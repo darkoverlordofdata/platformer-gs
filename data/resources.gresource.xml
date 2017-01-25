@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/darkoverlordofdata/platformer">
+    <file>res/default.map</file>
+    <file>res/grass.bmp</file>
+    <file>res/player.bmp</file>
+  </gresource>
+</gresources>
