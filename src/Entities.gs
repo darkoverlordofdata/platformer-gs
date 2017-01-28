@@ -3,10 +3,29 @@ uses SDL.Video
 /**
  * Entity Factory
  */
+
+ struct Entity 
+    id: int                     /* Unique sequential id */
+    name: string                /* Display name */
+    active: bool                /* In use */
+    entityType: EntityType      /* Category */
+    layer: Layer                /* Display Layer */
+    position: Point2d           /* Position on screen */
+    bounds: Rect                /* Sprite dimensions*/
+    sprite: Sprite              /* Sprite */
+                                /* Optional: */
+    scale: Vector2d?            /* Display scale */
+    tint: Color?                /* Color to use as tint */
+    expires: double             /* Countdown until expiration */
+    health: Health?             /* Track health */
+    scaleTween: ScaleTween?     /* scale Tweening variables*/
+    velocity: Vector2d?         /* Cartesian velocity*/
+
+
     
-def createPlayer(game: Game, renderer: Renderer):Entity
+def createPlayer(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(), 
+        id = uniqueId, 
         name = "Player", 
         active = true, 
         entityType = EntityType.Player, 
@@ -22,9 +41,9 @@ def createPlayer(game: Game, renderer: Renderer):Entity
         velocity = vector2d(0, 0)
     }
 
-def createBullet(game: Game, renderer: Renderer):Entity
+def createBullet(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(), 
+        id = uniqueId, 
         name = "Bullet", 
         active = false, 
         entityType = EntityType.Bullet, 
@@ -40,9 +59,9 @@ def createBullet(game: Game, renderer: Renderer):Entity
         velocity = vector2d(0, -800)
     }
 
-def createEnemy1(game: Game, renderer: Renderer):Entity
+def createEnemy1(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(),
+        id = uniqueId,
         name = "Enemy1",
         active = false,
         entityType = EntityType.Enemy, 
@@ -58,9 +77,9 @@ def createEnemy1(game: Game, renderer: Renderer):Entity
         velocity = vector2d(0, 40)
     }
 
-def createEnemy2(game: Game, renderer: Renderer):Entity
+def createEnemy2(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(),
+        id = uniqueId,
         name = "Enemy2",
         active = false,
         entityType = EntityType.Enemy, 
@@ -76,9 +95,9 @@ def createEnemy2(game: Game, renderer: Renderer):Entity
         velocity = vector2d(0, 30)
     }
 
-def createEnemy3(game: Game, renderer: Renderer):Entity
+def createEnemy3(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(),
+        id = uniqueId,
         name = "Enemy3",
         active = false,
         entityType = EntityType.Enemy, 
@@ -94,50 +113,50 @@ def createEnemy3(game: Game, renderer: Renderer):Entity
         velocity = vector2d(0, 20)
     }
 
-def createExplosion(game: Game, renderer: Renderer, scale:double = 0.5):Entity
+def createExplosion(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(),
+        id = uniqueId,
         name = "Explosion",
         active = false,
         entityType = EntityType.Explosion, 
         layer = Layer.EXPLOSION,
         position = point2d(0, 0),
         bounds = rect(0, 0, (int)game.explosionSurface.w/2, (int)game.explosionSurface.h/2),
-        scale = vector2d(scale, scale),
+        scale = vector2d(0.5, 0.5),
         sprite = sprite(game.explosionTexture, game.explosionSurface.w, game.explosionSurface.h),
         tint = color(0xd2, 0xfa, 0xd2, 0xfa),
         expires = 0.5,
         health = null,
-        scaleTween = scaletween(scale/100, scale, -3, false, true),
+        scaleTween = scaletween(0.5/100, 0.5, -3, false, true),
         velocity = null
     }
 
-def createBang(game: Game, renderer: Renderer, scale:double = 0.2):Entity
+def createBang(game: Game, renderer: Renderer, uniqueId: int):Entity
     return Entity(){
-        id = game.nextUniqueId(),
+        id = uniqueId,
         name = "Bang",
         active = false,
         entityType = EntityType.Explosion, 
         layer = Layer.BANG,
         position = point2d(0, 0),
         bounds = rect(0, 0, (int)game.explosionSurface.w/2, (int)game.explosionSurface.h/2),
-        scale = vector2d(scale, scale),
+        scale = vector2d(0.2, 0.2),
         sprite = sprite(game.explosionTexture, game.explosionSurface.w, game.explosionSurface.h),
         tint = color(0xaa, 0xe8, 0xaa, 0xee),
         expires = 0.5,
         health = null,
-        scaleTween = scaletween(scale/100, scale, -3, false, true),
+        scaleTween = scaletween(0.2/100, 0.2, -3, false, true),
         velocity = null
     }
 
-def createParticle(game: Game, renderer: Renderer):Entity
+def createParticle(game: Game, renderer: Renderer, uniqueId: int):Entity
     var radians = Random.next_double() * 2 * Math.PI
     var magnitude = Random.int_range(0, 200)
     var velocityX = magnitude * Math.cos(radians)
     var velocityY = magnitude * Math.sin(radians)
     var scale = Random.double_range(0.1, 1.0)
     return Entity(){
-        id = game.nextUniqueId(),
+        id = uniqueId,
         name = "Particle",
         active = false,
         entityType = EntityType.Particle, 
@@ -153,96 +172,96 @@ def createParticle(game: Game, renderer: Renderer):Entity
         velocity = vector2d(velocityX, velocityY)
     }
 
-def createEntityDB(game: Game, renderer: Renderer, width: int, height: int): array of Entity
+def createEntityDB(game: Game, renderer: Renderer, uniqueId: int=0): array of Entity
     return {
-        createPlayer(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createBang(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createExplosion(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createBullet(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy1(game, renderer),
-        createEnemy2(game, renderer),
-        createEnemy2(game, renderer),
-        createEnemy2(game, renderer),
-        createEnemy2(game, renderer),
-        createEnemy2(game, renderer),
-        createEnemy2(game, renderer),
-        createEnemy3(game, renderer),
-        createEnemy3(game, renderer),
-        createEnemy3(game, renderer),
-        createEnemy3(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer),
-        createParticle(game, renderer)
+        createPlayer(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createBang(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createExplosion(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createBullet(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy1(game, renderer, uniqueId++),
+        createEnemy2(game, renderer, uniqueId++),
+        createEnemy2(game, renderer, uniqueId++),
+        createEnemy2(game, renderer, uniqueId++),
+        createEnemy2(game, renderer, uniqueId++),
+        createEnemy2(game, renderer, uniqueId++),
+        createEnemy2(game, renderer, uniqueId++),
+        createEnemy3(game, renderer, uniqueId++),
+        createEnemy3(game, renderer, uniqueId++),
+        createEnemy3(game, renderer, uniqueId++),
+        createEnemy3(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++),
+        createParticle(game, renderer, uniqueId++)
     }
 

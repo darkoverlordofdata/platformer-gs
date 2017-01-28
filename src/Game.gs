@@ -6,18 +6,16 @@ uses SDLTTF
 
 class Game : Object
 
-    delegate SortByEntity(a:Entity?, b:Entity?):int
-
-    uniqueId: int = 0
-    inputs: array of bool
-    mouse: Point2d
-    renderer: unowned Renderer
     font: Font
     rawFont: RWops
     evt : private SDL.Event
-    pos: Point2d
+    renderer: unowned Renderer
+    mouse: Point2d
+    inputs: array of bool
     system: Systems
+    entities: array of Entity
 
+    /* resources */
     playerSurface: Surface
     bulletSurface: Surface
     enemy1Surface: Surface
@@ -34,6 +32,7 @@ class Game : Object
     particleTexture: Texture
     explosionTexture: Texture
 
+    /* assets */
     const FONT_TTF:string       = "/home/bruce/Git/platformer/data/res/OpenDyslexic-Bold.otf"
     const PLAYER_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/fighter.png"
     const BULLET_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/bullet.png"
@@ -43,15 +42,14 @@ class Game : Object
     const PARTICLE_PNG:string   = "/home/bruce/Git/ShmupWarz/res/images/star.png"
     const EXPLOSION_PNG:string  = "/home/bruce/Git/ShmupWarz/res/images/explosion.png"
 
-
-    entities: array of Entity
-    particles: list of ParticleQue? = new list of ParticleQue?
-    bullets: list of BulletQue? = new list of BulletQue?
-    enemies1: list of EnemyQue? = new list of EnemyQue?
-    enemies2: list of EnemyQue? = new list of EnemyQue?
-    enemies3: list of EnemyQue? = new list of EnemyQue?
-    explosions: list of ExplosionQue? = new list of ExplosionQue?
-    bangs: list of ExplosionQue? = new list of ExplosionQue?
+    /* 'event' triggers */
+    particles: list of Point2d? = new list of Point2d?
+    bullets: list of Point2d? = new list of Point2d?
+    enemies1: list of Point2d? = new list of Point2d?
+    enemies2: list of Point2d? = new list of Point2d?
+    enemies3: list of Point2d? = new list of Point2d?
+    explosions: list of Point2d? = new list of Point2d?
+    bangs: list of Point2d? = new list of Point2d?
 
     construct(renderer: Renderer)
         this.renderer = renderer
@@ -88,17 +86,17 @@ class Game : Object
         font = new Font.RW(rawFont, 0, 28)
         sdlFailIf(font == null, "Failed to load font")
 
-        entities = createEntityDB(this, renderer, 0, 0)
+        entities = createEntityDB(this, renderer)
         inputs = new array of bool[6]
         system = new Systems(this)
 
-    def nextUniqueId(): int
-        return uniqueId++
-        
-    def render(delta: double)
+    /**
+     *  Draw the screen
+     */
+    def draw()
         renderer.set_draw_color(110, 132, 174, 255)
         renderer.clear()
-        for e in activeEntities()
+        for e in getEntities()
             var w = e.scale != null ? e.sprite.width * e.scale.x : e.sprite.width
             var h = e.scale != null ? e.sprite.height * e.scale.y : e.sprite.height
             var x = e.position.x-(w/2)
@@ -108,48 +106,37 @@ class Game : Object
             renderer.copy(e.sprite.texture, null, {(int)x, (int)y, (int)w, (int)h})
         renderer.present()
 
+    /**
+     *  Update the game logic
+     */
+    def update(delta:double)
+        system.spawn(delta)
+        system.collision(delta)
+        system.input(delta, ref entities[0])
+        for var i=1 to (entities.length-1) do system.expire(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.create(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.physics(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.scaleTween(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.removeOffscreen(delta, ref entities[i])
+            
 
-    def activeEntities(): list of Entity?
+    /**
+     *  List of active entities sorted by layer
+     */
+    def getEntities(): list of Entity?
+        /** sort entities by layer */
         sort: CompareDataFunc of Entity? = def(a, b)
             return (int)a.layer-(int)b.layer
 
-        var l = new list of Entity?
-        for e in entities do if e.active do l.add(e)
-        l.sort(sort)
-        return l
+        var activeEntities = new list of Entity?
+        for e in entities do if e.active do activeEntities.add(e)
+        activeEntities.sort(sort)
+        return activeEntities
 
-    def update(delta:double)
-        system.spawn(delta)
-        for var i=0 to (entities.length-1) do system.input(delta, ref entities[i])
-        for var i=0 to (entities.length-1) do system.create(delta, ref entities[i])
-        for var i=0 to (entities.length-1) do system.movement(delta, ref entities[i])
-        for var i=0 to (entities.length-1) do system.expiring(delta, ref entities[i])
-        for var i=0 to (entities.length-1) do system.scaleTween(delta, ref entities[i])
-        for var i=0 to (entities.length-1) do system.removeOffscreen(delta, ref entities[i])
-        system.collision(delta)
-            
-    def addBullet(x: double, y: double)
-        bullets.add(bulletque(x, y))
-
-    def addParticle(x: double, y: double)
-        particles.add(particleque(x, y))
-    
-    def addEnemy(e: Enemies)
-        case e  
-            when Enemies.Enemy1
-                enemies1.add(enemyque(e))
-            when Enemies.Enemy2
-                enemies2.add(enemyque(e))
-            when Enemies.Enemy3
-                enemies3.add(enemyque(e))
-
-    def addExplosion(x: double, y: double)
-        explosions.add(explosionque(x, y, 0.5))
-
-    def addBang(x: double, y: double)
-        bangs.add(explosionque(x, y, 0.2))
-
-    def handleInput()
+    /**
+     * handle user input
+     */
+    def handleEvents()
         evt: Event
         while SDL.Event.poll(out evt) != 0
             case evt.type
@@ -179,6 +166,9 @@ class Game : Object
                     mouse.y = evt.motion.y
                     inputs[Input.jump] = true
 
+    /**
+     *
+     */
     def toInput(key: SDL.Input.Scancode): Input
         case key    
             when SDL.Input.Scancode.LEFT

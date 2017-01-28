@@ -88,23 +88,6 @@ struct ParticleQue
     x: double
     y: double
 
-struct Entity 
-    id: int                     /* Unique sequential id */
-    name: string                /* Display name */
-    active: bool                /* In use */
-    entityType: EntityType      /* Category */
-    layer: Layer                /* Display Layer */
-    position: Point2d           /* Position on screen */
-    bounds: Rect                /* Sprite dimensions*/
-    sprite: Sprite              /* Sprite */
-                                /* Optional: */
-    scale: Vector2d?            /* Display scale */
-    tint: Color?                /* Color to use as tint */
-    expires: double             /* Countdown until expiration */
-    health: Health?             /* Track health */
-    scaleTween: ScaleTween?     /* scale Tweening variables*/
-    velocity: Vector2d?         /* Cartesian velocity*/
-
 struct Sprite
     texture: unowned Texture
     width: int

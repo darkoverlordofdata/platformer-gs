@@ -2,6 +2,12 @@
 uses SDL
 uses SDL.Video
 uses SDLTTF
+/**
+ * No framework approach based on the 
+ * map-reduce-ecs in fsharp
+ *
+ * Uses idiomatic Genie to create entities and components
+ */
 
 const WINDOW_SIZE: Point = {640, 720}
 
@@ -41,12 +47,12 @@ def main(args: array of string)
     var deltaTime = 0.0
 
     while !game.inputs[Input.quit]
-        game.handleInput()
+        game.handleEvents()
         deltaTime = startTime-lastTime
         lastTime = startTime
         startTime = (double)GLib.get_real_time()/1000000
         game.update(deltaTime)
-        game.render(deltaTime)
+        game.draw()
 
 
 
