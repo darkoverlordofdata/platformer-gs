@@ -3,8 +3,19 @@ uses SDL
 uses SDL.Video
 uses SDLTTF
 
+const WINDOW_SIZE: Point = {640, 720}
+
+exception Exception
+    SDLException
+    InvalidValue
+
+def inline sdlFailIf(cond: bool, reason: string)
+    if cond
+        raise new Exception.SDLException(reason + ", SDL error: " + SDL.get_error())
+        GLib.Process.exit(0)
 
 def main(args: array of string)
+
 
     sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
         "SDL could not initialize!")
@@ -25,21 +36,17 @@ def main(args: array of string)
 
 
     var game = new Game(renderer)
-    var startTime = epochTime()
-    var lastTick = 0
+    var startTime = (double)GLib.get_real_time()/1000000
+    var lastTime = startTime
+    var deltaTime = 0.0
 
     while !game.inputs[Input.quit]
         game.handleInput()
-
-        var newTick = (int)((epochTime() - startTime) * 50)
-        if newTick > (lastTick+1)
-            print "%d - %d", lastTick, newTick
-        for var tick = (lastTick+1) to newTick
-            game.physics()
-            game.moveCamera()
-            game.logic(tick)
-        lastTick = newTick
-        game.render(lastTick)
+        deltaTime = startTime-lastTime
+        lastTime = startTime
+        startTime = (double)GLib.get_real_time()/1000000
+        game.update(deltaTime)
+        game.render(deltaTime)
 
 
 

@@ -2,6 +2,4 @@
 using Gee;
 
 namespace platformer {
-
-
 }

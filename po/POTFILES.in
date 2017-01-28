@@ -1,8 +1,6 @@
+src/Components.gs
+src/Entities.gs
 src/Game.gs
 src/Main.gs
-src/Map.gs
-src/Platformer.gs
-src/Player.gs
-src/TextCache.gs
-src/Time.gs
+src/Systems.gs
 src/platformer.vala

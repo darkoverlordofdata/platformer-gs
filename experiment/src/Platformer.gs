@@ -13,7 +13,8 @@ const FINISH: int = 110
 const PLAYER_PNG:string     = "/home/bruce/Git/platformer/data/res/player.bmp"
 const GRASS_PNG:string      = "/home/bruce/Git/platformer/data/res/grass.bmp"
 const DEFAULT_MAP:string    = "/home/bruce/Git/platformer/data/res/default.map"
-const FONT_TTF:string       = "/home/bruce/Git/platformer/data/res/DejaVuSans.ttf"
+//const FONT_TTF:string       = "/home/bruce/Git/platformer/data/res/DejaVuSans.ttf"
+const FONT_TTF:string       = "/home/bruce/Git/platformer/data/res/OpenDyslexic-Bold.otf"
 
 exception Exception
     SDLException

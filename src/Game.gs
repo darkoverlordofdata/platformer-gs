@@ -3,56 +3,151 @@ uses SDL
 uses SDL.Video
 uses SDLTTF
 
+
 class Game : Object
+
+    delegate SortByEntity(a:Entity?, b:Entity?):int
+
+    uniqueId: int = 0
     inputs: array of bool
+    mouse: Point2d
     renderer: unowned Renderer
     font: Font
-    font_rw: RWops
+    rawFont: RWops
     evt : private SDL.Event
-    player: Player
-    map: Map
-    camera: Vector2d
-    cameraType: CameraType
     pos: Point2d
+    system: Systems
+
+    playerSurface: Surface
+    bulletSurface: Surface
+    enemy1Surface: Surface
+    enemy2Surface: Surface
+    enemy3Surface: Surface
+    particleSurface: Surface
+    explosionSurface: Surface
+
     playerTexture: Texture
-    grassTexture: Texture
+    bulletTexture: Texture
+    enemy1Texture: Texture
+    enemy2Texture: Texture
+    enemy3Texture: Texture
+    particleTexture: Texture
+    explosionTexture: Texture
+
+    const FONT_TTF:string       = "/home/bruce/Git/platformer/data/res/OpenDyslexic-Bold.otf"
+    const PLAYER_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/fighter.png"
+    const BULLET_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/bullet.png"
+    const ENEMY1_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/enemy1.png"
+    const ENEMY2_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/enemy2.png"
+    const ENEMY3_PNG:string     = "/home/bruce/Git/ShmupWarz/res/images/enemy3.png"
+    const PARTICLE_PNG:string   = "/home/bruce/Git/ShmupWarz/res/images/star.png"
+    const EXPLOSION_PNG:string  = "/home/bruce/Git/ShmupWarz/res/images/explosion.png"
+
+
+    entities: array of Entity
+    particles: list of ParticleQue? = new list of ParticleQue?
+    bullets: list of BulletQue? = new list of BulletQue?
+    enemies1: list of EnemyQue? = new list of EnemyQue?
+    enemies2: list of EnemyQue? = new list of EnemyQue?
+    enemies3: list of EnemyQue? = new list of EnemyQue?
+    explosions: list of ExplosionQue? = new list of ExplosionQue?
+    bangs: list of ExplosionQue? = new list of ExplosionQue?
+
     construct(renderer: Renderer)
         this.renderer = renderer
-        playerTexture = loadTexture(renderer, PLAYER_PNG)
-        grassTexture = loadTexture(renderer, GRASS_PNG)
-        inputs = new array of bool[6]
 
-        font_rw = new RWops.from_file(FONT_TTF, "r")
-        font = new Font.RW(font_rw, 0, 28)
+        playerSurface = SDLImage.load(PLAYER_PNG)
+        playerTexture = Video.Texture.create_from_surface(renderer, playerSurface)
+        playerTexture.set_blend_mode(Video.BlendMode.BLEND)
 
+        bulletSurface = SDLImage.load(BULLET_PNG)
+        bulletTexture = Video.Texture.create_from_surface(renderer, bulletSurface)
+        bulletTexture.set_blend_mode(Video.BlendMode.BLEND)
+
+        enemy1Surface = SDLImage.load(ENEMY1_PNG)
+        enemy1Texture = Video.Texture.create_from_surface(renderer, enemy1Surface)
+        enemy1Texture.set_blend_mode(Video.BlendMode.BLEND)
+
+        enemy2Surface = SDLImage.load(ENEMY2_PNG)
+        enemy2Texture = Video.Texture.create_from_surface(renderer, enemy2Surface)
+        enemy2Texture.set_blend_mode(Video.BlendMode.BLEND)
+
+        enemy3Surface = SDLImage.load(ENEMY3_PNG)
+        enemy3Texture = Video.Texture.create_from_surface(renderer, enemy2Surface)
+        enemy3Texture.set_blend_mode(Video.BlendMode.BLEND)
+
+        particleSurface = SDLImage.load(PARTICLE_PNG)
+        particleTexture = Video.Texture.create_from_surface(renderer, particleSurface)
+        particleTexture.set_blend_mode(Video.BlendMode.BLEND)
+
+        explosionSurface = SDLImage.load(EXPLOSION_PNG)
+        explosionTexture = Video.Texture.create_from_surface(renderer, explosionSurface)
+        explosionTexture.set_blend_mode(Video.BlendMode.BLEND)
+
+        rawFont = new RWops.from_file(FONT_TTF, "r")
+        font = new Font.RW(rawFont, 0, 28)
         sdlFailIf(font == null, "Failed to load font")
-        player = new Player(playerTexture)
-        map = new Map(grassTexture, DEFAULT_MAP)
-        cameraType = CameraType.simpleCamera 
-        
-    def toInput(key: SDL.Input.Scancode): Input
-        case key    
-            when SDL.Input.Scancode.LEFT
-                return Input.left
-            when SDL.Input.Scancode.RIGHT
-                return Input.right
-            when SDL.Input.Scancode.UP
-                return Input.jump
-            when SDL.Input.Scancode.SPACE
-                return Input.jump
-            when SDL.Input.Scancode.R
-                return Input.restart
-            when SDL.Input.Scancode.Q
-                return Input.quit
-        return Input.none
 
-    def loadTexture(renderer: Renderer, path: string): Texture
-        var surface = SDLImage.load(path)
-        sdlFailIf(surface == null, "Unable to load image!")
-        var texture = Video.Texture.create_from_surface(renderer, surface)
-        sdlFailIf(texture == null, "Unable to load texture!")
-        texture.set_blend_mode(Video.BlendMode.BLEND)
-        return texture
+        entities = createEntityDB(this, renderer, 0, 0)
+        inputs = new array of bool[6]
+        system = new Systems(this)
+
+    def nextUniqueId(): int
+        return uniqueId++
+        
+    def render(delta: double)
+        renderer.set_draw_color(110, 132, 174, 255)
+        renderer.clear()
+        for e in activeEntities()
+            var w = e.scale != null ? e.sprite.width * e.scale.x : e.sprite.width
+            var h = e.scale != null ? e.sprite.height * e.scale.y : e.sprite.height
+            var x = e.position.x-(w/2)
+            var y = e.position.y-(h/2)
+            if e.tint != null 
+                e.sprite.texture.set_color_mod(e.tint.r, e.tint.g, e.tint.b)
+            renderer.copy(e.sprite.texture, null, {(int)x, (int)y, (int)w, (int)h})
+        renderer.present()
+
+
+    def activeEntities(): list of Entity?
+        sort: CompareDataFunc of Entity? = def(a, b)
+            return (int)a.layer-(int)b.layer
+
+        var l = new list of Entity?
+        for e in entities do if e.active do l.add(e)
+        l.sort(sort)
+        return l
+
+    def update(delta:double)
+        system.spawn(delta)
+        for var i=0 to (entities.length-1) do system.input(delta, ref entities[i])
+        for var i=0 to (entities.length-1) do system.create(delta, ref entities[i])
+        for var i=0 to (entities.length-1) do system.movement(delta, ref entities[i])
+        for var i=0 to (entities.length-1) do system.expiring(delta, ref entities[i])
+        for var i=0 to (entities.length-1) do system.scaleTween(delta, ref entities[i])
+        for var i=0 to (entities.length-1) do system.removeOffscreen(delta, ref entities[i])
+        system.collision(delta)
+            
+    def addBullet(x: double, y: double)
+        bullets.add(bulletque(x, y))
+
+    def addParticle(x: double, y: double)
+        particles.add(particleque(x, y))
+    
+    def addEnemy(e: Enemies)
+        case e  
+            when Enemies.Enemy1
+                enemies1.add(enemyque(e))
+            when Enemies.Enemy2
+                enemies2.add(enemyque(e))
+            when Enemies.Enemy3
+                enemies3.add(enemyque(e))
+
+    def addExplosion(x: double, y: double)
+        explosions.add(explosionque(x, y, 0.5))
+
+    def addBang(x: double, y: double)
+        bangs.add(explosionque(x, y, 0.2))
 
     def handleInput()
         evt: Event
@@ -64,74 +159,39 @@ class Game : Object
                     inputs[toInput(evt.key.keysym.scancode)] = true
                 when SDL.EventType.KEYUP
                     inputs[toInput(evt.key.keysym.scancode)] = false
+                when SDL.EventType.MOUSEBUTTONUP
+                    inputs[Input.jump] = false
+                when SDL.EventType.MOUSEBUTTONDOWN
+                    mouse.x = evt.motion.x
+                    mouse.y = evt.motion.y
+                    inputs[Input.jump] = true
+                when SDL.EventType.MOUSEMOTION
+                    mouse.x = evt.motion.x
+                    mouse.y = evt.motion.y
+                when SDL.EventType.FINGERUP
+                    inputs[Input.jump] = false
+                when SDL.EventType.FINGERDOWN
+                    mouse.x = evt.motion.x
+                    mouse.y = evt.motion.y
+                    inputs[Input.jump] = true
+                when SDL.EventType.FINGERMOTION
+                    mouse.x = evt.motion.x
+                    mouse.y = evt.motion.y
+                    inputs[Input.jump] = true
 
-    def render(tick: int)
-        renderer.set_draw_color(110, 132, 174, 255)
-        renderer.clear()
-        player.render(renderer, player.texture, point2d(player.pos.x - camera.x, player.pos.y - camera.y)) // game.player.pos - game.camera
-        map.render(renderer, camera)
-        
-        var time = player.time
-        var white = color(255, 255, 255, 255)
-        if time.begin >= 0
-            render_text(formatTime(tick - time.begin), 50, 100, white)
-        else if time.finish >= 0
-            render_text("Finished in: " + formatTime(time.finish), 50, 100, white)
-        if time.best >= 0
-            render_text("Best time: " + formatTime(time.best), 50, 150, white)
-
-        renderer.present()
-
-    def render_text(text: string, x: int, y: int, foreColor: Color)
-        var outlineColor = color(0, 0, 0, 64)
-        try
-            renderText(renderer, font, text, x, y, (FontStyle)2, outlineColor)
-            renderText(renderer, font, text, x, y, (FontStyle)0, foreColor)
-        except e:Error
-            print e.message
-
-    def physics()
-        if inputs[Input.restart] do player.restart()
-
-        var ground = map.onGround(player.pos, PLAYER_SIZE)
-        if inputs[Input.jump]
-            if ground
-                player.vel.y = -21
-
-        var direction = (double)((int)inputs[Input.right] - (int)inputs[Input.left])
-
-        player.vel.y += 0.75
-        if ground
-            player.vel.x = 0.5 * player.vel.x + 4.0 * direction
-        else
-            player.vel.x = 0.95 * player.vel.x + 2.0 * direction
-
-
-        player.vel.x = clamp(player.vel.x, -8, 8)
-        map.moveBox(ref player.pos, ref player.vel, PLAYER_SIZE)
-            
-    def moveCamera()
-        var halfWin = (double)WINDOW_SIZE.x/2
-        if cameraType == CameraType.fluidCamera
-            var dist = camera.x - player.pos.x + halfWin
-            camera.x -= 0.05 * dist
-        else if cameraType == CameraType.innerCamera
-            var leftArea  = player.pos.x - halfWin - 100
-            var rightArea = player.pos.x - halfWin + 100
-            camera.x = clamp(camera.x, leftArea, rightArea)
-        else // CameraType.simpleCamera
-            camera.x = player.pos.x - halfWin
-
-    def logic(tick: int)
-        case map.getTile(player.pos.x, player.pos.y)
-            when START
-                player.time.begin = tick
-            when FINISH
-                if player.time.begin >= 0
-                    player.time.finish = tick - player.time.begin
-                    player.time.begin = -1
-                    if player.time.best < 0 || player.time.finish < player.time.best
-                        player.time.best = player.time.finish
-                    print "Finished in %s", formatTime(player.time.finish)
-            
+    def toInput(key: SDL.Input.Scancode): Input
+        case key    
+            when SDL.Input.Scancode.LEFT
+                return Input.left
+            when SDL.Input.Scancode.RIGHT
+                return Input.right
+            when SDL.Input.Scancode.UP
+                return Input.jump
+            when SDL.Input.Scancode.Z
+                return Input.jump
+            when SDL.Input.Scancode.R
+                return Input.restart
+            when SDL.Input.Scancode.Q
+                return Input.quit
+        return Input.none
 

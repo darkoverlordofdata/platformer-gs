@@ -1,0 +1,62 @@
+{
+  "namespace": "Platformer",
+  "src": "src",
+  "output": {
+    "systems": "Systems"
+  },
+  "alloc": {
+    "entities": 128,
+    "components": 64
+  },
+  "components": {
+    "Active": false,
+    "Bounds": [
+      "radius:double"
+    ],
+    "Destroy": false,
+    "Layer": [
+      "ordinal:int"
+    ],
+    "Player": false,
+    "Position": [
+      "x:double",
+      "y:double"
+    ],
+    "Resource": [
+      "path:string",
+      "sprite:Object?",
+      "bgd:bool"
+    ],
+    "Score": [
+      "value:double"
+    ],
+    "Text": [
+      "text:string",
+      "sprite:Object?"
+    ],
+    "Velocity": [
+      "x:double",
+      "y:double"
+    ]
+  },
+  "systems": {
+    "PhysicsSystem": [
+      "ISetWorld",
+      "IExecuteSystem"
+    ],
+    "PlayerInputSystem": [
+      "ISetWorld",
+      "IExecuteSystem",
+      "IInitializeSystem"
+    ],
+    "RenderPositionSystem": [
+      "ISetWorld",
+      "IExecuteSystem"
+    ],
+    "ViewManagerSystem": [
+      "ISetWorld",
+      "IExecuteSystem"
+    ]
+  },
+  "entities": {}
+}

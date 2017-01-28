@@ -1,0 +1,26 @@
+{
+  "name": "platformer",
+  "version": "1.0.0",
+  "description": "platformer",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "entitas": "entitas"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkoverlordofdata/platformer-gs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/darkoverlordofdata/platformer-gs/issues"
+  },
+  "homepage": "https://github.com/darkoverlordofdata/platformer-gs#readme",
+  "devDependencies": {
+    "entitas-cli": "^0.1.3"
+  }
+}
