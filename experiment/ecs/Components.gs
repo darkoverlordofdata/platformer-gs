@@ -1,25 +1,21 @@
 [indent=4]
-uses SDL
 uses SDL.Video
-uses SDLTTF
-
+/**
+ * Component Factory
+ */
+    
 enum Input
-    none
-    left
-    right
-    jump
-    restart
-    quit
+    NONE
+    LEFT
+    RIGHT
+    JUMP
+    RESTART
+    QUIT
 
-enum Collision
-    x
-    y
-    corner
-
-enum CameraType
-    fluidCamera
-    innerCamera
-    simpleCamera
+enum Timers
+    TIMER1      = 2
+    TIMER2      = 7
+    TIMER3      = 13
 
 enum Actor
     DEFAULT      = 0
@@ -44,16 +40,21 @@ enum Category
     PARTICLE     = 4
     PLAYER       = 5
 
-struct Segment
-    source: SDL.Video.Rect
-    dest: SDL.Video.Rect
-    flip: SDL.Video.RendererFlip
+enum Effect 
+    PEW          = 0
+    ASPLODE      = 1
+    SMALLASPLODE = 2
 
-struct Timer 
-    begin: int
-    finish: int
-    best: int 
-    
+enum Enemies
+    ENEMY1       = 0
+    ENEMY2       = 1
+    ENEMY3       = 2
+
+
+struct Health
+    curHealth: int
+    maxHealth: int
+
 struct ScaleTween
     min : double
     max : double
@@ -84,37 +85,9 @@ struct Vector2d
     def inline len(): double
         return Math.sqrt(x*x+y*y)
 
-struct Health
-    curHealth: int
-    maxHealth: int
-
 def sprite(texture:Texture, width:int, height:int): Sprite
     sprite:Sprite = {texture, width, height}
     return sprite
-
-def timer(begin: int=-1, finish: int=-1, best:int=-1): Timer
-    timer:Timer = {begin, finish, best}
-    return timer
-
-def rect(x:int, y:int, h:int, w:int): Rect
-    rect:Rect = {x,y,h,w}
-    return rect
-
-def point2d(x: double=0, y: double=0): Point2d
-    point2d: Point2d = {x, y}
-    return point2d
-
-def vector2d(x: double=0, y: double=0): Vector2d
-    vector2d: Vector2d = {x, y}
-    return vector2d
-
-def color(r: uint8=0, g: uint8=0, b: uint8=0, a: uint8=255): Color
-    color: Color = {r, g, b, a}
-    return color
-
-def segment(source:SDL.Video.Rect, dest:SDL.Video.Rect, flip: SDL.Video.RendererFlip): Segment
-    segment:Segment = {source, dest, flip}
-    return segment
 
 def health(curHealth: int, maxHealth: int): Health
     health: Health = {curHealth, maxHealth}
@@ -123,4 +96,20 @@ def health(curHealth: int, maxHealth: int): Health
 def scaletween(min: double, max: double, speed: double, repeat: bool, active: bool): ScaleTween
     scaletween: ScaleTween = {min, max, speed, repeat, active}
     return scaletween
+
+def rect(x:int, y:int, h:int, w:int): Rect
+    rect:Rect = {x,y,h,w}
+    return rect
+
+def point2d(x: double, y: double): Point2d
+    point2d: Point2d = {x, y}
+    return point2d
+
+def vector2d(x: double, y: double): Vector2d
+    vector2d: Vector2d = {x, y}
+    return vector2d
+
+def color(r: uint8, g: uint8, b: uint8, a: uint8=255): Color
+    color: Color = {r, g, b, a}
+    return color
 

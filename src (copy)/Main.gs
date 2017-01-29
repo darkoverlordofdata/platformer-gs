@@ -20,6 +20,10 @@ def inline clamp(value: double, low: double, hi: double): double
 def inline epochTime(): double
     return (double)GLib.get_real_time()/1000000
 
+
+
+
+
 def main(args: array of string)
 
     sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
@@ -48,8 +52,12 @@ def main(args: array of string)
         game.handleInput()
 
         var newTick = (int)((epochTime() - startTime) * 50)
+        if newTick > (lastTick+1)
+            print "%d - %d", lastTick, newTick
         for var tick = (lastTick+1) to newTick
-            game.update(tick)
+            game.physics()
+            game.moveCamera()
+            game.logic(tick)
         lastTick = newTick
         game.render(lastTick)
 

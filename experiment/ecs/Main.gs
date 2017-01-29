@@ -2,6 +2,14 @@
 uses SDL
 uses SDL.Video
 uses SDLTTF
+/**
+ * No framework approach based on the 
+ * map-reduce-ecs in fsharp
+ *
+ * Uses idiomatic Genie to create entities and components
+ */
+
+const WINDOW_SIZE: Point = {640, 720}
 
 exception Exception
     SDLException
@@ -12,15 +20,8 @@ def inline sdlFailIf(cond: bool, reason: string)
         raise new Exception.SDLException(reason + ", SDL error: " + SDL.get_error())
         GLib.Process.exit(0)
 
-def inline clamp(value: double, low: double, hi: double): double
-    if value < low do return low
-    if value > hi do return hi
-    return value
-
-def inline epochTime(): double
-    return (double)GLib.get_real_time()/1000000
-
 def main(args: array of string)
+
 
     sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
         "SDL could not initialize!")
@@ -41,17 +42,17 @@ def main(args: array of string)
 
 
     var game = new Game(renderer)
-    var startTime = epochTime()
-    var lastTick = 0
+    var startTime = (double)GLib.get_real_time()/1000000
+    var lastTime = startTime
+    var deltaTime = 0.0
 
-    while !game.inputs[Input.quit]
-        game.handleInput()
-
-        var newTick = (int)((epochTime() - startTime) * 50)
-        for var tick = (lastTick+1) to newTick
-            game.update(tick)
-        lastTick = newTick
-        game.render(lastTick)
+    while !game.inputs[Input.QUIT]
+        game.handleEvents()
+        deltaTime = startTime-lastTime
+        lastTime = startTime
+        startTime = (double)GLib.get_real_time()/1000000
+        game.update(deltaTime)
+        game.draw()
 
 
 

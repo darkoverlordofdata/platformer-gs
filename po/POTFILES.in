@@ -2,5 +2,7 @@ src/Components.gs
 src/Entities.gs
 src/Game.gs
 src/Main.gs
+src/Map.gs
 src/Systems.gs
+src/TextCache.gs
 src/platformer.vala

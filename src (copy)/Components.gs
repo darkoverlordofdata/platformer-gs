@@ -44,7 +44,7 @@ enum Category
     PARTICLE     = 4
     PLAYER       = 5
 
-struct Segment
+struct BodyPart
     source: SDL.Video.Rect
     dest: SDL.Video.Rect
     flip: SDL.Video.RendererFlip
@@ -92,7 +92,7 @@ def sprite(texture:Texture, width:int, height:int): Sprite
     sprite:Sprite = {texture, width, height}
     return sprite
 
-def timer(begin: int=-1, finish: int=-1, best:int=-1): Timer
+def timer(begin: int=-1, finish: int=-1, best:int=0): Timer
     timer:Timer = {begin, finish, best}
     return timer
 
@@ -112,9 +112,9 @@ def color(r: uint8=0, g: uint8=0, b: uint8=0, a: uint8=255): Color
     color: Color = {r, g, b, a}
     return color
 
-def segment(source:SDL.Video.Rect, dest:SDL.Video.Rect, flip: SDL.Video.RendererFlip): Segment
-    segment:Segment = {source, dest, flip}
-    return segment
+def bodypart(source:SDL.Video.Rect, dest:SDL.Video.Rect, flip: SDL.Video.RendererFlip): BodyPart
+    bodypart:BodyPart = {source, dest, flip}
+    return bodypart
 
 def health(curHealth: int, maxHealth: int): Health
     health: Health = {curHealth, maxHealth}

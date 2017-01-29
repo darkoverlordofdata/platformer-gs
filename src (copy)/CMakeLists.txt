@@ -37,7 +37,7 @@ set (APP_SOURCES ${APP_SOURCES} Entities.gs)
 set (APP_SOURCES ${APP_SOURCES} Game.gs)
 set (APP_SOURCES ${APP_SOURCES} Main.gs)
 set (APP_SOURCES ${APP_SOURCES} Map.gs)
-set (APP_SOURCES ${APP_SOURCES} Systems.gs)
+set (APP_SOURCES ${APP_SOURCES} Player.gs)
 set (APP_SOURCES ${APP_SOURCES} TextCache.gs)
 set (APP_SOURCES ${APP_SOURCES} platformer.vala)
 

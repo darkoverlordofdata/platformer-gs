@@ -1,5 +1,7 @@
 [indent=4]
+uses SDL
 uses SDL.Video
+uses SDLTTF
 /**
  * Entity Factory
  */
@@ -8,260 +10,67 @@ uses SDL.Video
     id: int                     /* Unique sequential id */
     name: string                /* Display name */
     active: bool                /* In use */
-    entityType: EntityType      /* Category */
-    layer: Layer                /* Display Layer */
+    category: Category          /* Category */
+    actor: Actor                /* Display Actor */
     position: Point2d           /* Position on screen */
     bounds: Rect                /* Sprite dimensions*/
     sprite: Sprite              /* Sprite */
                                 /* Optional: */
     scale: Vector2d?            /* Display scale */
     tint: Color?                /* Color to use as tint */
-    expires: double             /* Countdown until expiration */
+    expires: Timer?             /* Countdown until expiration */
     health: Health?             /* Track health */
-    scaleTween: ScaleTween?     /* scale Tweening variables*/
     velocity: Vector2d?         /* Cartesian velocity*/
 
 
-    
-def createPlayer(game: Game, renderer: Renderer, uniqueId: int):Entity
+def CreatePlayer(texture: SDL.Video.Texture, h:int, w:int): Entity
     return Entity(){
-        id = uniqueId, 
-        name = "Player", 
-        active = true, 
-        entityType = EntityType.Player, 
-        layer = Layer.PLAYER, 
-        bounds = rect(100, 100, (int)game.playerSurface.w/2, (int)game.playerSurface.h/2),
-        position = point2d(100, 100),
-        sprite = sprite(game.playerTexture, game.playerSurface.w, game.playerSurface.h),
-        scale = null,
-        tint = null, 
-        expires = 0, 
-        health = health(100, 100), 
-        scaleTween = null, 
-        velocity = vector2d(0, 0)
+        id = 0,
+        name = "Player",
+        active = true,
+        category = Category.PLAYER,
+        actor = Actor.PLAYER,
+        position = point2d(170, 500),
+        bounds = rect(0, 0, h, w),
+        sprite = sprite(texture, h, w),
+        scale = vector2d(1, 1),
+        tint = color(),
+        expires = timer(),
+        health = health(0, 0),
+        velocity = vector2d()
     }
 
-def createBullet(game: Game, renderer: Renderer, uniqueId: int):Entity
-    return Entity(){
-        id = uniqueId, 
-        name = "Bullet", 
-        active = false, 
-        entityType = EntityType.Bullet, 
-        layer = Layer.BULLET, 
-        bounds = rect(0, 0, (int)game.bulletSurface.w/2, (int)game.bulletSurface.h/2),
-        position = point2d(0, 0),
-        sprite = sprite(game.bulletTexture, game.bulletSurface.w, game.bulletSurface.h),
-        scale = null,
-        tint = color(0xd2, 0xfa, 0x00, 0xfa),
-        expires = 1, 
-        health = health(2, 2), 
-        scaleTween = null, 
-        velocity = vector2d(0, -800)
-    }
 
-def createEnemy1(game: Game, renderer: Renderer, uniqueId: int):Entity
-    return Entity(){
-        id = uniqueId,
-        name = "Enemy1",
-        active = false,
-        entityType = EntityType.Enemy, 
-        layer = Layer.ENEMY1,
-        bounds = rect(0, 100, (int)game.enemy1Surface.w/2, (int)game.enemy1Surface.h/2),
-        position = point2d(0, 100),
-        scale = null,
-        sprite = sprite(game.enemy1Texture, game.enemy1Surface.w, game.enemy1Surface.h),
-        tint = null,
-        expires = 0,
-        health = health(10, 10),
-        scaleTween = null,
-        velocity = vector2d(0, 40)
-    }
-
-def createEnemy2(game: Game, renderer: Renderer, uniqueId: int):Entity
-    return Entity(){
-        id = uniqueId,
-        name = "Enemy2",
-        active = false,
-        entityType = EntityType.Enemy, 
-        layer = Layer.ENEMY2,
-        bounds = rect(0, 100, (int)game.enemy2Surface.w/2, (int)game.enemy2Surface.h/2),
-        position = point2d(0, 100),
-        scale = null,
-        sprite = sprite(game.enemy2Texture, game.enemy2Surface.w, game.enemy2Surface.h),
-        tint = null,
-        expires = 0,
-        health = health(20, 20),
-        scaleTween = null,
-        velocity = vector2d(0, 30)
-    }
-
-def createEnemy3(game: Game, renderer: Renderer, uniqueId: int):Entity
-    return Entity(){
-        id = uniqueId,
-        name = "Enemy3",
-        active = false,
-        entityType = EntityType.Enemy, 
-        layer = Layer.ENEMY3,
-        bounds = rect(0, 100, (int)game.enemy3Surface.w/2, (int)game.enemy3Surface.h/2),
-        position = point2d(0, 100),
-        scale = null,
-        sprite = sprite(game.enemy3Texture, game.enemy3Surface.w, game.enemy3Surface.h),
-        tint = null,
-        expires = 0,
-        health = health(60, 60),
-        scaleTween = null,
-        velocity = vector2d(0, 20)
-    }
-
-def createExplosion(game: Game, renderer: Renderer, uniqueId: int):Entity
-    return Entity(){
-        id = uniqueId,
-        name = "Explosion",
-        active = false,
-        entityType = EntityType.Explosion, 
-        layer = Layer.EXPLOSION,
-        position = point2d(0, 0),
-        bounds = rect(0, 0, (int)game.explosionSurface.w/2, (int)game.explosionSurface.h/2),
-        scale = vector2d(0.5, 0.5),
-        sprite = sprite(game.explosionTexture, game.explosionSurface.w, game.explosionSurface.h),
-        tint = color(0xd2, 0xfa, 0xd2, 0xfa),
-        expires = 0.5,
-        health = null,
-        scaleTween = scaletween(0.5/100, 0.5, -3, false, true),
-        velocity = null
-    }
-
-def createBang(game: Game, renderer: Renderer, uniqueId: int):Entity
-    return Entity(){
-        id = uniqueId,
-        name = "Bang",
-        active = false,
-        entityType = EntityType.Explosion, 
-        layer = Layer.BANG,
-        position = point2d(0, 0),
-        bounds = rect(0, 0, (int)game.explosionSurface.w/2, (int)game.explosionSurface.h/2),
-        scale = vector2d(0.2, 0.2),
-        sprite = sprite(game.explosionTexture, game.explosionSurface.w, game.explosionSurface.h),
-        tint = color(0xaa, 0xe8, 0xaa, 0xee),
-        expires = 0.5,
-        health = null,
-        scaleTween = scaletween(0.2/100, 0.2, -3, false, true),
-        velocity = null
-    }
-
-def createParticle(game: Game, renderer: Renderer, uniqueId: int):Entity
-    var radians = Random.next_double() * 2 * Math.PI
-    var magnitude = Random.int_range(0, 200)
-    var velocityX = magnitude * Math.cos(radians)
-    var velocityY = magnitude * Math.sin(radians)
-    var scale = Random.double_range(0.1, 1.0)
-    return Entity(){
-        id = uniqueId,
-        name = "Particle",
-        active = false,
-        entityType = EntityType.Particle, 
-        layer = Layer.PARTICLE,
-        position = point2d(0, 0),
-        bounds = rect(0, 0, (int)game.particleSurface.w/2, (int)game.particleSurface.h/2),
-        scale = vector2d(scale, scale),
-        sprite = sprite(game.particleTexture, game.particleSurface.w, game.particleSurface.h),
-        tint = color(0xfa, 0xfa, 0xd2, 0xff),
-        expires = 0.5,
-        health = null,
-        scaleTween = null,
-        velocity = vector2d(velocityX, velocityY)
-    }
-
-def createEntityDB(game: Game, renderer: Renderer, uniqueId: int=0): array of Entity
+def playerSegments(x:int, y:int): array of Segment        
     return {
-        createPlayer(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createBang(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createExplosion(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createBullet(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy1(game, renderer, uniqueId++),
-        createEnemy2(game, renderer, uniqueId++),
-        createEnemy2(game, renderer, uniqueId++),
-        createEnemy2(game, renderer, uniqueId++),
-        createEnemy2(game, renderer, uniqueId++),
-        createEnemy2(game, renderer, uniqueId++),
-        createEnemy2(game, renderer, uniqueId++),
-        createEnemy3(game, renderer, uniqueId++),
-        createEnemy3(game, renderer, uniqueId++),
-        createEnemy3(game, renderer, uniqueId++),
-        createEnemy3(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++),
-        createParticle(game, renderer, uniqueId++)
+        segment(rect(192,  64, 64, 32), rect(x-60, y,    96, 48), RendererFlip.NONE),
+        segment(rect( 96,   0, 96, 96), rect(x-48, y-48, 96, 96), RendererFlip.NONE),
+        segment(rect(192,  64, 64, 32), rect(x-36,    y, 96, 48), RendererFlip.NONE),
+        segment(rect(192,  32, 64, 32), rect(x-60,    y, 96, 48), RendererFlip.NONE),
+        segment(rect(  0,   0, 96, 96), rect(x-48, y-48, 96, 96), RendererFlip.NONE),
+        segment(rect(192,  32, 64, 32), rect(x-36,    y, 96, 48), RendererFlip.NONE),
+        segment(rect( 64,  96, 32, 32), rect(x-18, y-21, 36, 36), RendererFlip.NONE),
+        segment(rect( 64,  96, 32, 32), rect(x- 6, y-21, 36, 36), RendererFlip.HORIZONTAL)
     }
+
+def buildSprite(renderer: SDL.Video.Renderer, source: SDL.Video.Surface, builder: SpriteBuilder, h: int, w: int): Texture
+    var flags = (uint32)0x00010000  // SDL_SRCALPHA
+    var rmask = (uint32)0x000000ff  
+    var gmask = (uint32)0x0000ff00
+    var bmask = (uint32)0x00ff0000
+    var amask = (uint32)0xff000000
+    var surface = new Video.Surface.legacy_rgb(flags, h, w, 32, rmask, gmask, bmask, amask)
+    for var segment in builder(h/2, w/2)
+        source.blit_scaled(segment.source, surface, segment.dest)
+    var texture = Video.Texture.create_from_surface(renderer, surface)
+    return texture
+
+def loadTexture(renderer: Renderer, path: string): Texture
+    var surface = SDLImage.load(path)
+    sdlFailIf(surface == null, "Unable to load image!")
+    var texture = Video.Texture.create_from_surface(renderer, surface)
+    sdlFailIf(texture == null, "Unable to load texture!")
+    texture.set_blend_mode(Video.BlendMode.BLEND)
+    return texture
+
 
