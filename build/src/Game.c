@@ -184,8 +184,8 @@ void vector2d_free (Vector2d* self);
 #define AIR 0
 #define START 78
 #define FINISH 110
-#define PLAYER_PNG "assets/player.bmp"
-#define GRASS_PNG "assets/grass.bmp"
+#define PLAYER_PNG "assets/player.png"
+#define GRASS_PNG "assets/grass.png"
 #define DEFAULT_MAP "assets/default.map"
 #define FONT_TTF "assets/OpenDyslexic-Bold.otf"
 GType segment_get_type (void) G_GNUC_CONST;

@@ -51,7 +51,6 @@ endif()
 
 add_subdirectory(src/vapis)
 add_subdirectory(po)
-add_subdirectory(src/util)
 add_subdirectory(data)
 add_subdirectory(src)
 

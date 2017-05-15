@@ -10,8 +10,8 @@ const PLAYER_SIZE: Vector2d = {64, 64}
 const AIR: int = 0
 const START: int = 78
 const FINISH: int = 110
-const PLAYER_PNG:string	 = "assets/player.bmp"
-const GRASS_PNG:string	  = "assets/grass.bmp"
+const PLAYER_PNG:string	 = "assets/player.png"
+const GRASS_PNG:string	  = "assets/grass.png"
 const DEFAULT_MAP:string	= "assets/default.map"
 const FONT_TTF:string	   = "assets/OpenDyslexic-Bold.otf"
 

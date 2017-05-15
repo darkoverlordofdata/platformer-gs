@@ -6,7 +6,7 @@
               "type": "lldb",
               "request": "launch",
               "cwd": "${workspaceRoot}/install/src",
-              "program": "${workspaceRoot}/install/src/vala-emscripten",
+              "program": "${workspaceRoot}/install/src/platformer",
               "args": []
           }
       ]

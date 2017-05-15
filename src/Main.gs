@@ -9,6 +9,7 @@ exception Exception
 
 timerFreq: double
 window: Window
+renderer: Renderer
 startTime: double
 lastTick: int
 
@@ -25,7 +26,7 @@ def inline epochTime(): double
 	return (double)SDL.Timer.get_performance_counter()/timerFreq
 
 
-def initialize(): Renderer
+def initialize()
 
 	sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
 		"SDL could not initialize!")
@@ -37,7 +38,7 @@ def initialize(): Renderer
 	sdlFailIf(window == null, 
 		"Window could not be created!")
 
-	var renderer = Renderer.create(window, -1, RendererFlags.ACCELERATED | RendererFlags.PRESENTVSYNC)
+	renderer = Renderer.create(window, -1, RendererFlags.ACCELERATED | RendererFlags.PRESENTVSYNC)
 	sdlFailIf(renderer == null, 
 		"Renderer could not be created!")
 
@@ -46,11 +47,10 @@ def initialize(): Renderer
 
 	timerFreq = SDL.Timer.get_performance_frequency()
 
-	return renderer
 
 #if (DESKTOP)
 def main(args: array of string)
-	var renderer = initialize()
+	initialize()
 	var game = new Game(renderer)
 	startTime = epochTime()
 	lastTick = 0
@@ -66,7 +66,7 @@ def main(args: array of string)
 
 #else
 def game()
-	var renderer = initialize()
+	initialize()
 	var game = new Game(renderer)
 	startTime = epochTime()
 	lastTick = 0

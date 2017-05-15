@@ -6,6 +6,3 @@ src/Map.gs
 src/Systems.gs
 src/TextCache.gs
 src/platformer.vala
-src/util/Cache.vala
-src/util/File.vala
-src/util/String.vala

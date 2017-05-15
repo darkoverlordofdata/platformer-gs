@@ -19,7 +19,7 @@ var start_function = function(o) {
 
 
 (function() {
-	var memoryInitializer = 'shmupwarz.js.mem';
+	var memoryInitializer = 'platformer.js.mem';
 	if (typeof Module['locateFile'] === 'function') {
 		memoryInitializer = Module['locateFile'](memoryInitializer);
 	} else if (Module['memoryInitializerPrefixURL']) {
@@ -33,6 +33,6 @@ var start_function = function(o) {
 
 (function() {
 	var script = document.createElement('script');
-	script.src = "shmupwarz.js";
+	script.src = "platformer.js";
 	document.body.appendChild(script);
 })();

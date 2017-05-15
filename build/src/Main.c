@@ -7,11 +7,11 @@
 #include <float.h>
 #include <math.h>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL_render.h>
 #include <stdlib.h>
 #include <string.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL_ttf.h>
@@ -36,6 +36,8 @@ extern gdouble timerFreq;
 gdouble timerFreq = 0.0;
 extern SDL_Window* window;
 SDL_Window* window = NULL;
+extern SDL_Renderer* renderer;
+SDL_Renderer* renderer = NULL;
 extern gdouble startTime;
 gdouble startTime = 0.0;
 extern gint lastTick;
@@ -45,7 +47,7 @@ GQuark exception_quark (void);
 void sdlFailIf (gboolean cond, const gchar* reason);
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
 gdouble epochTime (void);
-SDL_Renderer* initialize (void);
+void initialize (void);
 void game (void);
 void game_release (Game* self);
 Game* game_retain (Game* self);
@@ -136,19 +138,18 @@ inline gdouble epochTime (void) {
 }
 
 
-SDL_Renderer* initialize (void) {
-	SDL_Renderer* result = NULL;
+void initialize (void) {
 	gint _tmp0_ = 0;
 	gboolean _tmp1_ = FALSE;
 	gint _tmp2_ = 0;
 	gint _tmp3_ = 0;
 	SDL_Window* _tmp4_ = NULL;
 	SDL_Window* _tmp5_ = NULL;
-	SDL_Renderer* renderer = NULL;
 	SDL_Window* _tmp6_ = NULL;
 	SDL_Renderer* _tmp7_ = NULL;
-	gint _tmp8_ = 0;
-	guint64 _tmp9_ = 0ULL;
+	SDL_Renderer* _tmp8_ = NULL;
+	gint _tmp9_ = 0;
+	guint64 _tmp10_ = 0ULL;
 	_tmp0_ = SDL_Init ((guint32) ((SDL_INIT_VIDEO | SDL_INIT_TIMER) | SDL_INIT_EVENTS));
 	sdlFailIf (_tmp0_ < 0, "SDL could not initialize!");
 	_tmp1_ = SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "2");
@@ -162,14 +163,14 @@ SDL_Renderer* initialize (void) {
 	sdlFailIf (_tmp5_ == NULL, "Window could not be created!");
 	_tmp6_ = window;
 	_tmp7_ = SDL_CreateRenderer (_tmp6_, -1, (guint32) (SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
+	_SDL_DestroyRenderer0 (renderer);
 	renderer = _tmp7_;
-	sdlFailIf (renderer == NULL, "Renderer could not be created!");
-	_tmp8_ = TTF_Init ();
-	sdlFailIf (_tmp8_ == (-1), "SDL_ttf could not initialize!");
-	_tmp9_ = SDL_GetPerformanceFrequency ();
-	timerFreq = (gdouble) _tmp9_;
-	result = renderer;
-	return result;
+	_tmp8_ = renderer;
+	sdlFailIf (_tmp8_ == NULL, "Renderer could not be created!");
+	_tmp9_ = TTF_Init ();
+	sdlFailIf (_tmp9_ == (-1), "SDL_ttf could not initialize!");
+	_tmp10_ = SDL_GetPerformanceFrequency ();
+	timerFreq = (gdouble) _tmp10_;
 }
 
 
@@ -179,21 +180,19 @@ static void _mainloop_em_arg_callback_func (void* arg) {
 
 
 void game (void) {
-	SDL_Renderer* renderer = NULL;
-	SDL_Renderer* _tmp0_ = NULL;
 	Game* game = NULL;
+	SDL_Renderer* _tmp0_ = NULL;
 	Game* _tmp1_ = NULL;
 	gdouble _tmp2_ = 0.0;
-	_tmp0_ = initialize ();
-	renderer = _tmp0_;
-	_tmp1_ = game_new (renderer);
+	initialize ();
+	_tmp0_ = renderer;
+	_tmp1_ = game_new (_tmp0_);
 	game = _tmp1_;
 	_tmp2_ = epochTime ();
 	startTime = _tmp2_;
 	lastTick = 0;
 	emscripten_set_main_loop_arg (_mainloop_em_arg_callback_func, game, 0, 1);
 	_game_release0 (game);
-	_SDL_DestroyRenderer0 (renderer);
 }
 
 

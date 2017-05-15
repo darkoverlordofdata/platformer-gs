@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#    -X "-s ALLOW_MEMORY_GROWTH=1" \
 
 
 ./valac2/valac2  \

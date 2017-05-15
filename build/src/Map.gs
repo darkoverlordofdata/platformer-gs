@@ -17,6 +17,19 @@ class Map
 	def extern free()
 	width: int
 	height: int
+	lines: array of string = {
+		" 0  0  0  0 78  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 110  0  0  0  0",
+		" 4  5  0  0 78  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 110  0  0  4  5",
+		"20 21  0  0 78  0  0  0  0  0  0  0  0  0  0  0  0  0  4  5  0  0  0  0  0  0  0  0  0  0  0  0 110  0  0 20 21",
+		"20 21  0  0 78  0  0  0  0  0  0  0  0  4  5  0  0  0 36 37  0  0  0  0  0  0  0  0  0  0  0  0 110  0  0 20 21",
+		"20 21  0  0 78  0  0  0  0  0  0  0  0 20 21  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 110  0  0 20 21",
+		"20 21  0  0 78  0  0  0  0  0  0  0  0 20 21  0  0  0  0  0  0  0  4 16 16 16 16  5  0  0  0  0 110  0  0 20 21",
+		"20 21  0  0 78  0  0  4  5  0  0  0  0 20 21  0  0  0  0  0  0  0 36 52 54 53 52 37  0  0  0  0 110  0  0 20 21",
+		"20 21  0  0 78  0  0 20 21  0  0  0  0 20 21  0  0  0  0  0  0  0  0  0 20 21  0  0  0  0  0  0 110  0  0 20 21",
+		"20 38  0  0 78  0  0 22 38  0  0  0  0 22 38  0  0  0  0  0  0  0  0  0 22 38  0  0  0  0  0  0 110  0  0 22 21",
+		"20 49 16 16 16 16 16 48 49 16 16 16 16 48 49 16 16 16 16 16 16 16 16 16 48 49 16 16 16 16 16 16  16 16 16 48 21",
+		"36 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52  52 52 52 52 37"
+	}
 	buf: array of uint8 = new array of uint8[4096]
 	stat: Posix.Stat?
 	ioBuff: array of char
@@ -28,7 +41,8 @@ class Map
 		tiles = new List of uint8
 
 		var line = ""
-		var path = (string)Posix.realpath(filename, buf)
+		var l2 = ""
+		var path = (string)Posix.realpath("assets/default.map", buf)
 		print(path)	
 		var exists = Posix.stat(path, out stat)	
 		var isFile = Posix.S_ISREG(stat.st_mode)
@@ -37,20 +51,29 @@ class Map
 		hFile: Posix.FILE = Posix.FILE.open(path, "r")
 		// var file = new DataInputStream(File.new_for_path(filename).read())
 		// while (line = file.read_line(null)) != null
-		while (line = (string)hFile.gets(ioBuff)) != null
-			var width = 0
-			for var word in line.split(" ")
-				if word == "" do continue
-				var value = int.parse(word)
-				if value > 255
-					raise new Exception.InvalidValue("Invalid value +" + word + " in map " + filename)
-				tiles.append((uint8)value)
-				width++
+		var i= 0
+		var eof = false
+		// while (line = (string)hFile.gets(ioBuff)) != null
+		while !eof //i < lines.length
+			line = (string)hFile.gets(ioBuff)
+			print line
+			if line == "EOF" do eof = true
+			else
+				var width = 0
+				for var word in line.split(" ")
+					if word == "" do continue
+					var value = int.parse(word)
+					if value > 255
+						raise new Exception.InvalidValue("Invalid value +" + word + " in map ")// + filename)
+					tiles.append((uint8)value)
+					width++
 
-			if this.width > 0 and this.width != width
-				raise new Exception.InvalidValue("Incompatible line length in map " + filename)
-			this.width = width
-			this.height++
+				if this.width > 0 and this.width != width
+					raise new Exception.InvalidValue("Incompatible line length in map ") // + filename)
+				this.width = width
+				this.height++
+
+
 
 	def getTile(x: double, y: double): int
 		var nx = (int)clamp(x / TILES_SIZE.x, 0, width-1)
