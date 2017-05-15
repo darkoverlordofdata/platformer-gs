@@ -90,20 +90,26 @@ class Game : Object
         inputs = new array of bool[6]
         system = new Systems(this)
 
+    def drawSprite(e:Entity)
+        var w = e.scale != null ? e.sprite.width * e.scale.x : e.sprite.width
+        var h = e.scale != null ? e.sprite.height * e.scale.y : e.sprite.height
+        var x = e.position.x-(w/2)
+        var y = e.position.y-(h/2)
+        if e.tint != null 
+            e.sprite.texture.set_color_mod(e.tint.r, e.tint.g, e.tint.b)
+        renderer.copy(e.sprite.texture, null, {(int)x, (int)y, (int)w, (int)h})
+        
     /**
      *  Draw the screen
      */
-    def draw()
+    def draw(fps:int)
         renderer.set_draw_color(110, 132, 174, 255)
         renderer.clear()
-        for e in getEntities()
-            var w = e.scale != null ? e.sprite.width * e.scale.x : e.sprite.width
-            var h = e.scale != null ? e.sprite.height * e.scale.y : e.sprite.height
-            var x = e.position.x-(w/2)
-            var y = e.position.y-(h/2)
-            if e.tint != null 
-                e.sprite.texture.set_color_mod(e.tint.r, e.tint.g, e.tint.b)
-            renderer.copy(e.sprite.texture, null, {(int)x, (int)y, (int)w, (int)h})
+        for e in entities do if e.active && e.actor != Actor.PLAYER do drawSprite(e)
+        drawSprite(entities[0])
+        var text = font.render(@"$fps", {0, 0, 0, 0})
+        var texture = Texture.create_from_surface(renderer, text)
+        renderer.copy(texture, null, {5, 5, 56, 28})
         renderer.present()
 
     /**
@@ -119,26 +125,19 @@ class Game : Object
         var active = new list of int
         for var i=1 to (entities.length-1) do if entities[i].active do active.add(i)
 
-        for var i in active do system.expire(delta, ref entities[i])
-        for var i in active do system.physics(delta, ref entities[i])
-        for var i in active do system.scaleTween(delta, ref entities[i])
-        for var i in active do system.removeOffscreen(delta, ref entities[i])
+
+        for var i=1 to (entities.length-1) do system.expire(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.physics(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.scaleTween(delta, ref entities[i])
+        for var i=1 to (entities.length-1) do system.removeOffscreen(delta, ref entities[i])
+
+        // for var i in active do system.expire(delta, ref entities[i])
+        // for var i in active do system.physics(delta, ref entities[i])
+        // for var i in active do system.scaleTween(delta, ref entities[i])
+        // for var i in active do system.removeOffscreen(delta, ref entities[i])
 
         system.input(delta, ref entities[0]) // entities[0] is the player
 
-
-    /**
-     *  List of active entities sorted by actor
-     */
-    def getEntities(): list of Entity?
-        /** sort entities by actor layer */
-        sort: CompareDataFunc of Entity? = def(a, b)
-            return (int)a.actor-(int)b.actor
-
-        var activeEntities = new list of Entity?
-        for e in entities do if e.active do activeEntities.add(e)
-        activeEntities.sort(sort)
-        return activeEntities
 
     /**
      * handle user input

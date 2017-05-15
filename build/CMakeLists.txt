@@ -27,6 +27,7 @@ set (VALA_PACKAGES ${VALA_PACKAGES} SDL2_mixer)
 set (VALA_PACKAGES ${VALA_PACKAGES} SDL2_ttf)
 set (VALA_PACKAGES ${VALA_PACKAGES} gee-0.8)
 set (VALA_PACKAGES ${VALA_PACKAGES} sdl2)
+set (VALA_PACKAGES ${VALA_PACKAGES} gio-2.0)
 set (VALA_PACKAGES ${VALA_PACKAGES} glib-2.0)
 set (VALA_PACKAGES ${VALA_PACKAGES} gobject-2.0)
 
@@ -35,7 +36,9 @@ set (APP_SOURCES ${APP_SOURCES} Components.gs)
 set (APP_SOURCES ${APP_SOURCES} Entities.gs)
 set (APP_SOURCES ${APP_SOURCES} Game.gs)
 set (APP_SOURCES ${APP_SOURCES} Main.gs)
+set (APP_SOURCES ${APP_SOURCES} Map.gs)
 set (APP_SOURCES ${APP_SOURCES} Systems.gs)
+set (APP_SOURCES ${APP_SOURCES} TextCache.gs)
 set (APP_SOURCES ${APP_SOURCES} platformer.vala)
 
 set (COMPILE_OPTIONS ${COMPILE_OPTIONS} --vapidir=${CMAKE_SOURCE_DIR}/src/vapis )
@@ -44,6 +47,9 @@ if ((${CMAKE_BUILD_TYPE} STREQUAL "Debug") OR (${CMAKE_BUILD_TYPE} STREQUAL "Rel
 	set(COMPILE_OPTIONS ${COMPILE_OPTIONS} "-g")
 endif()
 
+set (COMPILE_OPTIONS ${COMPILE_OPTIONS} --cc=clang )
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3" )
 
 vala_precompile(VALA_C platformer
 	${APP_SOURCES}

@@ -47,6 +47,9 @@ if ((${CMAKE_BUILD_TYPE} STREQUAL "Debug") OR (${CMAKE_BUILD_TYPE} STREQUAL "Rel
 	set(COMPILE_OPTIONS ${COMPILE_OPTIONS} "-g")
 endif()
 
+set (COMPILE_OPTIONS ${COMPILE_OPTIONS} --cc=clang )
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3" )
 
 vala_precompile(VALA_C platformer
 	${APP_SOURCES}

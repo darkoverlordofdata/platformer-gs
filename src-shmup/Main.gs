@@ -22,7 +22,6 @@ def inline sdlFailIf(cond: bool, reason: string)
 
 def main(args: array of string)
 
-
     sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
         "SDL could not initialize!")
 
@@ -45,14 +44,35 @@ def main(args: array of string)
     var startTime = (double)GLib.get_real_time()/1000000
     var lastTime = startTime
     var deltaTime = 0.0
+    var frame = 0
+    var fps = 60.0
+    var acc = 0.0
+    var k = 0
+    var t1 = 0LL
+    var t2 = 0LL
 
     while !game.inputs[Input.QUIT]
         game.handleEvents()
         deltaTime = startTime-lastTime
         lastTime = startTime
         startTime = (double)GLib.get_real_time()/1000000
+        //print "deltaTime %f %f", startTime, deltaTime
+        t1 = GLib.get_real_time()
         game.update(deltaTime)
-        game.draw()
+        t1 = GLib.get_real_time() - t1
+        t2 = t2 + t1
+        k++
+        if k == 1000
+            print "time: %f", ((double)t2)/1000
+
+        acc = acc + deltaTime
+        if acc > 1
+            fps = frame / acc
+            acc = 0
+            frame = 0
+            
+        game.draw((int)fps)
+        frame++
 
 
 
