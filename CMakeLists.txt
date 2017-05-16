@@ -37,7 +37,6 @@ set(MODULES_TO_CHECK ${MODULES_TO_CHECK} SDL2_image)
 set(MODULES_TO_CHECK ${MODULES_TO_CHECK} SDL2_mixer)
 set(MODULES_TO_CHECK ${MODULES_TO_CHECK} SDL2_ttf)
 set(MODULES_TO_CHECK ${MODULES_TO_CHECK} sdl2)
-set(MODULES_TO_CHECK ${MODULES_TO_CHECK} gio-2.0)
 set(MODULES_TO_CHECK ${MODULES_TO_CHECK} glib-2.0)
 set(MODULES_TO_CHECK ${MODULES_TO_CHECK} gobject-2.0)
 
@@ -51,6 +50,7 @@ endif()
 
 add_subdirectory(src/vapis)
 add_subdirectory(po)
+add_subdirectory(src/util)
 add_subdirectory(data)
 add_subdirectory(src)
 

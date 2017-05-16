@@ -4,19 +4,21 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <SDL2/SDL_render.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <SDL2/SDL_render.h>
-#include <stdio.h>
 #include <float.h>
 #include <math.h>
 #include <SDL2/SDL_rect.h>
 
 typedef struct _Map Map;
-#define _g_free0(var) ((var == NULL) ? NULL : (var = (g_free (var), NULL)))
+typedef struct _utilFile utilFile;
+#define _g_free0(var) (var = (g_free (var), NULL))
+void util_file_release (utilFile* self);
+void util_file_free (utilFile* self);
+utilFile* util_file_retain (utilFile* self);
+#define _util_file_release0(var) ((var == NULL) ? NULL : (var = (util_file_release (var), NULL)))
 #define _g_list_free0(var) ((var == NULL) ? NULL : (var = (g_list_free (var), NULL)))
-#define _fclose0(var) ((var == NULL) ? NULL : (var = (fclose (var), NULL)))
 
 #define TYPE_POINT2D (point2d_get_type ())
 typedef struct _Point2d Point2d;
@@ -30,14 +32,8 @@ struct _Map {
 	gint retainCount__;
 	gint width;
 	gint height;
-	gchar** lines;
-	gint lines_length1;
-	guint8* buf;
-	gint buf_length1;
-	struct stat* stat;
-	gchar* ioBuff;
-	gint ioBuff_length1;
-	GList* tiles;
+	guint8* tiles;
+	gint tiles_length1;
 	SDL_Texture* texture;
 };
 
@@ -74,7 +70,11 @@ void map_release (Map* self);
 Map* map_retain (Map* self);
 void map_free (Map* self);
 Map* map_new (SDL_Texture* texture, const gchar* filename);
-static struct stat* _stat_dup (struct stat* self);
+void util_file_release (utilFile* self);
+utilFile* util_file_retain (utilFile* self);
+void util_file_free (utilFile* self);
+utilFile* util_file_new (const gchar* path);
+gchar* util_file_read (utilFile* self);
 GQuark exception_quark (void);
 gint map_getTile (Map* self, gdouble x, gdouble y);
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
@@ -125,51 +125,22 @@ void map_release (Map* self) {
 }
 
 
-static struct stat* _stat_dup (struct stat* self) {
-	struct stat* dup;
-	dup = g_new0 (struct stat, 1);
-	memcpy (dup, self, sizeof (struct stat));
-	return dup;
-}
-
-
-static gpointer __stat_dup0 (gpointer self) {
-	return self ? _stat_dup (self) : NULL;
-}
-
-
 Map* map_new (SDL_Texture* texture, const gchar* filename) {
 	Map* self;
 	SDL_Texture* _tmp0_ = NULL;
-	gchar* line = NULL;
-	gchar* _tmp1_ = NULL;
-	gchar* l2 = NULL;
-	gchar* _tmp2_ = NULL;
-	gchar* path = NULL;
-	guint8* _tmp3_ = NULL;
-	gint _tmp3__length1 = 0;
+	GList* data = NULL;
+	utilFile* map = NULL;
+	utilFile* _tmp1_ = NULL;
+	utilFile* _tmp2_ = NULL;
+	gchar* _tmp3_ = NULL;
 	gchar* _tmp4_ = NULL;
-	const gchar* _tmp5_ = NULL;
-	gint exists = 0;
-	const gchar* _tmp6_ = NULL;
-	struct stat _tmp7_ = {0};
-	gint _tmp8_ = 0;
-	struct stat _tmp9_ = {0};
-	struct stat* _tmp10_ = NULL;
-	gboolean isFile = FALSE;
-	struct stat* _tmp11_ = NULL;
-	mode_t _tmp12_ = {0};
-	gboolean _tmp13_ = FALSE;
-	gint size = 0;
-	struct stat* _tmp14_ = NULL;
-	gsize _tmp15_ = 0UL;
-	gint _tmp16_ = 0;
-	gchar* _tmp17_ = NULL;
-	FILE* hFile = NULL;
-	const gchar* _tmp18_ = NULL;
-	FILE* _tmp19_ = NULL;
-	gint i = 0;
-	gboolean eof = FALSE;
+	gchar** _tmp5_ = NULL;
+	gchar** _tmp6_ = NULL;
+	gchar** _tmp7_ = NULL;
+	gint _tmp7__length1 = 0;
+	GList* _tmp40_ = NULL;
+	guint _tmp41_ = 0U;
+	guint8* _tmp42_ = NULL;
 	GError * _inner_error_ = NULL;
 	g_return_val_if_fail (texture != NULL, NULL);
 	g_return_val_if_fail (filename != NULL, NULL);
@@ -177,177 +148,199 @@ Map* map_new (SDL_Texture* texture, const gchar* filename) {
 	map_instance_init (self);
 	_tmp0_ = texture;
 	self->texture = _tmp0_;
-	_g_list_free0 (self->tiles);
-	self->tiles = NULL;
-	_tmp1_ = g_strdup ("");
-	line = _tmp1_;
-	_tmp2_ = g_strdup ("");
-	l2 = _tmp2_;
-	_tmp3_ = self->buf;
-	_tmp3__length1 = self->buf_length1;
-	_tmp4_ = realpath ("assets/default.map", _tmp3_);
-	path = (gchar*) _tmp4_;
-	_tmp5_ = path;
-	g_print ("%s\n", _tmp5_);
-	_tmp6_ = path;
-	_tmp8_ = stat (_tmp6_, &_tmp7_);
-	_g_free0 (self->stat);
-	_tmp9_ = _tmp7_;
-	_tmp10_ = __stat_dup0 (&_tmp9_);
-	self->stat = _tmp10_;
-	exists = _tmp8_;
-	_tmp11_ = self->stat;
-	_tmp12_ = (*_tmp11_).st_mode;
-	_tmp13_ = S_ISREG (_tmp12_);
-	isFile = _tmp13_;
-	_tmp14_ = self->stat;
-	_tmp15_ = (*_tmp14_).st_size;
-	size = (gint) _tmp15_;
-	_tmp16_ = size;
-	_tmp17_ = g_new0 (gchar, _tmp16_ + 1);
-	self->ioBuff = (g_free (self->ioBuff), NULL);
-	self->ioBuff = _tmp17_;
-	self->ioBuff_length1 = _tmp16_ + 1;
-	_tmp18_ = path;
-	_tmp19_ = fopen (_tmp18_, "r");
-	hFile = _tmp19_;
-	i = 0;
-	eof = FALSE;
-	while (TRUE) {
-		gboolean _tmp20_ = FALSE;
-		FILE* _tmp21_ = NULL;
-		gchar* _tmp22_ = NULL;
-		gint _tmp22__length1 = 0;
-		const gchar* _tmp23_ = NULL;
-		gchar* _tmp24_ = NULL;
-		const gchar* _tmp25_ = NULL;
-		const gchar* _tmp26_ = NULL;
-		_tmp20_ = eof;
-		if (!(!_tmp20_)) {
-			break;
-		}
-		_tmp21_ = hFile;
-		_tmp22_ = self->ioBuff;
-		_tmp22__length1 = self->ioBuff_length1;
-		_tmp23_ = fgets (_tmp22_, _tmp22__length1, _tmp21_);
-		_tmp24_ = g_strdup ((const gchar*) _tmp23_);
-		_g_free0 (line);
-		line = _tmp24_;
-		_tmp25_ = line;
-		g_print ("%s\n", _tmp25_);
-		_tmp26_ = line;
-		if (g_strcmp0 (_tmp26_, "EOF") == 0) {
-			eof = TRUE;
-		} else {
-			gint width = 0;
-			const gchar* _tmp27_ = NULL;
-			gchar** _tmp28_ = NULL;
-			gchar** _tmp29_ = NULL;
-			gboolean _tmp44_ = FALSE;
-			gint _tmp45_ = 0;
-			gint _tmp49_ = 0;
-			gint _tmp50_ = 0;
-			width = 0;
-			_tmp27_ = line;
-			_tmp29_ = _tmp28_ = g_strsplit (_tmp27_, " ", 0);
+	data = NULL;
+	_tmp1_ = util_file_new ("assets/default.map");
+	map = _tmp1_;
+	_tmp2_ = map;
+	_tmp3_ = util_file_read (_tmp2_);
+	_tmp4_ = _tmp3_;
+	_tmp6_ = _tmp5_ = g_strsplit (_tmp4_, "\n", 0);
+	_tmp7_ = _tmp6_;
+	_tmp7__length1 = _vala_array_length (_tmp5_);
+	_g_free0 (_tmp4_);
+	{
+		gchar** line_collection = NULL;
+		gint line_collection_length1 = 0;
+		gint _line_collection_size_ = 0;
+		gint line_it = 0;
+		line_collection = _tmp7_;
+		line_collection_length1 = _tmp7__length1;
+		for (line_it = 0; line_it < _tmp7__length1; line_it = line_it + 1) {
+			gchar* _tmp8_ = NULL;
+			gchar* line = NULL;
+			_tmp8_ = g_strdup (line_collection[line_it]);
+			line = _tmp8_;
 			{
-				gchar** word_collection = NULL;
-				gint word_collection_length1 = 0;
-				gint _word_collection_size_ = 0;
-				gint word_it = 0;
-				word_collection = _tmp29_;
-				word_collection_length1 = _vala_array_length (_tmp28_);
-				for (word_it = 0; word_it < _vala_array_length (_tmp28_); word_it = word_it + 1) {
-					gchar* _tmp30_ = NULL;
-					gchar* word = NULL;
-					_tmp30_ = g_strdup (word_collection[word_it]);
-					word = _tmp30_;
-					{
-						const gchar* _tmp31_ = NULL;
-						gint value = 0;
-						const gchar* _tmp32_ = NULL;
-						gint _tmp33_ = 0;
-						gint _tmp34_ = 0;
-						gint _tmp42_ = 0;
-						gint _tmp43_ = 0;
-						_tmp31_ = word;
-						if (g_strcmp0 (_tmp31_, "") == 0) {
+				gint width = 0;
+				const gchar* _tmp9_ = NULL;
+				gchar** _tmp10_ = NULL;
+				gchar** _tmp11_ = NULL;
+				gboolean _tmp29_ = FALSE;
+				gint _tmp30_ = 0;
+				gint _tmp38_ = 0;
+				gint _tmp39_ = 0;
+				width = 0;
+				_tmp9_ = line;
+				_tmp11_ = _tmp10_ = g_strsplit (_tmp9_, " ", 0);
+				{
+					gchar** word_collection = NULL;
+					gint word_collection_length1 = 0;
+					gint _word_collection_size_ = 0;
+					gint word_it = 0;
+					word_collection = _tmp11_;
+					word_collection_length1 = _vala_array_length (_tmp10_);
+					for (word_it = 0; word_it < _vala_array_length (_tmp10_); word_it = word_it + 1) {
+						gchar* _tmp12_ = NULL;
+						gchar* word = NULL;
+						_tmp12_ = g_strdup (word_collection[word_it]);
+						word = _tmp12_;
+						{
+							const gchar* _tmp13_ = NULL;
+							gint value = 0;
+							const gchar* _tmp14_ = NULL;
+							gint _tmp15_ = 0;
+							gint _tmp16_ = 0;
+							gint _tmp27_ = 0;
+							gint _tmp28_ = 0;
+							_tmp13_ = word;
+							if (g_strcmp0 (_tmp13_, "") == 0) {
+								_g_free0 (word);
+								continue;
+							}
+							_tmp14_ = word;
+							_tmp15_ = atoi (_tmp14_);
+							value = _tmp15_;
+							_tmp16_ = value;
+							if (_tmp16_ > 255) {
+								const gchar* _tmp17_ = NULL;
+								gchar* _tmp18_ = NULL;
+								gchar* _tmp19_ = NULL;
+								gchar* _tmp20_ = NULL;
+								gchar* _tmp21_ = NULL;
+								const gchar* _tmp22_ = NULL;
+								gchar* _tmp23_ = NULL;
+								gchar* _tmp24_ = NULL;
+								GError* _tmp25_ = NULL;
+								GError* _tmp26_ = NULL;
+								_tmp17_ = word;
+								_tmp18_ = g_strconcat ("Invalid value +", _tmp17_, NULL);
+								_tmp19_ = _tmp18_;
+								_tmp20_ = g_strconcat (_tmp19_, " in map ", NULL);
+								_tmp21_ = _tmp20_;
+								_tmp22_ = filename;
+								_tmp23_ = g_strconcat (_tmp21_, _tmp22_, NULL);
+								_tmp24_ = _tmp23_;
+								_tmp25_ = g_error_new_literal (EXCEPTION, EXCEPTION_InvalidValue, _tmp24_);
+								_tmp26_ = _tmp25_;
+								_g_free0 (_tmp24_);
+								_g_free0 (_tmp21_);
+								_g_free0 (_tmp19_);
+								_inner_error_ = _tmp26_;
+								_g_free0 (word);
+								word_collection = (_vala_array_free (word_collection, word_collection_length1, (GDestroyNotify) g_free), NULL);
+								_g_free0 (line);
+								line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
+								_util_file_release0 (map);
+								_g_list_free0 (data);
+								g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+								g_clear_error (&_inner_error_);
+								return NULL;
+							}
+							_tmp27_ = value;
+							data = g_list_append (data, (gpointer) ((guintptr) ((guint8) _tmp27_)));
+							_tmp28_ = width;
+							width = _tmp28_ + 1;
 							_g_free0 (word);
-							continue;
 						}
-						_tmp32_ = word;
-						_tmp33_ = atoi (_tmp32_);
-						value = _tmp33_;
-						_tmp34_ = value;
-						if (_tmp34_ > 255) {
-							const gchar* _tmp35_ = NULL;
-							gchar* _tmp36_ = NULL;
-							gchar* _tmp37_ = NULL;
-							gchar* _tmp38_ = NULL;
-							gchar* _tmp39_ = NULL;
-							GError* _tmp40_ = NULL;
-							GError* _tmp41_ = NULL;
-							_tmp35_ = word;
-							_tmp36_ = g_strconcat ("Invalid value +", _tmp35_, NULL);
-							_tmp37_ = _tmp36_;
-							_tmp38_ = g_strconcat (_tmp37_, " in map ", NULL);
-							_tmp39_ = _tmp38_;
-							_tmp40_ = g_error_new_literal (EXCEPTION, EXCEPTION_InvalidValue, _tmp39_);
-							_tmp41_ = _tmp40_;
-							_g_free0 (_tmp39_);
-							_g_free0 (_tmp37_);
-							_inner_error_ = _tmp41_;
-							_g_free0 (word);
-							word_collection = (_vala_array_free (word_collection, word_collection_length1, (GDestroyNotify) g_free), NULL);
-							_fclose0 (hFile);
-							_g_free0 (path);
-							_g_free0 (l2);
-							_g_free0 (line);
-							g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-							g_clear_error (&_inner_error_);
-							return NULL;
-						}
-						_tmp42_ = value;
-						self->tiles = g_list_append (self->tiles, (gpointer) ((guintptr) ((guint8) _tmp42_)));
-						_tmp43_ = width;
-						width = _tmp43_ + 1;
-						_g_free0 (word);
 					}
+					word_collection = (_vala_array_free (word_collection, word_collection_length1, (GDestroyNotify) g_free), NULL);
 				}
-				word_collection = (_vala_array_free (word_collection, word_collection_length1, (GDestroyNotify) g_free), NULL);
-			}
-			_tmp45_ = self->width;
-			if (_tmp45_ > 0) {
-				gint _tmp46_ = 0;
-				gint _tmp47_ = 0;
-				_tmp46_ = self->width;
-				_tmp47_ = width;
-				_tmp44_ = _tmp46_ != _tmp47_;
-			} else {
-				_tmp44_ = FALSE;
-			}
-			if (_tmp44_) {
-				GError* _tmp48_ = NULL;
-				_tmp48_ = g_error_new_literal (EXCEPTION, EXCEPTION_InvalidValue, "Incompatible line length in map ");
-				_inner_error_ = _tmp48_;
-				_fclose0 (hFile);
-				_g_free0 (path);
-				_g_free0 (l2);
+				_tmp30_ = self->width;
+				if (_tmp30_ > 0) {
+					gint _tmp31_ = 0;
+					gint _tmp32_ = 0;
+					_tmp31_ = self->width;
+					_tmp32_ = width;
+					_tmp29_ = _tmp31_ != _tmp32_;
+				} else {
+					_tmp29_ = FALSE;
+				}
+				if (_tmp29_) {
+					const gchar* _tmp33_ = NULL;
+					gchar* _tmp34_ = NULL;
+					gchar* _tmp35_ = NULL;
+					GError* _tmp36_ = NULL;
+					GError* _tmp37_ = NULL;
+					_tmp33_ = filename;
+					_tmp34_ = g_strconcat ("Incompatible line length in map ", _tmp33_, NULL);
+					_tmp35_ = _tmp34_;
+					_tmp36_ = g_error_new_literal (EXCEPTION, EXCEPTION_InvalidValue, _tmp35_);
+					_tmp37_ = _tmp36_;
+					_g_free0 (_tmp35_);
+					_inner_error_ = _tmp37_;
+					_g_free0 (line);
+					line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
+					_util_file_release0 (map);
+					_g_list_free0 (data);
+					g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+					g_clear_error (&_inner_error_);
+					return NULL;
+				}
+				_tmp38_ = width;
+				self->width = _tmp38_;
+				_tmp39_ = self->height;
+				self->height = _tmp39_ + 1;
 				_g_free0 (line);
-				g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-				g_clear_error (&_inner_error_);
-				return NULL;
 			}
-			_tmp49_ = width;
-			self->width = _tmp49_;
-			_tmp50_ = self->height;
-			self->height = _tmp50_ + 1;
+		}
+		line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
+	}
+	_tmp40_ = data;
+	_tmp41_ = g_list_length (_tmp40_);
+	_tmp42_ = g_new0 (guint8, _tmp41_);
+	self->tiles = (g_free (self->tiles), NULL);
+	self->tiles = _tmp42_;
+	self->tiles_length1 = _tmp41_;
+	{
+		gint i = 0;
+		i = 0;
+		{
+			gboolean _tmp43_ = FALSE;
+			_tmp43_ = TRUE;
+			while (TRUE) {
+				guint8* _tmp45_ = NULL;
+				gint _tmp45__length1 = 0;
+				guint8* _tmp46_ = NULL;
+				gint _tmp46__length1 = 0;
+				gint _tmp47_ = 0;
+				GList* _tmp48_ = NULL;
+				gint _tmp49_ = 0;
+				gconstpointer _tmp50_ = NULL;
+				guint8 _tmp51_ = 0U;
+				if (!_tmp43_) {
+					gint _tmp44_ = 0;
+					_tmp44_ = i;
+					i = _tmp44_ + 1;
+				}
+				_tmp43_ = FALSE;
+				_tmp45_ = self->tiles;
+				_tmp45__length1 = self->tiles_length1;
+				if (!(i <= _tmp45__length1)) {
+					break;
+				}
+				_tmp46_ = self->tiles;
+				_tmp46__length1 = self->tiles_length1;
+				_tmp47_ = i;
+				_tmp48_ = data;
+				_tmp49_ = i;
+				_tmp50_ = g_list_nth_data (_tmp48_, (guint) _tmp49_);
+				_tmp46_[_tmp47_] = (guint8) ((guintptr) _tmp50_);
+				_tmp51_ = _tmp46_[_tmp47_];
+			}
 		}
 	}
-	_fclose0 (hFile);
-	_g_free0 (path);
-	_g_free0 (l2);
-	_g_free0 (line);
+	_util_file_release0 (map);
+	_g_list_free0 (data);
 	return self;
 }
 
@@ -366,8 +359,9 @@ gint map_getTile (Map* self, gdouble x, gdouble y) {
 	gdouble _tmp7_ = 0.0;
 	gint pos = 0;
 	gint _tmp8_ = 0;
-	GList* _tmp9_ = NULL;
-	gconstpointer _tmp10_ = NULL;
+	guint8* _tmp9_ = NULL;
+	gint _tmp9__length1 = 0;
+	guint8 _tmp10_ = 0U;
 	g_return_val_if_fail (self != NULL, 0);
 	_tmp0_ = x;
 	_tmp1_ = TILES_SIZE.x;
@@ -382,8 +376,9 @@ gint map_getTile (Map* self, gdouble x, gdouble y) {
 	_tmp8_ = self->width;
 	pos = (ny * _tmp8_) + nx;
 	_tmp9_ = self->tiles;
-	_tmp10_ = g_list_nth_data (_tmp9_, (guint) pos);
-	result = (gint) ((guint8) ((guintptr) _tmp10_));
+	_tmp9__length1 = self->tiles_length1;
+	_tmp10_ = _tmp9_[pos];
+	result = (gint) _tmp10_;
 	return result;
 }
 
@@ -739,31 +734,32 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 			gboolean _tmp6_ = FALSE;
 			_tmp6_ = TRUE;
 			while (TRUE) {
-				GList* _tmp8_ = NULL;
-				guint _tmp9_ = 0U;
-				gint _tmp10_ = 0;
+				guint8* _tmp8_ = NULL;
+				gint _tmp8__length1 = 0;
+				gint _tmp9_ = 0;
 				gint tileNr = 0;
-				GList* _tmp11_ = NULL;
-				gint _tmp12_ = 0;
-				gconstpointer _tmp13_ = NULL;
+				guint8* _tmp10_ = NULL;
+				gint _tmp10__length1 = 0;
+				gint _tmp11_ = 0;
+				guint8 _tmp12_ = 0U;
+				gint _tmp13_ = 0;
 				gint _tmp14_ = 0;
 				gint _tmp15_ = 0;
 				gint _tmp16_ = 0;
 				gint _tmp17_ = 0;
 				gint _tmp18_ = 0;
 				gint _tmp19_ = 0;
-				gint _tmp20_ = 0;
-				Vector2d _tmp21_ = {0};
-				gdouble _tmp22_ = 0.0;
+				Vector2d _tmp20_ = {0};
+				gdouble _tmp21_ = 0.0;
+				gint _tmp22_ = 0;
 				gint _tmp23_ = 0;
 				gint _tmp24_ = 0;
-				gint _tmp25_ = 0;
-				Vector2d _tmp26_ = {0};
-				gdouble _tmp27_ = 0.0;
-				SDL_Renderer* _tmp28_ = NULL;
-				SDL_Texture* _tmp29_ = NULL;
+				Vector2d _tmp25_ = {0};
+				gdouble _tmp26_ = 0.0;
+				SDL_Renderer* _tmp27_ = NULL;
+				SDL_Texture* _tmp28_ = NULL;
+				SDL_Rect _tmp29_ = {0};
 				SDL_Rect _tmp30_ = {0};
-				SDL_Rect _tmp31_ = {0};
 				if (!_tmp6_) {
 					gint _tmp7_ = 0;
 					_tmp7_ = i;
@@ -771,41 +767,42 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 				}
 				_tmp6_ = FALSE;
 				_tmp8_ = self->tiles;
-				_tmp9_ = g_list_length (_tmp8_);
-				if (!(i <= (_tmp9_ - 1))) {
+				_tmp8__length1 = self->tiles_length1;
+				if (!(i <= (_tmp8__length1 - 1))) {
 					break;
 				}
-				_tmp10_ = i;
-				if (_tmp10_ == 0) {
+				_tmp9_ = i;
+				if (_tmp9_ == 0) {
 					continue;
 				}
-				_tmp11_ = self->tiles;
-				_tmp12_ = i;
-				_tmp13_ = g_list_nth_data (_tmp11_, (guint) _tmp12_);
-				tileNr = (gint) ((guint8) ((guintptr) _tmp13_));
-				_tmp14_ = tileNr;
-				_tmp15_ = TILES_SIZE.x;
-				clip.x = ((gint) (_tmp14_ % TILES_PER_ROW)) * _tmp15_;
-				_tmp16_ = tileNr;
-				_tmp17_ = TILES_SIZE.y;
-				clip.y = ((gint) (_tmp16_ / TILES_PER_ROW)) * _tmp17_;
-				_tmp18_ = i;
-				_tmp19_ = self->width;
-				_tmp20_ = TILES_SIZE.x;
-				_tmp21_ = *camera;
-				_tmp22_ = _tmp21_.x;
-				dest.x = ((_tmp18_ % _tmp19_) * ((gint) _tmp20_)) - ((gint) _tmp22_);
-				_tmp23_ = i;
-				_tmp24_ = self->width;
-				_tmp25_ = TILES_SIZE.y;
-				_tmp26_ = *camera;
-				_tmp27_ = _tmp26_.y;
-				dest.y = (((gint) (_tmp23_ / _tmp24_)) * ((gint) _tmp25_)) - ((gint) _tmp27_);
-				_tmp28_ = renderer;
-				_tmp29_ = self->texture;
-				_tmp30_ = clip;
-				_tmp31_ = dest;
-				SDL_RenderCopy (_tmp28_, _tmp29_, &_tmp30_, &_tmp31_);
+				_tmp10_ = self->tiles;
+				_tmp10__length1 = self->tiles_length1;
+				_tmp11_ = i;
+				_tmp12_ = _tmp10_[_tmp11_];
+				tileNr = (gint) _tmp12_;
+				_tmp13_ = tileNr;
+				_tmp14_ = TILES_SIZE.x;
+				clip.x = ((gint) (_tmp13_ % TILES_PER_ROW)) * _tmp14_;
+				_tmp15_ = tileNr;
+				_tmp16_ = TILES_SIZE.y;
+				clip.y = ((gint) (_tmp15_ / TILES_PER_ROW)) * _tmp16_;
+				_tmp17_ = i;
+				_tmp18_ = self->width;
+				_tmp19_ = TILES_SIZE.x;
+				_tmp20_ = *camera;
+				_tmp21_ = _tmp20_.x;
+				dest.x = ((_tmp17_ % _tmp18_) * ((gint) _tmp19_)) - ((gint) _tmp21_);
+				_tmp22_ = i;
+				_tmp23_ = self->width;
+				_tmp24_ = TILES_SIZE.y;
+				_tmp25_ = *camera;
+				_tmp26_ = _tmp25_.y;
+				dest.y = (((gint) (_tmp22_ / _tmp23_)) * ((gint) _tmp24_)) - ((gint) _tmp26_);
+				_tmp27_ = renderer;
+				_tmp28_ = self->texture;
+				_tmp29_ = clip;
+				_tmp30_ = dest;
+				SDL_RenderCopy (_tmp27_, _tmp28_, &_tmp29_, &_tmp30_);
 			}
 		}
 	}
@@ -813,68 +810,12 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 
 
 static void map_instance_init (Map * self) {
-	gchar* _tmp0_ = NULL;
-	gchar* _tmp1_ = NULL;
-	gchar* _tmp2_ = NULL;
-	gchar* _tmp3_ = NULL;
-	gchar* _tmp4_ = NULL;
-	gchar* _tmp5_ = NULL;
-	gchar* _tmp6_ = NULL;
-	gchar* _tmp7_ = NULL;
-	gchar* _tmp8_ = NULL;
-	gchar* _tmp9_ = NULL;
-	gchar* _tmp10_ = NULL;
-	gchar** _tmp11_ = NULL;
-	guint8* _tmp12_ = NULL;
 	self->retainCount__ = 1;
-	_tmp0_ = g_strdup (" 0  0  0  0 78  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  " \
-"0  0  0  0  0  0  0  0  0 110  0  0  0  0");
-	_tmp1_ = g_strdup (" 4  5  0  0 78  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  " \
-"0  0  0  0  0  0  0  0  0 110  0  0  4  5");
-	_tmp2_ = g_strdup ("20 21  0  0 78  0  0  0  0  0  0  0  0  0  0  0  0  0  4  5  0  0  0  " \
-"0  0  0  0  0  0  0  0  0 110  0  0 20 21");
-	_tmp3_ = g_strdup ("20 21  0  0 78  0  0  0  0  0  0  0  0  4  5  0  0  0 36 37  0  0  0  " \
-"0  0  0  0  0  0  0  0  0 110  0  0 20 21");
-	_tmp4_ = g_strdup ("20 21  0  0 78  0  0  0  0  0  0  0  0 20 21  0  0  0  0  0  0  0  0  " \
-"0  0  0  0  0  0  0  0  0 110  0  0 20 21");
-	_tmp5_ = g_strdup ("20 21  0  0 78  0  0  0  0  0  0  0  0 20 21  0  0  0  0  0  0  0  4 1" \
-"6 16 16 16  5  0  0  0  0 110  0  0 20 21");
-	_tmp6_ = g_strdup ("20 21  0  0 78  0  0  4  5  0  0  0  0 20 21  0  0  0  0  0  0  0 36 5" \
-"2 54 53 52 37  0  0  0  0 110  0  0 20 21");
-	_tmp7_ = g_strdup ("20 21  0  0 78  0  0 20 21  0  0  0  0 20 21  0  0  0  0  0  0  0  0  " \
-"0 20 21  0  0  0  0  0  0 110  0  0 20 21");
-	_tmp8_ = g_strdup ("20 38  0  0 78  0  0 22 38  0  0  0  0 22 38  0  0  0  0  0  0  0  0  " \
-"0 22 38  0  0  0  0  0  0 110  0  0 22 21");
-	_tmp9_ = g_strdup ("20 49 16 16 16 16 16 48 49 16 16 16 16 48 49 16 16 16 16 16 16 16 16 1" \
-"6 48 49 16 16 16 16 16 16  16 16 16 48 21");
-	_tmp10_ = g_strdup ("36 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 52 5" \
-"2 52 52 52 52 52 52 52 52  52 52 52 52 37");
-	_tmp11_ = g_new0 (gchar*, 11 + 1);
-	_tmp11_[0] = _tmp0_;
-	_tmp11_[1] = _tmp1_;
-	_tmp11_[2] = _tmp2_;
-	_tmp11_[3] = _tmp3_;
-	_tmp11_[4] = _tmp4_;
-	_tmp11_[5] = _tmp5_;
-	_tmp11_[6] = _tmp6_;
-	_tmp11_[7] = _tmp7_;
-	_tmp11_[8] = _tmp8_;
-	_tmp11_[9] = _tmp9_;
-	_tmp11_[10] = _tmp10_;
-	self->lines = _tmp11_;
-	self->lines_length1 = 11;
-	_tmp12_ = g_new0 (guint8, 4096);
-	self->buf = _tmp12_;
-	self->buf_length1 = 4096;
 }
 
 
 void map_free (Map* self) {
-	self->lines = (_vala_array_free (self->lines, self->lines_length1, (GDestroyNotify) g_free), NULL);
-	self->buf = (g_free (self->buf), NULL);
-	_g_free0 (self->stat);
-	self->ioBuff = (g_free (self->ioBuff), NULL);
-	_g_list_free0 (self->tiles);
+	self->tiles = (g_free (self->tiles), NULL);
 	g_slice_free (Map, self);
 }
 

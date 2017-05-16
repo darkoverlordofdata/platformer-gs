@@ -6,21 +6,8 @@ namespace util {
 	 * Simple File handler
 	 * 
 	 */
-	[Compact, CCode ( /** reference counting */
-		ref_function = "util_file_retain", 
-		unref_function = "util_file_release"
-	)]
-	public class File {
-		public int _retainCount = 1;
-		public unowned File retain() {
-			GLib.AtomicInt.add (ref _retainCount, 1);
-			return this;
-		}
-		public void release() { 
-			if (GLib.AtomicInt.dec_and_test (ref _retainCount)) this.free ();
-		}
-		public extern void free();
-		
+	
+	public class File : Object {
 
 		public Posix.Stat? stat;
 		public string path;
@@ -91,7 +78,6 @@ namespace util {
 			Posix.FILE hFile = Posix.FILE.open(path, "r");
 			var size = (int)stat.st_size;
 			var ioBuff = new char[size];
-			var eof = 0;
 			var lines = "";
 			while (lines.length < size)
 				lines += (string)hFile.gets(ioBuff);

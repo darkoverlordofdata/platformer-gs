@@ -27,7 +27,6 @@ def inline epochTime(): double
 
 
 def initialize()
-
 	sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
 		"SDL could not initialize!")
 

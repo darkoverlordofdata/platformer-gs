@@ -21,27 +21,27 @@ enum CameraType
 	simpleCamera
 
 enum Actor
-	DEFAULT	  = 0
-	BACKGROUND   = 1
-	TEXT		 = 2
+	DEFAULT	  	= 0
+	BACKGROUND  = 1
+	TEXT		= 2
 	LIVES		= 3
-	ENEMY1	   = 4
-	ENEMY2	   = 5
-	ENEMY3	   = 6
-	PLAYER	   = 7
-	BULLET	   = 8
+	ENEMY1	   	= 4
+	ENEMY2	   	= 5
+	ENEMY3	   	= 6
+	PLAYER	   	= 7
+	BULLET	   	= 8
 	EXPLOSION	= 9
-	BANG		 = 10
-	PARTICLE	 = 11
-	HUD		  = 12
+	BANG		= 10
+	PARTICLE	= 11
+	HUD		  	= 12
 
 enum Category 
-	BACKGROUND   = 0
-	BULLET	   = 1
+	BACKGROUND  = 0
+	BULLET	   	= 1
 	ENEMY		= 2
 	EXPLOSION	= 3
-	PARTICLE	 = 4
-	PLAYER	   = 5
+	PARTICLE	= 4
+	PLAYER	   	= 5
 
 struct Segment
 	source: SDL.Video.Rect

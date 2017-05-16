@@ -2,21 +2,9 @@
  * Unordered cache 
  */
 namespace util {
-	[Compact, CCode ( /** reference counting */
-		ref_function = "util_cache_retain", 
-		unref_function = "util_cache_release"
-	)]
-	public class Cache<T> {
-		public int _retainCount = 1;
-		public unowned Cache<T> retain() {
-			GLib.AtomicInt.add (ref _retainCount, 1);
-			return this;
-		}
-		public void release() { 
-			if (GLib.AtomicInt.dec_and_test (ref _retainCount)) this.free ();
-		}
-		public extern void free();
-		
+
+	
+	public class Cache<T> : Object {
 
 		public T[] items;
 		public int size;

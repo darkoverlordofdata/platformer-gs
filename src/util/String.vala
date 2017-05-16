@@ -9,21 +9,8 @@ namespace util {
      * @see utils.File 
 	 * 
 	 */
-	[Compact, CCode ( /** reference counting */
-		ref_function = "util_string_retain", 
-		unref_function = "util_string_release"
-	)]
-	public class String {
-		public int _retainCount = 1;
-		public unowned String retain() {
-			GLib.AtomicInt.add (ref _retainCount, 1);
-			return this;
-		}
-		public void release() { 
-			if (GLib.AtomicInt.dec_and_test (ref _retainCount)) this.free ();
-		}
-		public extern void free();
-		
+	
+	public class String : Object {
 
 		public char[] buf;
 

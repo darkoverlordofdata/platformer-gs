@@ -7,20 +7,20 @@ uses SDLTTF
  */
 
  struct Entity 
-	id: int					 /* Unique sequential id */
+	id: int					 	/* Unique sequential id */
 	name: string				/* Display name */
 	active: bool				/* In use */
-	category: Category		  /* Category */
+	category: Category		  	/* Category */
 	actor: Actor				/* Display Actor */
-	position: Point2d		   /* Position on screen */
+	position: Point2d		   	/* Position on screen */
 	bounds: Rect				/* Sprite dimensions*/
-	sprite: Sprite			  /* Sprite */
+	sprite: Sprite			  	/* Sprite */
 								/* Optional: */
 	scale: Vector2d?			/* Display scale */
 	tint: Color?				/* Color to use as tint */
-	expires: Timer?			 /* Countdown until expiration */
-	health: Health?			 /* Track health */
-	velocity: Vector2d?		 /* Cartesian velocity*/
+	expires: Timer?			 	/* Countdown until expiration */
+	health: Health?			 	/* Track health */
+	velocity: Vector2d?		 	/* Cartesian velocity*/
 
 
 def CreatePlayer(texture: SDL.Video.Texture, h:int, w:int): Entity
@@ -43,12 +43,12 @@ def CreatePlayer(texture: SDL.Video.Texture, h:int, w:int): Entity
 
 def playerSegments(x:int, y:int): array of Segment		
 	return {
-		segment(rect(192,  64, 64, 32), rect(x-60, y,	96, 48), RendererFlip.NONE),
+		segment(rect(192,  64, 64, 32), rect(x-60, y,	 96, 48), RendererFlip.NONE),
 		segment(rect( 96,   0, 96, 96), rect(x-48, y-48, 96, 96), RendererFlip.NONE),
-		segment(rect(192,  64, 64, 32), rect(x-36,	y, 96, 48), RendererFlip.NONE),
-		segment(rect(192,  32, 64, 32), rect(x-60,	y, 96, 48), RendererFlip.NONE),
+		segment(rect(192,  64, 64, 32), rect(x-36, y,    96, 48), RendererFlip.NONE),
+		segment(rect(192,  32, 64, 32), rect(x-60, y,    96, 48), RendererFlip.NONE),
 		segment(rect(  0,   0, 96, 96), rect(x-48, y-48, 96, 96), RendererFlip.NONE),
-		segment(rect(192,  32, 64, 32), rect(x-36,	y, 96, 48), RendererFlip.NONE),
+		segment(rect(192,  32, 64, 32), rect(x-36, y,    96, 48), RendererFlip.NONE),
 		segment(rect( 64,  96, 32, 32), rect(x-18, y-21, 36, 36), RendererFlip.NONE),
 		segment(rect( 64,  96, 32, 32), rect(x- 6, y-21, 36, 36), RendererFlip.HORIZONTAL)
 	}

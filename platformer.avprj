@@ -19,7 +19,6 @@ vala_check_package: SDL2_image
 vala_check_package: SDL2_mixer
 vala_check_package: SDL2_ttf
 vala_check_package: sdl2
-*vala_check_package: gio-2.0
 *vala_check_package: glib-2.0
 *vala_check_package: gobject-2.0
 *c_library: m
@@ -31,6 +30,9 @@ vala_check_package: sdl2
 *vala_source: Systems.gs
 *vala_source: TextCache.gs
 *vala_source: platformer.vala
+*vala_source: util/Cache.vala
+*vala_source: util/File.vala
+*vala_source: util/String.vala
 
 
 *po: po
@@ -43,6 +45,9 @@ vala_check_package: sdl2
 *translate: genie src/Systems.gs
 *translate: genie src/TextCache.gs
 *translate: vala src/platformer.vala
+*translate: vala src/util/Cache.vala
+*translate: vala src/util/File.vala
+*translate: vala src/util/String.vala
 
 *data: data/local
 

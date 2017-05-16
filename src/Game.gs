@@ -69,7 +69,6 @@ class Game : Object
 		if entity.expires.best >= 0
 			render_text("Best time: " + formatTime(entity.expires.best), 50, 150, WHITE)
 		
-
 	def render(tick: int)
 		renderer.set_draw_color(110, 132, 174, 255)
 		renderer.clear()
@@ -83,11 +82,11 @@ class Game : Object
 
 	def render_text(text: string, x: int, y: int, foreColor: Color)
 		var outlineColor = color(0, 0, 0, 64)
-		try
-			renderText(renderer, font, text, x, y, (FontStyle)2, outlineColor)
-			renderText(renderer, font, text, x, y, (FontStyle)0, foreColor)
-		except e:Error
-			print e.message
+		// try
+		renderText(renderer, font, text, x, y, (FontStyle)2, outlineColor)
+		renderText(renderer, font, text, x, y, (FontStyle)0, foreColor)
+		// except e:Error
+		// 	print e.message
 
 	def update(tick: int)
 		system.physics(ref entities[0], tick)
