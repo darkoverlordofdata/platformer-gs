@@ -1,0 +1,39 @@
+
+class Hud : Object
+
+	text1: string = ""
+	text2: string = "" 
+	text3: string = ""
+
+	hudText1: sdx.graphics.Sprite
+	hudText2: sdx.graphics.Sprite
+	hudText3: sdx.graphics.Sprite
+
+	construct()
+		hudText1 = sdx.graphics.Sprite.fromText(" ", sdx.font, sdx.Color.Cyan)
+		hudText2 = sdx.graphics.Sprite.fromText(" ", sdx.font, sdx.Color.Cyan)
+		hudText3 = sdx.graphics.Sprite.fromText(" ", sdx.font, sdx.Color.Cyan)
+	
+
+	def render(ref player: Entity*, tick: int)
+		if player.expires.begin >= 0
+			var t1 = formatTime(tick - player.expires.begin)
+			if text1 != t1   
+				text1 = t1
+				hudText1.setText(text1, sdx.font, sdx.Color.Cyan)
+			hudText1.render(50, 100)
+
+		else if player.expires.finish >= 0
+			var t2 = formatTime(player.expires.finish)
+			if text2 != t2
+				text2 = t2
+				hudText2.setText(text2, sdx.font, sdx.Color.Cyan)
+			hudText2.render(50, 100)
+
+		if player.expires.best >= 0
+			var t3 = "Best time: " + formatTime(player.expires.best)
+			if text3 != t3
+				text3 = t3
+				hudText3.setText(text3, sdx.font, sdx.Color.Cyan)
+			hudText3.render(50, 150)
+

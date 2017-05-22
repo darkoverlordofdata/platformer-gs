@@ -18,14 +18,10 @@ struct _utilCache {
 
 
 
-void util_cache_release (utilCache* self);
-utilCache* util_cache_retain (utilCache* self);
 void util_cache_free (utilCache* self);
 static void util_cache_instance_init (utilCache * self);
 utilCache* util_cache_retain (utilCache* self);
 void util_cache_release (utilCache* self);
-void util_cache_release (utilCache* self);
-utilCache* util_cache_retain (utilCache* self);
 void util_cache_free (utilCache* self);
 utilCache* util_cache_new (gint capacity);
 gboolean util_cache_isEmpty (utilCache* self);

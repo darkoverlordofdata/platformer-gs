@@ -6,58 +6,47 @@ uses SDLTTF
 exception Exception
 	SDLException
 	InvalidValue
+	MapFileFormat
 
-timerFreq: double
-window: Window
-renderer: Renderer
 startTime: double
 lastTick: int
+
+def inline formatTime(ticks: int): string
+	var mins = (ticks / 50) / 60
+	var secs = (ticks / 50) % 60
+	return "%02d:%02d".printf((int)mins, (int)secs)
 
 def inline sdlFailIf(cond: bool, reason: string)
 	if cond
 		raise new Exception.SDLException(reason + ", SDL error: " + SDL.get_error())
 
-def inline clamp(value: double, low: double, hi: double): double
-	if value < low do return low
-	if value > hi do return hi
-	return value
+def test()
+	pass
+	// new Map().parseJson("assets/default.json")
+	// var js = util.Json.parse("{\"name\": [1, 2, 3] }")
+	// print util.Json.stringify(js, null, "  ")
+	// var map = new util.File("assets/default.json")
+	// var js = util.Json.parse(map.read());
+	// print util.Json.stringify(js, null, "  ")
 
-def inline epochTime(): double
-	return (double)SDL.Timer.get_performance_counter()/timerFreq
 
 
-def initialize()
-	sdlFailIf(SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0, 
-		"SDL could not initialize!")
-
-	sdlFailIf(!SDL.Hint.set_hint(Hint.RENDER_SCALE_QUALITY, "2"), 
-		"Warning: Linear texture filtering not enabled!!")
-
-	window = new Window("Our own 2D platformer", Window.POS_CENTERED, Window.POS_CENTERED, WINDOW_SIZE.x, WINDOW_SIZE.y, WindowFlags.SHOWN)
-	sdlFailIf(window == null, 
-		"Window could not be created!")
-
-	renderer = Renderer.create(window, -1, RendererFlags.ACCELERATED | RendererFlags.PRESENTVSYNC)
-	sdlFailIf(renderer == null, 
-		"Renderer could not be created!")
-
-	sdlFailIf(SDLTTF.init() == -1, 
-		"SDL_ttf could not initialize!")
-
-	timerFreq = SDL.Timer.get_performance_frequency()
+	
 
 
 #if (DESKTOP)
 def main(args: array of string)
-	initialize()
-	var game = new Game(renderer)
-	startTime = epochTime()
+	test()
+	var window = sdx.initialize((int)WINDOW_SIZE.x, (int)WINDOW_SIZE.y, "Shmupwarz");
+	var game = new Game()
+	startTime = sdx.getNow()
 	lastTick = 0
 
-	while !game.inputs[Input.quit]
-		game.handleInput()
+	sdx.start()
+	while sdx.running
+		sdx.processEvents()
 
-		var newTick = (int)((epochTime() - startTime) * 50)
+		var newTick = (int)((sdx.getNow() - startTime) * 50)
 		for var tick = (lastTick+1) to newTick
 			game.update(tick)
 		lastTick = newTick
@@ -65,17 +54,19 @@ def main(args: array of string)
 
 #else
 def game()
-	initialize()
-	var game = new Game(renderer)
-	startTime = epochTime()
+	test()
+
+	var window = sdx.initialize(WINDOW_SIZE.x, WINDOW_SIZE.y, "Shmupwarz")
+	var game = new Game()
+	startTime = sdx.getNow()
 	lastTick = 0
-	Emscripten.emscripten_set_main_loop_arg(mainloop, game, 0, 1);
+	sdx.start()
+	Emscripten.emscripten_set_main_loop_arg(mainloop, game, 0, 1)
 
 def mainloop(arg: void*)
 	var game = (Game)arg
-	game.handleInput()
-
-	var newTick = (int)((epochTime() - startTime) * 50)
+	sdx.processEvents()
+	var newTick = (int)((sdx.getNow() - startTime) * 50)
 	for var tick = (lastTick+1) to newTick
 		game.update(tick)
 	lastTick = newTick

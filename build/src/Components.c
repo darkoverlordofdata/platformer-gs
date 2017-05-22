@@ -4,15 +4,14 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
-#include <string.h>
 #include <float.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_render.h>
 
-
-#define TYPE_INPUT (input_get_type ())
 
 #define TYPE_COLLISION (collision_get_type ())
 
@@ -22,11 +21,32 @@
 
 #define TYPE_CATEGORY (category_get_type ())
 
-#define TYPE_SEGMENT (segment_get_type ())
-typedef struct _Segment Segment;
+#define TYPE_ENTITY (entity_get_type ())
+
+#define TYPE_POINT2D (point2d_get_type ())
+typedef struct _Point2d Point2d;
+typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
+
+#define TYPE_VECTOR2D (vector2d_get_type ())
+typedef struct _Vector2d Vector2d;
 
 #define TYPE_TIMER (timer_get_type ())
 typedef struct _Timer Timer;
+
+#define TYPE_HEALTH (health_get_type ())
+typedef struct _Health Health;
+typedef struct _Entity Entity;
+#define _g_free0(var) (var = (g_free (var), NULL))
+void sdx_graphics_sprite_release (sdxgraphicsSprite* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
+sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
+#define _sdx_graphics_sprite_release0(var) ((var == NULL) ? NULL : (var = (sdx_graphics_sprite_release (var), NULL)))
+#define _vector2d_free0(var) ((var == NULL) ? NULL : (var = (vector2d_free (var), NULL)))
+#define _timer_free0(var) ((var == NULL) ? NULL : (var = (timer_free (var), NULL)))
+#define _health_free0(var) ((var == NULL) ? NULL : (var = (health_free (var), NULL)))
+
+#define TYPE_BLIT (blit_get_type ())
+typedef struct _Blit Blit;
 
 #define TYPE_SCALE_TWEEN (scale_tween_get_type ())
 typedef struct _ScaleTween ScaleTween;
@@ -34,71 +54,78 @@ typedef struct _ScaleTween ScaleTween;
 #define TYPE_SPRITE (sprite_get_type ())
 typedef struct _Sprite Sprite;
 
-#define TYPE_POINT2D (point2d_get_type ())
-typedef struct _Point2d Point2d;
-
-#define TYPE_VECTOR2D (vector2d_get_type ())
-typedef struct _Vector2d Vector2d;
-
-#define TYPE_HEALTH (health_get_type ())
-typedef struct _Health Health;
+#define TYPE_CAMERA (camera_get_type ())
+typedef Vector2d Camera;
 
 typedef enum  {
-	INPUT_none,
-	INPUT_left,
-	INPUT_right,
-	INPUT_jump,
-	INPUT_restart,
-	INPUT_quit
-} Input;
-
-typedef enum  {
-	COLLISION_x,
-	COLLISION_y,
-	COLLISION_corner
+	COLLISION_X,
+	COLLISION_Y,
+	COLLISION_CORNER
 } Collision;
 
 typedef enum  {
-	CAMERA_TYPE_fluidCamera,
-	CAMERA_TYPE_innerCamera,
-	CAMERA_TYPE_simpleCamera
+	CAMERA_TYPE_FLUID_CAMERA,
+	CAMERA_TYPE_INNER_CAMERA,
+	CAMERA_TYPE_SIMPLE_CAMERA
 } CameraType;
 
 typedef enum  {
-	ACTOR_DEFAULT = 0,
-	ACTOR_BACKGROUND = 1,
-	ACTOR_TEXT = 2,
-	ACTOR_LIVES = 3,
-	ACTOR_ENEMY1 = 4,
-	ACTOR_ENEMY2 = 5,
-	ACTOR_ENEMY3 = 6,
-	ACTOR_PLAYER = 7,
-	ACTOR_BULLET = 8,
-	ACTOR_EXPLOSION = 9,
-	ACTOR_BANG = 10,
-	ACTOR_PARTICLE = 11,
-	ACTOR_HUD = 12
+	ACTOR_DEFAULT,
+	ACTOR_BACKGROUND,
+	ACTOR_TEXT,
+	ACTOR_PLAYER,
+	ACTOR_BONUS,
+	ACTOR_HUD
 } Actor;
 
 typedef enum  {
-	CATEGORY_BACKGROUND = 0,
-	CATEGORY_BULLET = 1,
-	CATEGORY_ENEMY = 2,
-	CATEGORY_EXPLOSION = 3,
-	CATEGORY_PARTICLE = 4,
-	CATEGORY_PLAYER = 5
+	CATEGORY_BACKGROUND,
+	CATEGORY_PLAYER,
+	CATEGORY_BONUS
 } Category;
 
-struct _Segment {
-	SDL_Rect source;
-	SDL_Rect dest;
-	SDL_RendererFlip flip;
+struct _Point2d {
+	gdouble x;
+	gdouble y;
+};
+
+struct _Vector2d {
+	gdouble x;
+	gdouble y;
 };
 
 struct _Timer {
 	gint begin;
 	gint finish;
 	gint best;
+};
+
+struct _Health {
+	gint curHealth;
+	gint maxHealth;
+};
+
+struct _Entity {
+	gint id;
+	gchar* name;
+	gboolean active;
+	Category category;
+	Actor actor;
+	Point2d position;
+	SDL_Rect bounds;
+	sdxgraphicsSprite* sprite;
+	Vector2d* size;
+	Vector2d* scale;
+	SDL_Color* tint;
+	Timer* expires;
+	Health* health;
+	Vector2d* velocity;
+};
+
+struct _Blit {
+	SDL_Rect source;
+	SDL_Rect dest;
+	SDL_RendererFlip flip;
 };
 
 struct _ScaleTween {
@@ -115,46 +142,41 @@ struct _Sprite {
 	gint height;
 };
 
-struct _Point2d {
-	gdouble x;
-	gdouble y;
-};
-
-struct _Vector2d {
-	gdouble x;
-	gdouble y;
-};
-
-struct _Health {
-	gint curHealth;
-	gint maxHealth;
-};
 
 
-
-GType input_get_type (void) G_GNUC_CONST;
+gdouble clamp (gdouble value, gdouble low, gdouble hi);
 GType collision_get_type (void) G_GNUC_CONST;
 GType camera_type_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
-GType segment_get_type (void) G_GNUC_CONST;
-Segment* segment_dup (const Segment* self);
-void segment_free (Segment* self);
+GType entity_get_type (void) G_GNUC_CONST;
+GType point2d_get_type (void) G_GNUC_CONST;
+Point2d* point2d_dup (const Point2d* self);
+void point2d_free (Point2d* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
+GType vector2d_get_type (void) G_GNUC_CONST;
+Vector2d* vector2d_dup (const Vector2d* self);
+void vector2d_free (Vector2d* self);
 GType timer_get_type (void) G_GNUC_CONST;
 Timer* timer_dup (const Timer* self);
 void timer_free (Timer* self);
+GType health_get_type (void) G_GNUC_CONST;
+Health* health_dup (const Health* self);
+void health_free (Health* self);
+Entity* entity_dup (const Entity* self);
+void entity_free (Entity* self);
+void entity_copy (const Entity* self, Entity* dest);
+void entity_destroy (Entity* self);
+static SDL_Color* _sdl_video_color_dup (SDL_Color* self);
+GType blit_get_type (void) G_GNUC_CONST;
+Blit* blit_dup (const Blit* self);
+void blit_free (Blit* self);
 GType scale_tween_get_type (void) G_GNUC_CONST;
 ScaleTween* scale_tween_dup (const ScaleTween* self);
 void scale_tween_free (ScaleTween* self);
 GType sprite_get_type (void) G_GNUC_CONST;
 Sprite* sprite_dup (const Sprite* self);
 void sprite_free (Sprite* self);
-GType point2d_get_type (void) G_GNUC_CONST;
-Point2d* point2d_dup (const Point2d* self);
-void point2d_free (Point2d* self);
-GType vector2d_get_type (void) G_GNUC_CONST;
-Vector2d* vector2d_dup (const Vector2d* self);
-void vector2d_free (Vector2d* self);
 void point2d_add (Point2d *self, Vector2d* v, Point2d* result);
 void point2d (gdouble x, gdouble y, Point2d* result);
 void point2d_sub (Point2d *self, Vector2d* v, Point2d* result);
@@ -162,34 +184,57 @@ void vector2d_mul (Vector2d *self, gdouble f, Vector2d* result);
 void vector2d (gdouble x, gdouble y, Vector2d* result);
 void vector2d_div (Vector2d *self, gdouble f, Vector2d* result);
 gdouble vector2d_len (Vector2d *self);
-GType health_get_type (void) G_GNUC_CONST;
-Health* health_dup (const Health* self);
-void health_free (Health* self);
+GType camera_get_type (void) G_GNUC_CONST;
+Camera* camera_dup (const Camera* self);
+void camera_free (Camera* self);
+void camera_scrollTo (Camera *self, gdouble x);
+void camera_scrollBy (Camera *self, gdouble x);
 void sprite (SDL_Texture* texture, gint width, gint height, Sprite* result);
 void timer (gint begin, gint finish, gint best, Timer* result);
 void rect (gint x, gint y, gint h, gint w, SDL_Rect* result);
 SDL_Color color (guint8 r, guint8 g, guint8 b, guint8 a);
-void segment (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Segment* result);
+void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result);
 void health (gint curHealth, gint maxHealth, Health* result);
 void scaletween (gdouble min, gdouble max, gdouble speed, gboolean repeat, gboolean active, ScaleTween* result);
 
 
-GType input_get_type (void) {
-	static volatile gsize input_type_id__volatile = 0;
-	if (g_once_init_enter (&input_type_id__volatile)) {
-		static const GEnumValue values[] = {{INPUT_none, "INPUT_none", "none"}, {INPUT_left, "INPUT_left", "left"}, {INPUT_right, "INPUT_right", "right"}, {INPUT_jump, "INPUT_jump", "jump"}, {INPUT_restart, "INPUT_restart", "restart"}, {INPUT_quit, "INPUT_quit", "quit"}, {0, NULL, NULL}};
-		GType input_type_id;
-		input_type_id = g_enum_register_static ("Input", values);
-		g_once_init_leave (&input_type_id__volatile, input_type_id);
+inline gdouble clamp (gdouble value, gdouble low, gdouble hi) {
+	gdouble result = 0.0;
+	gdouble _tmp0_ = 0.0;
+	gdouble _tmp1_ = 0.0;
+	gdouble _tmp2_ = 0.0;
+	_tmp1_ = value;
+	_tmp2_ = low;
+	if (_tmp1_ < _tmp2_) {
+		gdouble _tmp3_ = 0.0;
+		_tmp3_ = low;
+		_tmp0_ = _tmp3_;
+	} else {
+		gdouble _tmp4_ = 0.0;
+		gdouble _tmp5_ = 0.0;
+		gdouble _tmp6_ = 0.0;
+		_tmp5_ = value;
+		_tmp6_ = hi;
+		if (_tmp5_ > _tmp6_) {
+			gdouble _tmp7_ = 0.0;
+			_tmp7_ = hi;
+			_tmp4_ = _tmp7_;
+		} else {
+			gdouble _tmp8_ = 0.0;
+			_tmp8_ = value;
+			_tmp4_ = _tmp8_;
+		}
+		_tmp0_ = _tmp4_;
 	}
-	return input_type_id__volatile;
+	result = _tmp0_;
+	return result;
 }
 
 
 GType collision_get_type (void) {
 	static volatile gsize collision_type_id__volatile = 0;
 	if (g_once_init_enter (&collision_type_id__volatile)) {
-		static const GEnumValue values[] = {{COLLISION_x, "COLLISION_x", "x"}, {COLLISION_y, "COLLISION_y", "y"}, {COLLISION_corner, "COLLISION_corner", "corner"}, {0, NULL, NULL}};
+		static const GEnumValue values[] = {{COLLISION_X, "COLLISION_X", "x"}, {COLLISION_Y, "COLLISION_Y", "y"}, {COLLISION_CORNER, "COLLISION_CORNER", "corner"}, {0, NULL, NULL}};
 		GType collision_type_id;
 		collision_type_id = g_enum_register_static ("Collision", values);
 		g_once_init_leave (&collision_type_id__volatile, collision_type_id);
@@ -201,7 +246,7 @@ GType collision_get_type (void) {
 GType camera_type_get_type (void) {
 	static volatile gsize camera_type_type_id__volatile = 0;
 	if (g_once_init_enter (&camera_type_type_id__volatile)) {
-		static const GEnumValue values[] = {{CAMERA_TYPE_fluidCamera, "CAMERA_TYPE_fluidCamera", "fluidcamera"}, {CAMERA_TYPE_innerCamera, "CAMERA_TYPE_innerCamera", "innercamera"}, {CAMERA_TYPE_simpleCamera, "CAMERA_TYPE_simpleCamera", "simplecamera"}, {0, NULL, NULL}};
+		static const GEnumValue values[] = {{CAMERA_TYPE_FLUID_CAMERA, "CAMERA_TYPE_FLUID_CAMERA", "fluid-camera"}, {CAMERA_TYPE_INNER_CAMERA, "CAMERA_TYPE_INNER_CAMERA", "inner-camera"}, {CAMERA_TYPE_SIMPLE_CAMERA, "CAMERA_TYPE_SIMPLE_CAMERA", "simple-camera"}, {0, NULL, NULL}};
 		GType camera_type_type_id;
 		camera_type_type_id = g_enum_register_static ("CameraType", values);
 		g_once_init_leave (&camera_type_type_id__volatile, camera_type_type_id);
@@ -213,7 +258,7 @@ GType camera_type_get_type (void) {
 GType actor_get_type (void) {
 	static volatile gsize actor_type_id__volatile = 0;
 	if (g_once_init_enter (&actor_type_id__volatile)) {
-		static const GEnumValue values[] = {{ACTOR_DEFAULT, "ACTOR_DEFAULT", "default"}, {ACTOR_BACKGROUND, "ACTOR_BACKGROUND", "background"}, {ACTOR_TEXT, "ACTOR_TEXT", "text"}, {ACTOR_LIVES, "ACTOR_LIVES", "lives"}, {ACTOR_ENEMY1, "ACTOR_ENEMY1", "enemy1"}, {ACTOR_ENEMY2, "ACTOR_ENEMY2", "enemy2"}, {ACTOR_ENEMY3, "ACTOR_ENEMY3", "enemy3"}, {ACTOR_PLAYER, "ACTOR_PLAYER", "player"}, {ACTOR_BULLET, "ACTOR_BULLET", "bullet"}, {ACTOR_EXPLOSION, "ACTOR_EXPLOSION", "explosion"}, {ACTOR_BANG, "ACTOR_BANG", "bang"}, {ACTOR_PARTICLE, "ACTOR_PARTICLE", "particle"}, {ACTOR_HUD, "ACTOR_HUD", "hud"}, {0, NULL, NULL}};
+		static const GEnumValue values[] = {{ACTOR_DEFAULT, "ACTOR_DEFAULT", "default"}, {ACTOR_BACKGROUND, "ACTOR_BACKGROUND", "background"}, {ACTOR_TEXT, "ACTOR_TEXT", "text"}, {ACTOR_PLAYER, "ACTOR_PLAYER", "player"}, {ACTOR_BONUS, "ACTOR_BONUS", "bonus"}, {ACTOR_HUD, "ACTOR_HUD", "hud"}, {0, NULL, NULL}};
 		GType actor_type_id;
 		actor_type_id = g_enum_register_static ("Actor", values);
 		g_once_init_leave (&actor_type_id__volatile, actor_type_id);
@@ -225,7 +270,7 @@ GType actor_get_type (void) {
 GType category_get_type (void) {
 	static volatile gsize category_type_id__volatile = 0;
 	if (g_once_init_enter (&category_type_id__volatile)) {
-		static const GEnumValue values[] = {{CATEGORY_BACKGROUND, "CATEGORY_BACKGROUND", "background"}, {CATEGORY_BULLET, "CATEGORY_BULLET", "bullet"}, {CATEGORY_ENEMY, "CATEGORY_ENEMY", "enemy"}, {CATEGORY_EXPLOSION, "CATEGORY_EXPLOSION", "explosion"}, {CATEGORY_PARTICLE, "CATEGORY_PARTICLE", "particle"}, {CATEGORY_PLAYER, "CATEGORY_PLAYER", "player"}, {0, NULL, NULL}};
+		static const GEnumValue values[] = {{CATEGORY_BACKGROUND, "CATEGORY_BACKGROUND", "background"}, {CATEGORY_PLAYER, "CATEGORY_PLAYER", "player"}, {CATEGORY_BONUS, "CATEGORY_BONUS", "bonus"}, {0, NULL, NULL}};
 		GType category_type_id;
 		category_type_id = g_enum_register_static ("Category", values);
 		g_once_init_leave (&category_type_id__volatile, category_type_id);
@@ -234,27 +279,167 @@ GType category_get_type (void) {
 }
 
 
-Segment* segment_dup (const Segment* self) {
-	Segment* dup;
-	dup = g_new0 (Segment, 1);
-	memcpy (dup, self, sizeof (Segment));
+static gpointer _sdx_graphics_sprite_retain0 (gpointer self) {
+	return self ? sdx_graphics_sprite_retain (self) : NULL;
+}
+
+
+static gpointer _vector2d_dup0 (gpointer self) {
+	return self ? vector2d_dup (self) : NULL;
+}
+
+
+static SDL_Color* _sdl_video_color_dup (SDL_Color* self) {
+	SDL_Color* dup;
+	dup = g_new0 (SDL_Color, 1);
+	memcpy (dup, self, sizeof (SDL_Color));
 	return dup;
 }
 
 
-void segment_free (Segment* self) {
+static gpointer __sdl_video_color_dup0 (gpointer self) {
+	return self ? _sdl_video_color_dup (self) : NULL;
+}
+
+
+static gpointer _timer_dup0 (gpointer self) {
+	return self ? timer_dup (self) : NULL;
+}
+
+
+static gpointer _health_dup0 (gpointer self) {
+	return self ? health_dup (self) : NULL;
+}
+
+
+void entity_copy (const Entity* self, Entity* dest) {
+	gint _tmp0_ = 0;
+	const gchar* _tmp1_ = NULL;
+	gchar* _tmp2_ = NULL;
+	gboolean _tmp3_ = FALSE;
+	Category _tmp4_ = 0;
+	Actor _tmp5_ = 0;
+	Point2d _tmp6_ = {0};
+	SDL_Rect _tmp7_ = {0};
+	sdxgraphicsSprite* _tmp8_ = NULL;
+	sdxgraphicsSprite* _tmp9_ = NULL;
+	Vector2d* _tmp10_ = NULL;
+	Vector2d* _tmp11_ = NULL;
+	Vector2d* _tmp12_ = NULL;
+	Vector2d* _tmp13_ = NULL;
+	SDL_Color* _tmp14_ = NULL;
+	SDL_Color* _tmp15_ = NULL;
+	Timer* _tmp16_ = NULL;
+	Timer* _tmp17_ = NULL;
+	Health* _tmp18_ = NULL;
+	Health* _tmp19_ = NULL;
+	Vector2d* _tmp20_ = NULL;
+	Vector2d* _tmp21_ = NULL;
+	_tmp0_ = (*self).id;
+	(*dest).id = _tmp0_;
+	_tmp1_ = (*self).name;
+	_tmp2_ = g_strdup (_tmp1_);
+	_g_free0 ((*dest).name);
+	(*dest).name = _tmp2_;
+	_tmp3_ = (*self).active;
+	(*dest).active = _tmp3_;
+	_tmp4_ = (*self).category;
+	(*dest).category = _tmp4_;
+	_tmp5_ = (*self).actor;
+	(*dest).actor = _tmp5_;
+	_tmp6_ = (*self).position;
+	(*dest).position = _tmp6_;
+	_tmp7_ = (*self).bounds;
+	(*dest).bounds = _tmp7_;
+	_tmp8_ = (*self).sprite;
+	_tmp9_ = _sdx_graphics_sprite_retain0 (_tmp8_);
+	_sdx_graphics_sprite_release0 ((*dest).sprite);
+	(*dest).sprite = _tmp9_;
+	_tmp10_ = (*self).size;
+	_tmp11_ = _vector2d_dup0 (_tmp10_);
+	_vector2d_free0 ((*dest).size);
+	(*dest).size = _tmp11_;
+	_tmp12_ = (*self).scale;
+	_tmp13_ = _vector2d_dup0 (_tmp12_);
+	_vector2d_free0 ((*dest).scale);
+	(*dest).scale = _tmp13_;
+	_tmp14_ = (*self).tint;
+	_tmp15_ = __sdl_video_color_dup0 (_tmp14_);
+	_g_free0 ((*dest).tint);
+	(*dest).tint = _tmp15_;
+	_tmp16_ = (*self).expires;
+	_tmp17_ = _timer_dup0 (_tmp16_);
+	_timer_free0 ((*dest).expires);
+	(*dest).expires = _tmp17_;
+	_tmp18_ = (*self).health;
+	_tmp19_ = _health_dup0 (_tmp18_);
+	_health_free0 ((*dest).health);
+	(*dest).health = _tmp19_;
+	_tmp20_ = (*self).velocity;
+	_tmp21_ = _vector2d_dup0 (_tmp20_);
+	_vector2d_free0 ((*dest).velocity);
+	(*dest).velocity = _tmp21_;
+}
+
+
+void entity_destroy (Entity* self) {
+	_g_free0 ((*self).name);
+	_sdx_graphics_sprite_release0 ((*self).sprite);
+	_vector2d_free0 ((*self).size);
+	_vector2d_free0 ((*self).scale);
+	_g_free0 ((*self).tint);
+	_timer_free0 ((*self).expires);
+	_health_free0 ((*self).health);
+	_vector2d_free0 ((*self).velocity);
+}
+
+
+Entity* entity_dup (const Entity* self) {
+	Entity* dup;
+	dup = g_new0 (Entity, 1);
+	entity_copy (self, dup);
+	return dup;
+}
+
+
+void entity_free (Entity* self) {
+	entity_destroy (self);
 	g_free (self);
 }
 
 
-GType segment_get_type (void) {
-	static volatile gsize segment_type_id__volatile = 0;
-	if (g_once_init_enter (&segment_type_id__volatile)) {
-		GType segment_type_id;
-		segment_type_id = g_boxed_type_register_static ("Segment", (GBoxedCopyFunc) segment_dup, (GBoxedFreeFunc) segment_free);
-		g_once_init_leave (&segment_type_id__volatile, segment_type_id);
+GType entity_get_type (void) {
+	static volatile gsize entity_type_id__volatile = 0;
+	if (g_once_init_enter (&entity_type_id__volatile)) {
+		GType entity_type_id;
+		entity_type_id = g_boxed_type_register_static ("Entity", (GBoxedCopyFunc) entity_dup, (GBoxedFreeFunc) entity_free);
+		g_once_init_leave (&entity_type_id__volatile, entity_type_id);
 	}
-	return segment_type_id__volatile;
+	return entity_type_id__volatile;
+}
+
+
+Blit* blit_dup (const Blit* self) {
+	Blit* dup;
+	dup = g_new0 (Blit, 1);
+	memcpy (dup, self, sizeof (Blit));
+	return dup;
+}
+
+
+void blit_free (Blit* self) {
+	g_free (self);
+}
+
+
+GType blit_get_type (void) {
+	static volatile gsize blit_type_id__volatile = 0;
+	if (g_once_init_enter (&blit_type_id__volatile)) {
+		GType blit_type_id;
+		blit_type_id = g_boxed_type_register_static ("Blit", (GBoxedCopyFunc) blit_dup, (GBoxedFreeFunc) blit_free);
+		g_once_init_leave (&blit_type_id__volatile, blit_type_id);
+	}
+	return blit_type_id__volatile;
 }
 
 
@@ -469,6 +654,46 @@ GType vector2d_get_type (void) {
 }
 
 
+void camera_scrollTo (Camera *self, gdouble x) {
+	gdouble _tmp0_ = 0.0;
+	_tmp0_ = x;
+	(*self).x = _tmp0_;
+}
+
+
+void camera_scrollBy (Camera *self, gdouble x) {
+	gdouble _tmp0_ = 0.0;
+	gdouble _tmp1_ = 0.0;
+	_tmp0_ = (*self).x;
+	_tmp1_ = x;
+	(*self).x = _tmp0_ + _tmp1_;
+}
+
+
+Camera* camera_dup (const Camera* self) {
+	Camera* dup;
+	dup = g_new0 (Camera, 1);
+	memcpy (dup, self, sizeof (Camera));
+	return dup;
+}
+
+
+void camera_free (Camera* self) {
+	g_free (self);
+}
+
+
+GType camera_get_type (void) {
+	static volatile gsize camera_type_id__volatile = 0;
+	if (g_once_init_enter (&camera_type_id__volatile)) {
+		GType camera_type_id;
+		camera_type_id = g_boxed_type_register_static ("Camera", (GBoxedCopyFunc) camera_dup, (GBoxedFreeFunc) camera_free);
+		g_once_init_leave (&camera_type_id__volatile, camera_type_id);
+	}
+	return camera_type_id__volatile;
+}
+
+
 Health* health_dup (const Health* self) {
 	Health* dup;
 	dup = g_new0 (Health, 1);
@@ -603,12 +828,12 @@ SDL_Color color (guint8 r, guint8 g, guint8 b, guint8 a) {
 }
 
 
-void segment (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Segment* result) {
-	Segment segment = {0};
+void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result) {
+	Blit blit = {0};
 	SDL_Rect _tmp0_ = {0};
 	SDL_Rect _tmp1_ = {0};
 	SDL_RendererFlip _tmp2_ = 0;
-	Segment _tmp3_ = {0};
+	Blit _tmp3_ = {0};
 	g_return_if_fail (source != NULL);
 	g_return_if_fail (dest != NULL);
 	_tmp0_ = *source;
@@ -617,8 +842,8 @@ void segment (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Segment* 
 	_tmp3_.source = _tmp0_;
 	_tmp3_.dest = _tmp1_;
 	_tmp3_.flip = _tmp2_;
-	segment = _tmp3_;
-	*result = segment;
+	blit = _tmp3_;
+	*result = blit;
 	return;
 }
 

@@ -17,14 +17,10 @@ struct _utilString {
 
 
 
-void util_string_release (utilString* self);
-utilString* util_string_retain (utilString* self);
 void util_string_free (utilString* self);
 static void util_string_instance_init (utilString * self);
 utilString* util_string_retain (utilString* self);
 void util_string_release (utilString* self);
-void util_string_release (utilString* self);
-utilString* util_string_retain (utilString* self);
 void util_string_free (utilString* self);
 utilString* util_string_new (const gchar* str);
 gchar* util_string_to_string (utilString* self);

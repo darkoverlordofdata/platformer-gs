@@ -2,8 +2,7 @@
 #    -X "-s ALLOW_MEMORY_GROWTH=1" \
 
 
-./valac2/valac2  \
-    --plugin ./valac2 \
+emvalac  \
     --builddir build \
     --cc=emcc \
     --define PROFILING \

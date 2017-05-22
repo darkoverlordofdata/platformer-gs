@@ -1,9 +1,6 @@
-
 uses SDL
 uses SDL.Video
 uses SDLTTF
-
-
 
 [Compact, CCode ( /** reference counting */
 	ref_function = "systems_retain", 
@@ -25,18 +22,18 @@ class Systems
 	/**
 	 *  Physics
 	 */
-	def physics(ref player:Entity, tick: int)
-		if game.inputs[Input.restart]
-			player.position = point2d(170, 500)
-			player.velocity = vector2d(0, 0)
-			player.expires = timer(0, 0, player.expires.best)
+	def physics(ref player:Entity*, tick: int)
+		if sdx.keys[114] == 1
+			player.position = { 170, 500 }
+			player.velocity = { 0, 0 } 
+			player.expires = { 0, 0, player.expires.best }
 
-		var ground = game.map.onGround(player.position, PLAYER_SIZE)
-		if game.inputs[Input.jump]
+		var ground = game.map.onGround(player.position, player.size)
+		if sdx.dir[sdx.Direction.UP]
 			if ground
 				player.velocity.y = -21
 
-		var direction = (double)((int)game.inputs[Input.right] - (int)game.inputs[Input.left])
+		var direction = (double)((int)sdx.dir[sdx.Direction.RIGHT] - (int)sdx.dir[sdx.Direction.LEFT])
 
 		player.velocity.y += 0.75
 		if ground
@@ -44,33 +41,32 @@ class Systems
 		else
 			player.velocity.x = 0.95 * player.velocity.x + 2.0 * direction
 
-
 		player.velocity.x = clamp(player.velocity.x, -8, 8)
-		game.map.moveBox(ref player.position, ref player.velocity, PLAYER_SIZE)
+		game.map.moveBox(ref player.position, ref player.velocity, player.size)
 			
 	/**
 	 *  Camera
 	 */
-	def camera(ref player:Entity, tick: int)
+	def camera(ref player:Entity*, tick: int)
 		var halfWin = (double)WINDOW_SIZE.x/2
-		if game.cameraType == CameraType.fluidCamera
+		if game.cameraType == CameraType.FLUID_CAMERA
 			var dist = game.camera.x - player.position.x + halfWin
-			game.camera.x -= 0.05 * dist
-		else if game.cameraType == CameraType.innerCamera
+			game.camera.scrollBy(-0.05 * dist)
+		else if game.cameraType == CameraType.INNER_CAMERA
 			var leftArea  = player.position.x - halfWin - 100
 			var rightArea = player.position.x - halfWin + 100
-			game.camera.x = clamp(game.camera.x, leftArea, rightArea)
+			game.camera.scrollTo(clamp(game.camera.x, leftArea, rightArea))
 		else // CameraType.simpleCamera
-			game.camera.x = player.position.x - halfWin
+			game.camera.scrollTo(player.position.x - halfWin)
 
 	/**
 	 *  Logic
 	 */
-	def logic(ref player:Entity, tick: int)
+	def logic(ref player:Entity*, tick: int)
 		case game.map.getTile(player.position.x, player.position.y)
-			when START
+			when Map.START
 				player.expires.begin = tick
-			when FINISH
+			when Map.FINISH
 				if player.expires.begin >= 0
 					player.expires.finish = tick - player.expires.begin
 					player.expires.begin = -1

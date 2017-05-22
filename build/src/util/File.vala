@@ -49,10 +49,8 @@ namespace util {
 		 * the parent is everything prior to the final separator
 		 */
 		public string getParent() {
-			for (var i=path.length-1; i>0; i--)
-				if (path[i] == pathSeparatorChar) 
-					return path.substring(0, i-1);
-			return "";
+			var i = path.last_index_of(pathSeparator);
+			return i < 0 ? "" : path.substring(0, i);
 		}
 
 		/**
@@ -91,7 +89,6 @@ namespace util {
 			Posix.FILE hFile = Posix.FILE.open(path, "r");
 			var size = (int)stat.st_size;
 			var ioBuff = new char[size];
-			var eof = 0;
 			var lines = "";
 			while (lines.length < size)
 				lines += (string)hFile.gets(ioBuff);

@@ -9,12 +9,7 @@
 #include <float.h>
 #include <math.h>
 #include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_pixels.h>
-#include <SDL_ttf.h>
-#include <SDL2/SDL_rwops.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_surface.h>
 
 typedef struct _Systems Systems;
 typedef struct _Game Game;
@@ -31,9 +26,7 @@ Game* game_retain (Game* self);
 
 #define TYPE_POINT2D (point2d_get_type ())
 typedef struct _Point2d Point2d;
-
-#define TYPE_SPRITE (sprite_get_type ())
-typedef struct _Sprite Sprite;
+typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
 
 #define TYPE_VECTOR2D (vector2d_get_type ())
 typedef struct _Vector2d Vector2d;
@@ -44,13 +37,18 @@ typedef struct _Timer Timer;
 #define TYPE_HEALTH (health_get_type ())
 typedef struct _Health Health;
 typedef struct _Entity Entity;
-typedef struct _Map Map;
-
-#define TYPE_CAMERA_TYPE (camera_type_get_type ())
-
-#define TYPE_INPUT (input_get_type ())
 #define _vector2d_free0(var) ((var == NULL) ? NULL : (var = (vector2d_free (var), NULL)))
 #define _timer_free0(var) ((var == NULL) ? NULL : (var = (timer_free (var), NULL)))
+typedef struct _Map Map;
+
+#define TYPE_CAMERA (camera_get_type ())
+typedef Vector2d Camera;
+
+#define TYPE_CAMERA_TYPE (camera_type_get_type ())
+typedef struct _Entities Entities;
+typedef struct _Hud Hud;
+
+#define SDX_TYPE_DIRECTION (sdx_direction_get_type ())
 #define _g_free0(var) (var = (g_free (var), NULL))
 
 struct _Systems {
@@ -59,39 +57,23 @@ struct _Systems {
 };
 
 typedef enum  {
-	CATEGORY_BACKGROUND = 0,
-	CATEGORY_BULLET = 1,
-	CATEGORY_ENEMY = 2,
-	CATEGORY_EXPLOSION = 3,
-	CATEGORY_PARTICLE = 4,
-	CATEGORY_PLAYER = 5
+	CATEGORY_BACKGROUND,
+	CATEGORY_PLAYER,
+	CATEGORY_BONUS
 } Category;
 
 typedef enum  {
-	ACTOR_DEFAULT = 0,
-	ACTOR_BACKGROUND = 1,
-	ACTOR_TEXT = 2,
-	ACTOR_LIVES = 3,
-	ACTOR_ENEMY1 = 4,
-	ACTOR_ENEMY2 = 5,
-	ACTOR_ENEMY3 = 6,
-	ACTOR_PLAYER = 7,
-	ACTOR_BULLET = 8,
-	ACTOR_EXPLOSION = 9,
-	ACTOR_BANG = 10,
-	ACTOR_PARTICLE = 11,
-	ACTOR_HUD = 12
+	ACTOR_DEFAULT,
+	ACTOR_BACKGROUND,
+	ACTOR_TEXT,
+	ACTOR_PLAYER,
+	ACTOR_BONUS,
+	ACTOR_HUD
 } Actor;
 
 struct _Point2d {
 	gdouble x;
 	gdouble y;
-};
-
-struct _Sprite {
-	SDL_Texture* texture;
-	gint width;
-	gint height;
 };
 
 struct _Vector2d {
@@ -118,7 +100,8 @@ struct _Entity {
 	Actor actor;
 	Point2d position;
 	SDL_Rect bounds;
-	Sprite sprite;
+	sdxgraphicsSprite* sprite;
+	Vector2d* size;
 	Vector2d* scale;
 	SDL_Color* tint;
 	Timer* expires;
@@ -127,53 +110,44 @@ struct _Entity {
 };
 
 typedef enum  {
-	CAMERA_TYPE_fluidCamera,
-	CAMERA_TYPE_innerCamera,
-	CAMERA_TYPE_simpleCamera
+	CAMERA_TYPE_FLUID_CAMERA,
+	CAMERA_TYPE_INNER_CAMERA,
+	CAMERA_TYPE_SIMPLE_CAMERA
 } CameraType;
 
 struct _Game {
 	gint retainCount__;
-	gboolean* inputs;
-	gint inputs_length1;
-	SDL_Renderer* renderer;
-	TTF_Font* font;
-	SDL_RWops* font_rw;
-	SDL_Event evt;
 	Map* map;
-	Vector2d camera;
+	Camera camera;
 	CameraType cameraType;
-	Point2d pos;
-	SDL_Surface* playerSurface;
-	SDL_Texture* playerTexture;
-	SDL_Texture* grassTexture;
-	Systems* system;
+	Entities* factory;
 	Entity* entities;
 	gint entities_length1;
+	Systems* system;
+	Hud* hud;
+	Entity* player;
+	GList* sprites;
 };
 
 typedef enum  {
-	INPUT_none,
-	INPUT_left,
-	INPUT_right,
-	INPUT_jump,
-	INPUT_restart,
-	INPUT_quit
-} Input;
+	SDX_DIRECTION_NONE,
+	SDX_DIRECTION_LEFT,
+	SDX_DIRECTION_RIGHT,
+	SDX_DIRECTION_UP,
+	SDX_DIRECTION_DOWN
+} sdxDirection;
 
 
+extern guint8* sdx_keys;
+extern gint sdx_keys_length1;
+extern gboolean* sdx_dir;
+extern gint sdx_dir_length1;
 
-void systems_release (Systems* self);
-Systems* systems_retain (Systems* self);
 void systems_free (Systems* self);
-void game_release (Game* self);
-Game* game_retain (Game* self);
 void game_free (Game* self);
 static void systems_instance_init (Systems * self);
 Systems* systems_retain (Systems* self);
 void systems_release (Systems* self);
-void systems_release (Systems* self);
-Systems* systems_retain (Systems* self);
 void systems_free (Systems* self);
 Systems* systems_new (Game* game);
 GType entity_get_type (void) G_GNUC_CONST;
@@ -182,9 +156,7 @@ GType actor_get_type (void) G_GNUC_CONST;
 GType point2d_get_type (void) G_GNUC_CONST;
 Point2d* point2d_dup (const Point2d* self);
 void point2d_free (Point2d* self);
-GType sprite_get_type (void) G_GNUC_CONST;
-Sprite* sprite_dup (const Sprite* self);
-void sprite_free (Sprite* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
 GType vector2d_get_type (void) G_GNUC_CONST;
 Vector2d* vector2d_dup (const Vector2d* self);
 void vector2d_free (Vector2d* self);
@@ -198,26 +170,27 @@ Entity* entity_dup (const Entity* self);
 void entity_free (Entity* self);
 void entity_copy (const Entity* self, Entity* dest);
 void entity_destroy (Entity* self);
-void systems_physics (Systems* self, Entity* player, gint tick);
-void map_release (Map* self);
-Map* map_retain (Map* self);
+void systems_physics (Systems* self, Entity** player, gint tick);
 void map_free (Map* self);
+GType camera_get_type (void) G_GNUC_CONST;
+Camera* camera_dup (const Camera* self);
+void camera_free (Camera* self);
 GType camera_type_get_type (void) G_GNUC_CONST;
-GType input_get_type (void) G_GNUC_CONST;
-void point2d (gdouble x, gdouble y, Point2d* result);
-void vector2d (gdouble x, gdouble y, Vector2d* result);
-void timer (gint begin, gint finish, gint best, Timer* result);
+void entities_free (Entities* self);
+void hud_free (Hud* self);
 gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size);
+GType sdx_direction_get_type (void) G_GNUC_CONST;
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
 void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size);
-void systems_camera (Systems* self, Entity* player, gint tick);
-void systems_logic (Systems* self, Entity* player, gint tick);
+void systems_camera (Systems* self, Entity** player, gint tick);
+void camera_scrollBy (Camera *self, gdouble x);
+void camera_scrollTo (Camera *self, gdouble x);
+void systems_logic (Systems* self, Entity** player, gint tick);
 gint map_getTile (Map* self, gdouble x, gdouble y);
-#define START 78
-#define FINISH 110
+#define MAP_START 79
+#define MAP_FINISH 111
 gchar* formatTime (gint ticks);
 
-extern const Vector2d PLAYER_SIZE;
 extern const SDL_Point WINDOW_SIZE;
 
 Systems* systems_retain (Systems* self) {
@@ -272,245 +245,247 @@ static gpointer _timer_dup0 (gpointer self) {
 }
 
 
-void systems_physics (Systems* self, Entity* player, gint tick) {
-	Game* _tmp0_ = NULL;
-	gboolean* _tmp1_ = NULL;
-	gint _tmp1__length1 = 0;
-	gboolean _tmp2_ = FALSE;
+void systems_physics (Systems* self, Entity** player, gint tick) {
+	guint8* _tmp0_ = NULL;
+	gint _tmp0__length1 = 0;
+	guint8 _tmp1_ = 0U;
 	gboolean ground = FALSE;
-	Game* _tmp11_ = NULL;
-	Map* _tmp12_ = NULL;
-	Entity _tmp13_ = {0};
-	Point2d _tmp14_ = {0};
-	gboolean _tmp15_ = FALSE;
-	Game* _tmp16_ = NULL;
-	gboolean* _tmp17_ = NULL;
-	gint _tmp17__length1 = 0;
-	gboolean _tmp18_ = FALSE;
+	Game* _tmp10_ = NULL;
+	Map* _tmp11_ = NULL;
+	Entity* _tmp12_ = NULL;
+	Point2d _tmp13_ = {0};
+	Entity* _tmp14_ = NULL;
+	Vector2d* _tmp15_ = NULL;
+	Vector2d _tmp16_ = {0};
+	gboolean _tmp17_ = FALSE;
+	gboolean* _tmp18_ = NULL;
+	gint _tmp18__length1 = 0;
+	gboolean _tmp19_ = FALSE;
 	gdouble direction = 0.0;
-	Game* _tmp22_ = NULL;
 	gboolean* _tmp23_ = NULL;
 	gint _tmp23__length1 = 0;
 	gboolean _tmp24_ = FALSE;
-	Game* _tmp25_ = NULL;
-	gboolean* _tmp26_ = NULL;
-	gint _tmp26__length1 = 0;
-	gboolean _tmp27_ = FALSE;
-	Entity _tmp28_ = {0};
-	Vector2d* _tmp29_ = NULL;
-	Entity _tmp30_ = {0};
-	Vector2d* _tmp31_ = NULL;
-	gdouble _tmp32_ = 0.0;
-	gboolean _tmp33_ = FALSE;
-	Entity _tmp46_ = {0};
-	Vector2d* _tmp47_ = NULL;
-	Entity _tmp48_ = {0};
-	Vector2d* _tmp49_ = NULL;
+	gboolean* _tmp25_ = NULL;
+	gint _tmp25__length1 = 0;
+	gboolean _tmp26_ = FALSE;
+	Entity* _tmp27_ = NULL;
+	Vector2d* _tmp28_ = NULL;
+	Entity* _tmp29_ = NULL;
+	Vector2d* _tmp30_ = NULL;
+	gdouble _tmp31_ = 0.0;
+	gboolean _tmp32_ = FALSE;
+	Entity* _tmp45_ = NULL;
+	Vector2d* _tmp46_ = NULL;
+	Entity* _tmp47_ = NULL;
+	Vector2d* _tmp48_ = NULL;
+	gdouble _tmp49_ = 0.0;
 	gdouble _tmp50_ = 0.0;
-	gdouble _tmp51_ = 0.0;
-	Game* _tmp52_ = NULL;
-	Map* _tmp53_ = NULL;
+	Game* _tmp51_ = NULL;
+	Map* _tmp52_ = NULL;
+	Entity* _tmp53_ = NULL;
+	Vector2d* _tmp54_ = NULL;
+	Vector2d _tmp55_ = {0};
 	g_return_if_fail (self != NULL);
-	g_return_if_fail (player != NULL);
-	_tmp0_ = self->game;
-	_tmp1_ = _tmp0_->inputs;
-	_tmp1__length1 = _tmp0_->inputs_length1;
-	_tmp2_ = _tmp1_[INPUT_restart];
-	if (_tmp2_) {
-		Point2d _tmp3_ = {0};
-		Vector2d _tmp4_ = {0};
-		Vector2d* _tmp5_ = NULL;
-		Entity _tmp6_ = {0};
-		Timer* _tmp7_ = NULL;
-		gint _tmp8_ = 0;
-		Timer _tmp9_ = {0};
-		Timer* _tmp10_ = NULL;
-		point2d ((gdouble) 170, (gdouble) 500, &_tmp3_);
-		(*player).position = _tmp3_;
-		vector2d ((gdouble) 0, (gdouble) 0, &_tmp4_);
-		_tmp5_ = _vector2d_dup0 (&_tmp4_);
-		_vector2d_free0 ((*player).velocity);
-		(*player).velocity = _tmp5_;
-		_tmp6_ = *player;
-		_tmp7_ = _tmp6_.expires;
-		_tmp8_ = (*_tmp7_).best;
-		timer (0, 0, _tmp8_, &_tmp9_);
-		_tmp10_ = _timer_dup0 (&_tmp9_);
-		_timer_free0 ((*player).expires);
-		(*player).expires = _tmp10_;
+	_tmp0_ = sdx_keys;
+	_tmp0__length1 = sdx_keys_length1;
+	_tmp1_ = _tmp0_[114];
+	if (((gint) _tmp1_) == 1) {
+		Point2d _tmp2_ = {0};
+		Vector2d _tmp3_ = {0};
+		Vector2d* _tmp4_ = NULL;
+		Entity* _tmp5_ = NULL;
+		Timer* _tmp6_ = NULL;
+		gint _tmp7_ = 0;
+		Timer _tmp8_ = {0};
+		Timer* _tmp9_ = NULL;
+		_tmp2_.x = (gdouble) 170;
+		_tmp2_.y = (gdouble) 500;
+		(*(*player)).position = _tmp2_;
+		_tmp3_.x = (gdouble) 0;
+		_tmp3_.y = (gdouble) 0;
+		_tmp4_ = _vector2d_dup0 (&_tmp3_);
+		_vector2d_free0 ((*(*player)).velocity);
+		(*(*player)).velocity = _tmp4_;
+		_tmp5_ = *player;
+		_tmp6_ = (*_tmp5_).expires;
+		_tmp7_ = (*_tmp6_).best;
+		_tmp8_.begin = 0;
+		_tmp8_.finish = 0;
+		_tmp8_.best = _tmp7_;
+		_tmp9_ = _timer_dup0 (&_tmp8_);
+		_timer_free0 ((*(*player)).expires);
+		(*(*player)).expires = _tmp9_;
 	}
-	_tmp11_ = self->game;
-	_tmp12_ = _tmp11_->map;
-	_tmp13_ = *player;
-	_tmp14_ = _tmp13_.position;
-	_tmp15_ = map_onGround (_tmp12_, &_tmp14_, &PLAYER_SIZE);
-	ground = _tmp15_;
-	_tmp16_ = self->game;
-	_tmp17_ = _tmp16_->inputs;
-	_tmp17__length1 = _tmp16_->inputs_length1;
-	_tmp18_ = _tmp17_[INPUT_jump];
-	if (_tmp18_) {
-		gboolean _tmp19_ = FALSE;
-		_tmp19_ = ground;
-		if (_tmp19_) {
-			Entity _tmp20_ = {0};
-			Vector2d* _tmp21_ = NULL;
-			_tmp20_ = *player;
-			_tmp21_ = _tmp20_.velocity;
-			(*_tmp21_).y = (gdouble) (-21);
+	_tmp10_ = self->game;
+	_tmp11_ = _tmp10_->map;
+	_tmp12_ = *player;
+	_tmp13_ = (*_tmp12_).position;
+	_tmp14_ = *player;
+	_tmp15_ = (*_tmp14_).size;
+	_tmp16_ = *_tmp15_;
+	_tmp17_ = map_onGround (_tmp11_, &_tmp13_, &_tmp16_);
+	ground = _tmp17_;
+	_tmp18_ = sdx_dir;
+	_tmp18__length1 = sdx_dir_length1;
+	_tmp19_ = _tmp18_[SDX_DIRECTION_UP];
+	if (_tmp19_) {
+		gboolean _tmp20_ = FALSE;
+		_tmp20_ = ground;
+		if (_tmp20_) {
+			Entity* _tmp21_ = NULL;
+			Vector2d* _tmp22_ = NULL;
+			_tmp21_ = *player;
+			_tmp22_ = (*_tmp21_).velocity;
+			(*_tmp22_).y = (gdouble) (-21);
 		}
 	}
-	_tmp22_ = self->game;
-	_tmp23_ = _tmp22_->inputs;
-	_tmp23__length1 = _tmp22_->inputs_length1;
-	_tmp24_ = _tmp23_[INPUT_right];
-	_tmp25_ = self->game;
-	_tmp26_ = _tmp25_->inputs;
-	_tmp26__length1 = _tmp25_->inputs_length1;
-	_tmp27_ = _tmp26_[INPUT_left];
-	direction = (gdouble) (((gint) _tmp24_) - ((gint) _tmp27_));
-	_tmp28_ = *player;
-	_tmp29_ = _tmp28_.velocity;
-	_tmp30_ = *player;
-	_tmp31_ = _tmp30_.velocity;
-	_tmp32_ = (*_tmp31_).y;
-	(*_tmp31_).y = _tmp32_ + 0.75;
-	_tmp33_ = ground;
-	if (_tmp33_) {
-		Entity _tmp34_ = {0};
-		Vector2d* _tmp35_ = NULL;
-		Entity _tmp36_ = {0};
-		Vector2d* _tmp37_ = NULL;
+	_tmp23_ = sdx_dir;
+	_tmp23__length1 = sdx_dir_length1;
+	_tmp24_ = _tmp23_[SDX_DIRECTION_RIGHT];
+	_tmp25_ = sdx_dir;
+	_tmp25__length1 = sdx_dir_length1;
+	_tmp26_ = _tmp25_[SDX_DIRECTION_LEFT];
+	direction = (gdouble) (((gint) _tmp24_) - ((gint) _tmp26_));
+	_tmp27_ = *player;
+	_tmp28_ = (*_tmp27_).velocity;
+	_tmp29_ = *player;
+	_tmp30_ = (*_tmp29_).velocity;
+	_tmp31_ = (*_tmp30_).y;
+	(*_tmp30_).y = _tmp31_ + 0.75;
+	_tmp32_ = ground;
+	if (_tmp32_) {
+		Entity* _tmp33_ = NULL;
+		Vector2d* _tmp34_ = NULL;
+		Entity* _tmp35_ = NULL;
+		Vector2d* _tmp36_ = NULL;
+		gdouble _tmp37_ = 0.0;
 		gdouble _tmp38_ = 0.0;
-		gdouble _tmp39_ = 0.0;
-		_tmp34_ = *player;
-		_tmp35_ = _tmp34_.velocity;
-		_tmp36_ = *player;
-		_tmp37_ = _tmp36_.velocity;
-		_tmp38_ = (*_tmp37_).x;
-		_tmp39_ = direction;
-		(*_tmp35_).x = (0.5 * _tmp38_) + (4.0 * _tmp39_);
+		_tmp33_ = *player;
+		_tmp34_ = (*_tmp33_).velocity;
+		_tmp35_ = *player;
+		_tmp36_ = (*_tmp35_).velocity;
+		_tmp37_ = (*_tmp36_).x;
+		_tmp38_ = direction;
+		(*_tmp34_).x = (0.5 * _tmp37_) + (4.0 * _tmp38_);
 	} else {
-		Entity _tmp40_ = {0};
-		Vector2d* _tmp41_ = NULL;
-		Entity _tmp42_ = {0};
-		Vector2d* _tmp43_ = NULL;
+		Entity* _tmp39_ = NULL;
+		Vector2d* _tmp40_ = NULL;
+		Entity* _tmp41_ = NULL;
+		Vector2d* _tmp42_ = NULL;
+		gdouble _tmp43_ = 0.0;
 		gdouble _tmp44_ = 0.0;
-		gdouble _tmp45_ = 0.0;
-		_tmp40_ = *player;
-		_tmp41_ = _tmp40_.velocity;
-		_tmp42_ = *player;
-		_tmp43_ = _tmp42_.velocity;
-		_tmp44_ = (*_tmp43_).x;
-		_tmp45_ = direction;
-		(*_tmp41_).x = (0.95 * _tmp44_) + (2.0 * _tmp45_);
+		_tmp39_ = *player;
+		_tmp40_ = (*_tmp39_).velocity;
+		_tmp41_ = *player;
+		_tmp42_ = (*_tmp41_).velocity;
+		_tmp43_ = (*_tmp42_).x;
+		_tmp44_ = direction;
+		(*_tmp40_).x = (0.95 * _tmp43_) + (2.0 * _tmp44_);
 	}
-	_tmp46_ = *player;
-	_tmp47_ = _tmp46_.velocity;
-	_tmp48_ = *player;
-	_tmp49_ = _tmp48_.velocity;
-	_tmp50_ = (*_tmp49_).x;
-	_tmp51_ = clamp (_tmp50_, (gdouble) (-8), (gdouble) 8);
-	(*_tmp47_).x = _tmp51_;
-	_tmp52_ = self->game;
-	_tmp53_ = _tmp52_->map;
-	map_moveBox (_tmp53_, &(*player).position, (*player).velocity, &PLAYER_SIZE);
+	_tmp45_ = *player;
+	_tmp46_ = (*_tmp45_).velocity;
+	_tmp47_ = *player;
+	_tmp48_ = (*_tmp47_).velocity;
+	_tmp49_ = (*_tmp48_).x;
+	_tmp50_ = clamp (_tmp49_, (gdouble) (-8), (gdouble) 8);
+	(*_tmp46_).x = _tmp50_;
+	_tmp51_ = self->game;
+	_tmp52_ = _tmp51_->map;
+	_tmp53_ = *player;
+	_tmp54_ = (*_tmp53_).size;
+	_tmp55_ = *_tmp54_;
+	map_moveBox (_tmp52_, &(*(*player)).position, (*(*player)).velocity, &_tmp55_);
 }
 
 
 /**
  *  Camera
  */
-void systems_camera (Systems* self, Entity* player, gint tick) {
+void systems_camera (Systems* self, Entity** player, gint tick) {
 	gdouble halfWin = 0.0;
 	gint _tmp0_ = 0;
 	Game* _tmp1_ = NULL;
 	CameraType _tmp2_ = 0;
 	g_return_if_fail (self != NULL);
-	g_return_if_fail (player != NULL);
 	_tmp0_ = WINDOW_SIZE.x;
 	halfWin = ((gdouble) _tmp0_) / 2;
 	_tmp1_ = self->game;
 	_tmp2_ = _tmp1_->cameraType;
-	if (_tmp2_ == CAMERA_TYPE_fluidCamera) {
+	if (_tmp2_ == CAMERA_TYPE_FLUID_CAMERA) {
 		gdouble dist = 0.0;
 		Game* _tmp3_ = NULL;
-		Vector2d _tmp4_ = {0};
+		Camera _tmp4_ = {0};
 		gdouble _tmp5_ = 0.0;
-		Entity _tmp6_ = {0};
+		Entity* _tmp6_ = NULL;
 		Point2d _tmp7_ = {0};
 		gdouble _tmp8_ = 0.0;
 		gdouble _tmp9_ = 0.0;
 		Game* _tmp10_ = NULL;
-		Game* _tmp11_ = NULL;
-		gdouble _tmp12_ = 0.0;
-		gdouble _tmp13_ = 0.0;
+		gdouble _tmp11_ = 0.0;
 		_tmp3_ = self->game;
 		_tmp4_ = _tmp3_->camera;
 		_tmp5_ = _tmp4_.x;
 		_tmp6_ = *player;
-		_tmp7_ = _tmp6_.position;
+		_tmp7_ = (*_tmp6_).position;
 		_tmp8_ = _tmp7_.x;
 		_tmp9_ = halfWin;
 		dist = (_tmp5_ - _tmp8_) + _tmp9_;
 		_tmp10_ = self->game;
-		_tmp11_ = self->game;
-		_tmp12_ = _tmp11_->camera.x;
-		_tmp13_ = dist;
-		_tmp11_->camera.x = _tmp12_ - (0.05 * _tmp13_);
+		_tmp11_ = dist;
+		camera_scrollBy (&_tmp10_->camera, (-0.05) * _tmp11_);
 	} else {
-		Game* _tmp14_ = NULL;
-		CameraType _tmp15_ = 0;
-		_tmp14_ = self->game;
-		_tmp15_ = _tmp14_->cameraType;
-		if (_tmp15_ == CAMERA_TYPE_innerCamera) {
+		Game* _tmp12_ = NULL;
+		CameraType _tmp13_ = 0;
+		_tmp12_ = self->game;
+		_tmp13_ = _tmp12_->cameraType;
+		if (_tmp13_ == CAMERA_TYPE_INNER_CAMERA) {
 			gdouble leftArea = 0.0;
-			Entity _tmp16_ = {0};
-			Point2d _tmp17_ = {0};
-			gdouble _tmp18_ = 0.0;
-			gdouble _tmp19_ = 0.0;
+			Entity* _tmp14_ = NULL;
+			Point2d _tmp15_ = {0};
+			gdouble _tmp16_ = 0.0;
+			gdouble _tmp17_ = 0.0;
 			gdouble rightArea = 0.0;
-			Entity _tmp20_ = {0};
-			Point2d _tmp21_ = {0};
-			gdouble _tmp22_ = 0.0;
-			gdouble _tmp23_ = 0.0;
-			Game* _tmp24_ = NULL;
-			Game* _tmp25_ = NULL;
-			Vector2d _tmp26_ = {0};
+			Entity* _tmp18_ = NULL;
+			Point2d _tmp19_ = {0};
+			gdouble _tmp20_ = 0.0;
+			gdouble _tmp21_ = 0.0;
+			Game* _tmp22_ = NULL;
+			Game* _tmp23_ = NULL;
+			Camera _tmp24_ = {0};
+			gdouble _tmp25_ = 0.0;
+			gdouble _tmp26_ = 0.0;
 			gdouble _tmp27_ = 0.0;
 			gdouble _tmp28_ = 0.0;
-			gdouble _tmp29_ = 0.0;
-			gdouble _tmp30_ = 0.0;
-			_tmp16_ = *player;
-			_tmp17_ = _tmp16_.position;
-			_tmp18_ = _tmp17_.x;
-			_tmp19_ = halfWin;
-			leftArea = (_tmp18_ - _tmp19_) - 100;
-			_tmp20_ = *player;
-			_tmp21_ = _tmp20_.position;
-			_tmp22_ = _tmp21_.x;
-			_tmp23_ = halfWin;
-			rightArea = (_tmp22_ - _tmp23_) + 100;
-			_tmp24_ = self->game;
-			_tmp25_ = self->game;
-			_tmp26_ = _tmp25_->camera;
-			_tmp27_ = _tmp26_.x;
-			_tmp28_ = leftArea;
-			_tmp29_ = rightArea;
-			_tmp30_ = clamp (_tmp27_, _tmp28_, _tmp29_);
-			_tmp24_->camera.x = _tmp30_;
+			_tmp14_ = *player;
+			_tmp15_ = (*_tmp14_).position;
+			_tmp16_ = _tmp15_.x;
+			_tmp17_ = halfWin;
+			leftArea = (_tmp16_ - _tmp17_) - 100;
+			_tmp18_ = *player;
+			_tmp19_ = (*_tmp18_).position;
+			_tmp20_ = _tmp19_.x;
+			_tmp21_ = halfWin;
+			rightArea = (_tmp20_ - _tmp21_) + 100;
+			_tmp22_ = self->game;
+			_tmp23_ = self->game;
+			_tmp24_ = _tmp23_->camera;
+			_tmp25_ = _tmp24_.x;
+			_tmp26_ = leftArea;
+			_tmp27_ = rightArea;
+			_tmp28_ = clamp (_tmp25_, _tmp26_, _tmp27_);
+			camera_scrollTo (&_tmp22_->camera, _tmp28_);
 		} else {
-			Game* _tmp31_ = NULL;
-			Entity _tmp32_ = {0};
-			Point2d _tmp33_ = {0};
-			gdouble _tmp34_ = 0.0;
-			gdouble _tmp35_ = 0.0;
-			_tmp31_ = self->game;
-			_tmp32_ = *player;
-			_tmp33_ = _tmp32_.position;
-			_tmp34_ = _tmp33_.x;
-			_tmp35_ = halfWin;
-			_tmp31_->camera.x = _tmp34_ - _tmp35_;
+			Game* _tmp29_ = NULL;
+			Entity* _tmp30_ = NULL;
+			Point2d _tmp31_ = {0};
+			gdouble _tmp32_ = 0.0;
+			gdouble _tmp33_ = 0.0;
+			_tmp29_ = self->game;
+			_tmp30_ = *player;
+			_tmp31_ = (*_tmp30_).position;
+			_tmp32_ = _tmp31_.x;
+			_tmp33_ = halfWin;
+			camera_scrollTo (&_tmp29_->camera, _tmp32_ - _tmp33_);
 		}
 	}
 }
@@ -519,113 +494,112 @@ void systems_camera (Systems* self, Entity* player, gint tick) {
 /**
  *  Logic
  */
-void systems_logic (Systems* self, Entity* player, gint tick) {
+void systems_logic (Systems* self, Entity** player, gint tick) {
 	Game* _tmp0_ = NULL;
 	Map* _tmp1_ = NULL;
-	Entity _tmp2_ = {0};
+	Entity* _tmp2_ = NULL;
 	Point2d _tmp3_ = {0};
 	gdouble _tmp4_ = 0.0;
-	Entity _tmp5_ = {0};
+	Entity* _tmp5_ = NULL;
 	Point2d _tmp6_ = {0};
 	gdouble _tmp7_ = 0.0;
 	gint _tmp8_ = 0;
 	g_return_if_fail (self != NULL);
-	g_return_if_fail (player != NULL);
 	_tmp0_ = self->game;
 	_tmp1_ = _tmp0_->map;
 	_tmp2_ = *player;
-	_tmp3_ = _tmp2_.position;
+	_tmp3_ = (*_tmp2_).position;
 	_tmp4_ = _tmp3_.x;
 	_tmp5_ = *player;
-	_tmp6_ = _tmp5_.position;
+	_tmp6_ = (*_tmp5_).position;
 	_tmp7_ = _tmp6_.y;
 	_tmp8_ = map_getTile (_tmp1_, _tmp4_, _tmp7_);
 	switch (_tmp8_) {
-		case START:
+		case MAP_START:
 		{
 			{
-				Entity _tmp9_ = {0};
+				Entity* _tmp9_ = NULL;
 				Timer* _tmp10_ = NULL;
 				gint _tmp11_ = 0;
 				_tmp9_ = *player;
-				_tmp10_ = _tmp9_.expires;
+				_tmp10_ = (*_tmp9_).expires;
 				_tmp11_ = tick;
 				(*_tmp10_).begin = _tmp11_;
 			}
 			break;
 		}
-		case FINISH:
+		case MAP_FINISH:
 		{
 			{
-				Entity _tmp12_ = {0};
+				Entity* _tmp12_ = NULL;
 				Timer* _tmp13_ = NULL;
 				gint _tmp14_ = 0;
 				_tmp12_ = *player;
-				_tmp13_ = _tmp12_.expires;
+				_tmp13_ = (*_tmp12_).expires;
 				_tmp14_ = (*_tmp13_).begin;
 				if (_tmp14_ >= 0) {
-					Entity _tmp15_ = {0};
+					Entity* _tmp15_ = NULL;
 					Timer* _tmp16_ = NULL;
 					gint _tmp17_ = 0;
-					Entity _tmp18_ = {0};
+					Entity* _tmp18_ = NULL;
 					Timer* _tmp19_ = NULL;
 					gint _tmp20_ = 0;
-					Entity _tmp21_ = {0};
+					Entity* _tmp21_ = NULL;
 					Timer* _tmp22_ = NULL;
 					gboolean _tmp23_ = FALSE;
-					Entity _tmp24_ = {0};
+					Entity* _tmp24_ = NULL;
 					Timer* _tmp25_ = NULL;
 					gint _tmp26_ = 0;
-					Entity _tmp38_ = {0};
+					Entity* _tmp38_ = NULL;
 					Timer* _tmp39_ = NULL;
 					gint _tmp40_ = 0;
 					gchar* _tmp41_ = NULL;
 					gchar* _tmp42_ = NULL;
 					_tmp15_ = *player;
-					_tmp16_ = _tmp15_.expires;
+					_tmp16_ = (*_tmp15_).expires;
 					_tmp17_ = tick;
 					_tmp18_ = *player;
-					_tmp19_ = _tmp18_.expires;
+					_tmp19_ = (*_tmp18_).expires;
 					_tmp20_ = (*_tmp19_).begin;
 					(*_tmp16_).finish = _tmp17_ - _tmp20_;
 					_tmp21_ = *player;
-					_tmp22_ = _tmp21_.expires;
+					_tmp22_ = (*_tmp21_).expires;
 					(*_tmp22_).begin = -1;
 					_tmp24_ = *player;
-					_tmp25_ = _tmp24_.expires;
+					_tmp25_ = (*_tmp24_).expires;
 					_tmp26_ = (*_tmp25_).best;
 					if (_tmp26_ < 0) {
 						_tmp23_ = TRUE;
 					} else {
-						Entity _tmp27_ = {0};
+						Entity* _tmp27_ = NULL;
 						Timer* _tmp28_ = NULL;
 						gint _tmp29_ = 0;
-						Entity _tmp30_ = {0};
+						Entity* _tmp30_ = NULL;
 						Timer* _tmp31_ = NULL;
 						gint _tmp32_ = 0;
 						_tmp27_ = *player;
-						_tmp28_ = _tmp27_.expires;
+						_tmp28_ = (*_tmp27_).expires;
 						_tmp29_ = (*_tmp28_).finish;
 						_tmp30_ = *player;
-						_tmp31_ = _tmp30_.expires;
+						_tmp31_ = (*_tmp30_).expires;
 						_tmp32_ = (*_tmp31_).best;
 						_tmp23_ = _tmp29_ < _tmp32_;
 					}
 					if (_tmp23_) {
-						Entity _tmp33_ = {0};
+						Entity* _tmp33_ = NULL;
 						Timer* _tmp34_ = NULL;
-						Entity _tmp35_ = {0};
+						Entity* _tmp35_ = NULL;
 						Timer* _tmp36_ = NULL;
 						gint _tmp37_ = 0;
 						_tmp33_ = *player;
-						_tmp34_ = _tmp33_.expires;
+						_tmp34_ = (*_tmp33_).expires;
 						_tmp35_ = *player;
-						_tmp36_ = _tmp35_.expires;
+						_tmp36_ = (*_tmp35_).expires;
 						_tmp37_ = (*_tmp36_).finish;
 						(*_tmp34_).best = _tmp37_;
 					}
 					_tmp38_ = *player;
-					_tmp39_ = _tmp38_.expires;
+					_tmp39_ = (*_tmp38_).expires;
 					_tmp40_ = (*_tmp39_).finish;
 					_tmp41_ = formatTime (_tmp40_);
 					_tmp42_ = _tmp41_;

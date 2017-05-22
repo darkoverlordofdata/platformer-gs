@@ -4,21 +4,37 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <SDL2/SDL_render.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
 #include <math.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 
 typedef struct _Map Map;
-typedef struct _utilFile utilFile;
+typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
 #define _g_free0(var) (var = (g_free (var), NULL))
+void sdx_graphics_sprite_release (sdxgraphicsSprite* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
+sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
+#define _sdx_graphics_sprite_release0(var) ((var == NULL) ? NULL : (var = (sdx_graphics_sprite_release (var), NULL)))
+typedef struct _utilFile utilFile;
+typedef struct _utilJsVariant utilJsVariant;
+
+#define UTIL_TYPE_JS_TYPE (util_js_type_get_type ())
+void util_js_variant_release (utilJsVariant* self);
+void util_js_variant_free (utilJsVariant* self);
+utilJsVariant* util_js_variant_retain (utilJsVariant* self);
+#define _util_js_variant_release0(var) ((var == NULL) ? NULL : (var = (util_js_variant_release (var), NULL)))
+
+#define SDX_GRAPHICS_TYPE_SCALE (sdx_graphics_scale_get_type ())
+typedef struct _sdxgraphicsScale sdxgraphicsScale;
 void util_file_release (utilFile* self);
 void util_file_free (utilFile* self);
 utilFile* util_file_retain (utilFile* self);
 #define _util_file_release0(var) ((var == NULL) ? NULL : (var = (util_file_release (var), NULL)))
-#define _g_list_free0(var) ((var == NULL) ? NULL : (var = (g_list_free (var), NULL)))
 
 #define TYPE_POINT2D (point2d_get_type ())
 typedef struct _Point2d Point2d;
@@ -26,22 +42,62 @@ typedef struct _Point2d Point2d;
 #define TYPE_VECTOR2D (vector2d_get_type ())
 typedef struct _Vector2d Vector2d;
 
-#define TYPE_COLLISION (collision_get_type ())
+#define TYPE_CAMERA (camera_get_type ())
+typedef Vector2d Camera;
 
 struct _Map {
 	gint retainCount__;
 	gint width;
 	gint height;
+	gint tileheight;
+	gint tilewidth;
+	gchar* tileset;
 	guint8* tiles;
 	gint tiles_length1;
-	SDL_Texture* texture;
+	sdxgraphicsSprite* sprite;
 };
 
 typedef enum  {
-	EXCEPTION_SDLException,
-	EXCEPTION_InvalidValue
-} Exception;
-#define EXCEPTION exception_quark ()
+	UTIL_JS_TYPE_JS_INVALID,
+	UTIL_JS_TYPE_JS_BOOLEAN,
+	UTIL_JS_TYPE_JS_NUMBER,
+	UTIL_JS_TYPE_JS_STRING,
+	UTIL_JS_TYPE_JS_OBJECT,
+	UTIL_JS_TYPE_JS_ARRAY
+} utilJsType;
+
+struct _utilJsVariant {
+	gint _retainCount;
+	gboolean boolean;
+	gdouble number;
+	gchar* string;
+	GHashTable* object;
+	GList* array;
+	utilJsType type;
+};
+
+struct _sdxgraphicsScale {
+	gdouble x;
+	gdouble y;
+};
+
+struct _sdxgraphicsSprite {
+	gint _retainCount;
+	SDL_Texture* texture;
+	SDL_Surface* surface;
+	gint width;
+	gint height;
+	gint x;
+	gint y;
+	sdxgraphicsScale scale;
+	SDL_Color color;
+	gboolean centered;
+	gint layer;
+	gint id;
+	gchar* path;
+	gboolean isText;
+};
+
 struct _Point2d {
 	gdouble x;
 	gdouble y;
@@ -52,36 +108,35 @@ struct _Vector2d {
 	gdouble y;
 };
 
-typedef enum  {
-	COLLISION_x,
-	COLLISION_y,
-	COLLISION_corner
-} Collision;
 
 
-
-void map_release (Map* self);
-Map* map_retain (Map* self);
 void map_free (Map* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
 static void map_instance_init (Map * self);
+#define MAP_AIR 0
+#define MAP_START 79
+#define MAP_FINISH 111
+#define MAP_TILES_PER_ROW 16
 Map* map_retain (Map* self);
 void map_release (Map* self);
-void map_release (Map* self);
-Map* map_retain (Map* self);
 void map_free (Map* self);
-Map* map_new (SDL_Texture* texture, const gchar* filename);
-void util_file_release (utilFile* self);
-utilFile* util_file_retain (utilFile* self);
+Map* map_new (const gchar* mapPath);
 void util_file_free (utilFile* self);
 utilFile* util_file_new (const gchar* path);
+void util_js_variant_free (utilJsVariant* self);
+utilJsVariant* util_json_parse (const gchar* source);
 gchar* util_file_read (utilFile* self);
-GQuark exception_quark (void);
+utilJsVariant* util_js_variant_member (utilJsVariant* self, const gchar* key);
+GType util_js_type_get_type (void) G_GNUC_CONST;
+utilJsVariant* util_js_variant_at (utilJsVariant* self, gint index);
+gchar* util_file_getParent (utilFile* self);
+sdxgraphicsSprite* sdx_graphics_sprite_new (const gchar* path);
+GType sdx_graphics_scale_get_type (void) G_GNUC_CONST;
+sdxgraphicsScale* sdx_graphics_scale_dup (const sdxgraphicsScale* self);
+void sdx_graphics_scale_free (sdxgraphicsScale* self);
 gint map_getTile (Map* self, gdouble x, gdouble y);
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
 gboolean map_isSolid (Map* self, gdouble x, gdouble y);
-#define AIR 0
-#define START 78
-#define FINISH 110
 GType point2d_get_type (void) G_GNUC_CONST;
 Point2d* point2d_dup (const Point2d* self);
 void point2d_free (Point2d* self);
@@ -91,20 +146,16 @@ void vector2d_free (Vector2d* self);
 gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size);
 gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size);
 void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size);
-GType collision_get_type (void) G_GNUC_CONST;
 gdouble vector2d_len (Vector2d *self);
 void point2d_add (Point2d *self, Vector2d* v, Point2d* result);
 void vector2d_mul (Vector2d *self, gdouble f, Vector2d* result);
-void point2d (gdouble x, gdouble y, Point2d* result);
-void vector2d (gdouble x, gdouble y, Vector2d* result);
-void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera);
+GType camera_get_type (void) G_GNUC_CONST;
+Camera* camera_dup (const Camera* self);
+void camera_free (Camera* self);
+void map_render (Map* self, Camera* camera);
 void rect (gint x, gint y, gint h, gint w, SDL_Rect* result);
-#define TILES_PER_ROW 16
-static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
-static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
-static gint _vala_array_length (gpointer array);
+void sdx_graphics_sprite_copy (sdxgraphicsSprite* self, SDL_Rect* src, SDL_Rect* dest);
 
-extern const SDL_Point TILES_SIZE;
 
 Map* map_retain (Map* self) {
 	Map* result = NULL;
@@ -125,222 +176,193 @@ void map_release (Map* self) {
 }
 
 
-Map* map_new (SDL_Texture* texture, const gchar* filename) {
+/**
+ * Load json map file created with Tiled
+ */
+static gpointer _util_js_variant_retain0 (gpointer self) {
+	return self ? util_js_variant_retain (self) : NULL;
+}
+
+
+Map* map_new (const gchar* mapPath) {
 	Map* self;
-	SDL_Texture* _tmp0_ = NULL;
-	GList* data = NULL;
 	utilFile* map = NULL;
+	const gchar* _tmp0_ = NULL;
 	utilFile* _tmp1_ = NULL;
+	utilJsVariant* json = NULL;
 	utilFile* _tmp2_ = NULL;
 	gchar* _tmp3_ = NULL;
 	gchar* _tmp4_ = NULL;
-	gchar** _tmp5_ = NULL;
-	gchar** _tmp6_ = NULL;
-	gchar** _tmp7_ = NULL;
-	gint _tmp7__length1 = 0;
-	GList* _tmp40_ = NULL;
-	guint _tmp41_ = 0U;
-	guint8* _tmp42_ = NULL;
-	GError * _inner_error_ = NULL;
-	g_return_val_if_fail (texture != NULL, NULL);
-	g_return_val_if_fail (filename != NULL, NULL);
+	utilJsVariant* _tmp5_ = NULL;
+	utilJsVariant* _tmp6_ = NULL;
+	utilJsVariant* _tmp7_ = NULL;
+	utilJsVariant* _tmp8_ = NULL;
+	utilJsVariant* _tmp9_ = NULL;
+	gdouble _tmp10_ = 0.0;
+	utilJsVariant* _tmp11_ = NULL;
+	utilJsVariant* _tmp12_ = NULL;
+	utilJsVariant* _tmp13_ = NULL;
+	gdouble _tmp14_ = 0.0;
+	utilJsVariant* _tmp15_ = NULL;
+	utilJsVariant* _tmp16_ = NULL;
+	utilJsVariant* _tmp17_ = NULL;
+	gdouble _tmp18_ = 0.0;
+	utilJsVariant* _tmp19_ = NULL;
+	utilJsVariant* _tmp20_ = NULL;
+	utilJsVariant* _tmp21_ = NULL;
+	gdouble _tmp22_ = 0.0;
+	utilJsVariant* _tmp23_ = NULL;
+	utilJsVariant* _tmp24_ = NULL;
+	utilJsVariant* _tmp25_ = NULL;
+	utilJsVariant* _tmp26_ = NULL;
+	utilJsVariant* _tmp27_ = NULL;
+	utilJsVariant* _tmp28_ = NULL;
+	utilJsVariant* _tmp29_ = NULL;
+	const gchar* _tmp30_ = NULL;
+	gchar* _tmp31_ = NULL;
+	utilFile* _tmp32_ = NULL;
+	gchar* _tmp33_ = NULL;
+	gchar* _tmp34_ = NULL;
+	gchar* _tmp35_ = NULL;
+	gchar* _tmp36_ = NULL;
+	const gchar* _tmp37_ = NULL;
+	gchar* _tmp38_ = NULL;
+	gchar* _tmp39_ = NULL;
+	sdxgraphicsSprite* _tmp40_ = NULL;
+	sdxgraphicsSprite* _tmp41_ = NULL;
+	utilJsVariant* data = NULL;
+	utilJsVariant* _tmp42_ = NULL;
+	utilJsVariant* _tmp43_ = NULL;
+	utilJsVariant* _tmp44_ = NULL;
+	utilJsVariant* _tmp45_ = NULL;
+	utilJsVariant* _tmp46_ = NULL;
+	utilJsVariant* _tmp47_ = NULL;
+	utilJsVariant* _tmp48_ = NULL;
+	utilJsVariant* _tmp49_ = NULL;
+	GList* _tmp50_ = NULL;
+	guint _tmp51_ = 0U;
+	guint8* _tmp52_ = NULL;
+	gint i = 0;
+	utilJsVariant* _tmp53_ = NULL;
+	GList* _tmp54_ = NULL;
+	g_return_val_if_fail (mapPath != NULL, NULL);
 	self = g_slice_new0 (Map);
 	map_instance_init (self);
-	_tmp0_ = texture;
-	self->texture = _tmp0_;
-	data = NULL;
-	_tmp1_ = util_file_new ("assets/default.map");
+	_tmp0_ = mapPath;
+	_tmp1_ = util_file_new (_tmp0_);
 	map = _tmp1_;
 	_tmp2_ = map;
 	_tmp3_ = util_file_read (_tmp2_);
 	_tmp4_ = _tmp3_;
-	_tmp6_ = _tmp5_ = g_strsplit (_tmp4_, "\n", 0);
-	_tmp7_ = _tmp6_;
-	_tmp7__length1 = _vala_array_length (_tmp5_);
+	_tmp5_ = util_json_parse (_tmp4_);
+	_tmp6_ = _tmp5_;
 	_g_free0 (_tmp4_);
-	{
-		gchar** line_collection = NULL;
-		gint line_collection_length1 = 0;
-		gint _line_collection_size_ = 0;
-		gint line_it = 0;
-		line_collection = _tmp7_;
-		line_collection_length1 = _tmp7__length1;
-		for (line_it = 0; line_it < _tmp7__length1; line_it = line_it + 1) {
-			gchar* _tmp8_ = NULL;
-			gchar* line = NULL;
-			_tmp8_ = g_strdup (line_collection[line_it]);
-			line = _tmp8_;
-			{
-				gint width = 0;
-				const gchar* _tmp9_ = NULL;
-				gchar** _tmp10_ = NULL;
-				gchar** _tmp11_ = NULL;
-				gboolean _tmp29_ = FALSE;
-				gint _tmp30_ = 0;
-				gint _tmp38_ = 0;
-				gint _tmp39_ = 0;
-				width = 0;
-				_tmp9_ = line;
-				_tmp11_ = _tmp10_ = g_strsplit (_tmp9_, " ", 0);
-				{
-					gchar** word_collection = NULL;
-					gint word_collection_length1 = 0;
-					gint _word_collection_size_ = 0;
-					gint word_it = 0;
-					word_collection = _tmp11_;
-					word_collection_length1 = _vala_array_length (_tmp10_);
-					for (word_it = 0; word_it < _vala_array_length (_tmp10_); word_it = word_it + 1) {
-						gchar* _tmp12_ = NULL;
-						gchar* word = NULL;
-						_tmp12_ = g_strdup (word_collection[word_it]);
-						word = _tmp12_;
-						{
-							const gchar* _tmp13_ = NULL;
-							gint value = 0;
-							const gchar* _tmp14_ = NULL;
-							gint _tmp15_ = 0;
-							gint _tmp16_ = 0;
-							gint _tmp27_ = 0;
-							gint _tmp28_ = 0;
-							_tmp13_ = word;
-							if (g_strcmp0 (_tmp13_, "") == 0) {
-								_g_free0 (word);
-								continue;
-							}
-							_tmp14_ = word;
-							_tmp15_ = atoi (_tmp14_);
-							value = _tmp15_;
-							_tmp16_ = value;
-							if (_tmp16_ > 255) {
-								const gchar* _tmp17_ = NULL;
-								gchar* _tmp18_ = NULL;
-								gchar* _tmp19_ = NULL;
-								gchar* _tmp20_ = NULL;
-								gchar* _tmp21_ = NULL;
-								const gchar* _tmp22_ = NULL;
-								gchar* _tmp23_ = NULL;
-								gchar* _tmp24_ = NULL;
-								GError* _tmp25_ = NULL;
-								GError* _tmp26_ = NULL;
-								_tmp17_ = word;
-								_tmp18_ = g_strconcat ("Invalid value +", _tmp17_, NULL);
-								_tmp19_ = _tmp18_;
-								_tmp20_ = g_strconcat (_tmp19_, " in map ", NULL);
-								_tmp21_ = _tmp20_;
-								_tmp22_ = filename;
-								_tmp23_ = g_strconcat (_tmp21_, _tmp22_, NULL);
-								_tmp24_ = _tmp23_;
-								_tmp25_ = g_error_new_literal (EXCEPTION, EXCEPTION_InvalidValue, _tmp24_);
-								_tmp26_ = _tmp25_;
-								_g_free0 (_tmp24_);
-								_g_free0 (_tmp21_);
-								_g_free0 (_tmp19_);
-								_inner_error_ = _tmp26_;
-								_g_free0 (word);
-								word_collection = (_vala_array_free (word_collection, word_collection_length1, (GDestroyNotify) g_free), NULL);
-								_g_free0 (line);
-								line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
-								_util_file_release0 (map);
-								_g_list_free0 (data);
-								g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-								g_clear_error (&_inner_error_);
-								return NULL;
-							}
-							_tmp27_ = value;
-							data = g_list_append (data, (gpointer) ((guintptr) ((guint8) _tmp27_)));
-							_tmp28_ = width;
-							width = _tmp28_ + 1;
-							_g_free0 (word);
-						}
-					}
-					word_collection = (_vala_array_free (word_collection, word_collection_length1, (GDestroyNotify) g_free), NULL);
-				}
-				_tmp30_ = self->width;
-				if (_tmp30_ > 0) {
-					gint _tmp31_ = 0;
-					gint _tmp32_ = 0;
-					_tmp31_ = self->width;
-					_tmp32_ = width;
-					_tmp29_ = _tmp31_ != _tmp32_;
-				} else {
-					_tmp29_ = FALSE;
-				}
-				if (_tmp29_) {
-					const gchar* _tmp33_ = NULL;
-					gchar* _tmp34_ = NULL;
-					gchar* _tmp35_ = NULL;
-					GError* _tmp36_ = NULL;
-					GError* _tmp37_ = NULL;
-					_tmp33_ = filename;
-					_tmp34_ = g_strconcat ("Incompatible line length in map ", _tmp33_, NULL);
-					_tmp35_ = _tmp34_;
-					_tmp36_ = g_error_new_literal (EXCEPTION, EXCEPTION_InvalidValue, _tmp35_);
-					_tmp37_ = _tmp36_;
-					_g_free0 (_tmp35_);
-					_inner_error_ = _tmp37_;
-					_g_free0 (line);
-					line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
-					_util_file_release0 (map);
-					_g_list_free0 (data);
-					g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-					g_clear_error (&_inner_error_);
-					return NULL;
-				}
-				_tmp38_ = width;
-				self->width = _tmp38_;
-				_tmp39_ = self->height;
-				self->height = _tmp39_ + 1;
-				_g_free0 (line);
-			}
-		}
-		line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
-	}
-	_tmp40_ = data;
-	_tmp41_ = g_list_length (_tmp40_);
-	_tmp42_ = g_new0 (guint8, _tmp41_);
+	json = _tmp6_;
+	_tmp7_ = json;
+	_tmp8_ = util_js_variant_member (_tmp7_, "width");
+	_tmp9_ = _tmp8_;
+	_tmp10_ = _tmp9_->number;
+	self->width = (gint) _tmp10_;
+	_util_js_variant_release0 (_tmp9_);
+	_tmp11_ = json;
+	_tmp12_ = util_js_variant_member (_tmp11_, "height");
+	_tmp13_ = _tmp12_;
+	_tmp14_ = _tmp13_->number;
+	self->height = (gint) _tmp14_;
+	_util_js_variant_release0 (_tmp13_);
+	_tmp15_ = json;
+	_tmp16_ = util_js_variant_member (_tmp15_, "tilewidth");
+	_tmp17_ = _tmp16_;
+	_tmp18_ = _tmp17_->number;
+	self->tilewidth = (gint) _tmp18_;
+	_util_js_variant_release0 (_tmp17_);
+	_tmp19_ = json;
+	_tmp20_ = util_js_variant_member (_tmp19_, "tileheight");
+	_tmp21_ = _tmp20_;
+	_tmp22_ = _tmp21_->number;
+	self->tileheight = (gint) _tmp22_;
+	_util_js_variant_release0 (_tmp21_);
+	_tmp23_ = json;
+	_tmp24_ = util_js_variant_member (_tmp23_, "tilesets");
+	_tmp25_ = _tmp24_;
+	_tmp26_ = util_js_variant_at (_tmp25_, 0);
+	_tmp27_ = _tmp26_;
+	_tmp28_ = util_js_variant_member (_tmp27_, "image");
+	_tmp29_ = _tmp28_;
+	_tmp30_ = _tmp29_->string;
+	_tmp31_ = g_strdup (_tmp30_);
+	_g_free0 (self->tileset);
+	self->tileset = _tmp31_;
+	_util_js_variant_release0 (_tmp29_);
+	_util_js_variant_release0 (_tmp27_);
+	_util_js_variant_release0 (_tmp25_);
+	_tmp32_ = map;
+	_tmp33_ = util_file_getParent (_tmp32_);
+	_tmp34_ = _tmp33_;
+	_tmp35_ = g_strconcat (_tmp34_, "/", NULL);
+	_tmp36_ = _tmp35_;
+	_tmp37_ = self->tileset;
+	_tmp38_ = g_strconcat (_tmp36_, _tmp37_, NULL);
+	_tmp39_ = _tmp38_;
+	_tmp40_ = sdx_graphics_sprite_new (_tmp39_);
+	_sdx_graphics_sprite_release0 (self->sprite);
+	self->sprite = _tmp40_;
+	_g_free0 (_tmp39_);
+	_g_free0 (_tmp36_);
+	_g_free0 (_tmp34_);
+	_tmp41_ = self->sprite;
+	_tmp41_->centered = FALSE;
+	_tmp42_ = json;
+	_tmp43_ = util_js_variant_member (_tmp42_, "layers");
+	_tmp44_ = _tmp43_;
+	_tmp45_ = util_js_variant_at (_tmp44_, 0);
+	_tmp46_ = _tmp45_;
+	_tmp47_ = util_js_variant_member (_tmp46_, "data");
+	_tmp48_ = _tmp47_;
+	_util_js_variant_release0 (_tmp46_);
+	_util_js_variant_release0 (_tmp44_);
+	data = _tmp48_;
+	_tmp49_ = data;
+	_tmp50_ = _tmp49_->array;
+	_tmp51_ = g_list_length (_tmp50_);
+	_tmp52_ = g_new0 (guint8, _tmp51_);
 	self->tiles = (g_free (self->tiles), NULL);
-	self->tiles = _tmp42_;
-	self->tiles_length1 = _tmp41_;
+	self->tiles = _tmp52_;
+	self->tiles_length1 = _tmp51_;
+	i = 0;
+	_tmp53_ = data;
+	_tmp54_ = _tmp53_->array;
 	{
-		gint i = 0;
-		i = 0;
-		{
-			gboolean _tmp43_ = FALSE;
-			_tmp43_ = TRUE;
-			while (TRUE) {
-				guint8* _tmp45_ = NULL;
-				gint _tmp45__length1 = 0;
-				guint8* _tmp46_ = NULL;
-				gint _tmp46__length1 = 0;
-				gint _tmp47_ = 0;
-				GList* _tmp48_ = NULL;
-				gint _tmp49_ = 0;
-				gconstpointer _tmp50_ = NULL;
-				guint8 _tmp51_ = 0U;
-				if (!_tmp43_) {
-					gint _tmp44_ = 0;
-					_tmp44_ = i;
-					i = _tmp44_ + 1;
-				}
-				_tmp43_ = FALSE;
-				_tmp45_ = self->tiles;
-				_tmp45__length1 = self->tiles_length1;
-				if (!(i <= _tmp45__length1)) {
-					break;
-				}
-				_tmp46_ = self->tiles;
-				_tmp46__length1 = self->tiles_length1;
-				_tmp47_ = i;
-				_tmp48_ = data;
-				_tmp49_ = i;
-				_tmp50_ = g_list_nth_data (_tmp48_, (guint) _tmp49_);
-				_tmp46_[_tmp47_] = (guint8) ((guintptr) _tmp50_);
-				_tmp51_ = _tmp46_[_tmp47_];
+		GList* d_collection = NULL;
+		GList* d_it = NULL;
+		d_collection = _tmp54_;
+		for (d_it = d_collection; d_it != NULL; d_it = d_it->next) {
+			utilJsVariant* _tmp55_ = NULL;
+			utilJsVariant* d = NULL;
+			_tmp55_ = _util_js_variant_retain0 ((utilJsVariant*) d_it->data);
+			d = _tmp55_;
+			{
+				guint8* _tmp56_ = NULL;
+				gint _tmp56__length1 = 0;
+				gint _tmp57_ = 0;
+				utilJsVariant* _tmp58_ = NULL;
+				gdouble _tmp59_ = 0.0;
+				guint8 _tmp60_ = 0U;
+				_tmp56_ = self->tiles;
+				_tmp56__length1 = self->tiles_length1;
+				_tmp57_ = i;
+				i = _tmp57_ + 1;
+				_tmp58_ = d;
+				_tmp59_ = _tmp58_->number;
+				_tmp56_[_tmp57_] = (guint8) _tmp59_;
+				_tmp60_ = _tmp56_[_tmp57_];
+				_util_js_variant_release0 (d);
 			}
 		}
 	}
+	_util_js_variant_release0 (data);
+	_util_js_variant_release0 (json);
 	_util_file_release0 (map);
-	_g_list_free0 (data);
 	return self;
 }
 
@@ -364,12 +386,12 @@ gint map_getTile (Map* self, gdouble x, gdouble y) {
 	guint8 _tmp10_ = 0U;
 	g_return_val_if_fail (self != NULL, 0);
 	_tmp0_ = x;
-	_tmp1_ = TILES_SIZE.x;
+	_tmp1_ = self->tilewidth;
 	_tmp2_ = self->width;
 	_tmp3_ = clamp (_tmp0_ / _tmp1_, (gdouble) 0, (gdouble) (_tmp2_ - 1));
 	nx = (gint) _tmp3_;
 	_tmp4_ = y;
-	_tmp5_ = TILES_SIZE.y;
+	_tmp5_ = self->tileheight;
 	_tmp6_ = self->height;
 	_tmp7_ = clamp (_tmp4_ / _tmp5_, (gdouble) 0, (gdouble) (_tmp6_ - 1));
 	ny = (gint) _tmp7_;
@@ -393,7 +415,7 @@ gboolean map_isSolid (Map* self, gdouble x, gdouble y) {
 	_tmp1_ = y;
 	_tmp2_ = map_getTile (self, _tmp0_, _tmp1_);
 	switch (_tmp2_) {
-		case AIR:
+		case MAP_AIR:
 		{
 			{
 				result = FALSE;
@@ -401,7 +423,7 @@ gboolean map_isSolid (Map* self, gdouble x, gdouble y) {
 			}
 			break;
 		}
-		case START:
+		case MAP_START:
 		{
 			{
 				result = FALSE;
@@ -409,7 +431,7 @@ gboolean map_isSolid (Map* self, gdouble x, gdouble y) {
 			}
 			break;
 		}
-		case FINISH:
+		case MAP_FINISH:
 		{
 			{
 				result = FALSE;
@@ -448,7 +470,7 @@ gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size) {
 	_tmp6_ = _tmp5_.y;
 	_tmp7_ = *size;
 	_tmp8_ = _tmp7_.y;
-	_tmp9_ = map_isSolid (self, _tmp2_ - (_tmp4_ * 0.5), (_tmp6_ + (_tmp8_ * 0.5)) + 1);
+	_tmp9_ = map_isSolid (self, _tmp2_ - (_tmp4_ * 0.25), (_tmp6_ + (_tmp8_ * 0.25)) + 1);
 	if (_tmp9_) {
 		_tmp0_ = TRUE;
 	} else {
@@ -469,7 +491,7 @@ gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size) {
 		_tmp15_ = _tmp14_.y;
 		_tmp16_ = *size;
 		_tmp17_ = _tmp16_.y;
-		_tmp18_ = map_isSolid (self, _tmp11_ + (_tmp13_ * 0.5), (_tmp15_ + (_tmp17_ * 0.5)) + 1);
+		_tmp18_ = map_isSolid (self, _tmp11_ + (_tmp13_ * 0.25), (_tmp15_ + (_tmp17_ * 0.25)) + 1);
 		_tmp0_ = _tmp18_;
 	}
 	result = _tmp0_;
@@ -502,7 +524,7 @@ gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
 	_tmp8_ = _tmp7_.y;
 	_tmp9_ = *size;
 	_tmp10_ = _tmp9_.y;
-	_tmp11_ = map_isSolid (self, _tmp4_ - (_tmp6_ * 0.5), _tmp8_ - (_tmp10_ * 0.5));
+	_tmp11_ = map_isSolid (self, _tmp4_ - (_tmp6_ * 0.25), _tmp8_ - (_tmp10_ * 0.25));
 	if (_tmp11_) {
 		_tmp2_ = TRUE;
 	} else {
@@ -523,7 +545,7 @@ gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
 		_tmp17_ = _tmp16_.y;
 		_tmp18_ = *size;
 		_tmp19_ = _tmp18_.y;
-		_tmp20_ = map_isSolid (self, _tmp13_ + (_tmp15_ * 0.5), _tmp17_ - (_tmp19_ * 0.5));
+		_tmp20_ = map_isSolid (self, _tmp13_ + (_tmp15_ * 0.25), _tmp17_ - (_tmp19_ * 0.25));
 		_tmp2_ = _tmp20_;
 	}
 	if (_tmp2_) {
@@ -546,7 +568,7 @@ gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
 		_tmp26_ = _tmp25_.y;
 		_tmp27_ = *size;
 		_tmp28_ = _tmp27_.y;
-		_tmp29_ = map_isSolid (self, _tmp22_ - (_tmp24_ * 0.5), _tmp26_ + (_tmp28_ * 0.5));
+		_tmp29_ = map_isSolid (self, _tmp22_ - (_tmp24_ * 0.25), _tmp26_ + (_tmp28_ * 0.25));
 		_tmp1_ = _tmp29_;
 	}
 	if (_tmp1_) {
@@ -569,7 +591,7 @@ gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
 		_tmp35_ = _tmp34_.y;
 		_tmp36_ = *size;
 		_tmp37_ = _tmp36_.y;
-		_tmp38_ = map_isSolid (self, _tmp31_ + (_tmp33_ * 0.5), _tmp35_ + (_tmp37_ * 0.5));
+		_tmp38_ = map_isSolid (self, _tmp31_ + (_tmp33_ * 0.25), _tmp35_ + (_tmp37_ * 0.25));
 		_tmp0_ = _tmp38_;
 	}
 	result = _tmp0_;
@@ -578,7 +600,6 @@ gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
 
 
 void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
-	GList* _result_ = NULL;
 	gdouble distance = 0.0;
 	gdouble _tmp0_ = 0.0;
 	gint maximum = 0;
@@ -590,14 +611,12 @@ void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 	g_return_if_fail (pos != NULL);
 	g_return_if_fail (vel != NULL);
 	g_return_if_fail (size != NULL);
-	_result_ = NULL;
 	_tmp0_ = vector2d_len (vel);
 	distance = _tmp0_;
 	_tmp1_ = distance;
 	maximum = (gint) _tmp1_;
 	_tmp2_ = distance;
 	if (_tmp2_ < ((gdouble) 0)) {
-		_g_list_free0 (_result_);
 		return;
 	}
 	_tmp3_ = maximum;
@@ -657,13 +676,13 @@ void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 					_tmp14_ = _tmp13_.x;
 					_tmp15_ = newPos;
 					_tmp16_ = _tmp15_.y;
-					point2d (_tmp14_, _tmp16_, &_tmp17_);
+					_tmp17_.x = _tmp14_;
+					_tmp17_.y = _tmp16_;
 					_tmp18_ = *size;
 					_tmp19_ = map_testBox (self, &_tmp17_, &_tmp18_);
 					if (_tmp19_) {
 						Point2d _tmp20_ = {0};
 						gdouble _tmp21_ = 0.0;
-						_result_ = g_list_append (_result_, (gpointer) ((gintptr) COLLISION_y));
 						_tmp20_ = *pos;
 						_tmp21_ = _tmp20_.y;
 						newPos.y = _tmp21_;
@@ -674,13 +693,13 @@ void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 					_tmp23_ = _tmp22_.x;
 					_tmp24_ = *pos;
 					_tmp25_ = _tmp24_.y;
-					point2d (_tmp23_, _tmp25_, &_tmp26_);
+					_tmp26_.x = _tmp23_;
+					_tmp26_.y = _tmp25_;
 					_tmp27_ = *size;
 					_tmp28_ = map_testBox (self, &_tmp26_, &_tmp27_);
 					if (_tmp28_) {
 						Point2d _tmp29_ = {0};
 						gdouble _tmp30_ = 0.0;
-						_result_ = g_list_append (_result_, (gpointer) ((gintptr) COLLISION_x));
 						_tmp29_ = *pos;
 						_tmp30_ = _tmp29_.x;
 						newPos.x = _tmp30_;
@@ -691,10 +710,10 @@ void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 					if (!_tmp31_) {
 						Point2d _tmp32_ = {0};
 						Vector2d _tmp33_ = {0};
-						_result_ = g_list_append (_result_, (gpointer) ((gintptr) COLLISION_corner));
 						_tmp32_ = *pos;
 						newPos = _tmp32_;
-						vector2d ((gdouble) 0, (gdouble) 0, &_tmp33_);
+						_tmp33_.x = (gdouble) 0;
+						_tmp33_.y = (gdouble) 0;
 						*vel = _tmp33_;
 					}
 				}
@@ -703,11 +722,10 @@ void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 			}
 		}
 	}
-	_g_list_free0 (_result_);
 }
 
 
-void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
+void map_render (Map* self, Camera* camera) {
 	SDL_Rect clip = {0};
 	gint _tmp0_ = 0;
 	gint _tmp1_ = 0;
@@ -717,14 +735,13 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 	gint _tmp4_ = 0;
 	SDL_Rect _tmp5_ = {0};
 	g_return_if_fail (self != NULL);
-	g_return_if_fail (renderer != NULL);
 	g_return_if_fail (camera != NULL);
-	_tmp0_ = TILES_SIZE.x;
-	_tmp1_ = TILES_SIZE.y;
+	_tmp0_ = self->tilewidth;
+	_tmp1_ = self->tileheight;
 	rect (0, 0, _tmp0_, _tmp1_, &_tmp2_);
 	clip = _tmp2_;
-	_tmp3_ = TILES_SIZE.x;
-	_tmp4_ = TILES_SIZE.y;
+	_tmp3_ = self->tilewidth;
+	_tmp4_ = self->tileheight;
 	rect (0, 0, _tmp3_, _tmp4_, &_tmp5_);
 	dest = _tmp5_;
 	{
@@ -736,12 +753,12 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 			while (TRUE) {
 				guint8* _tmp8_ = NULL;
 				gint _tmp8__length1 = 0;
-				gint _tmp9_ = 0;
 				gint tileNr = 0;
-				guint8* _tmp10_ = NULL;
-				gint _tmp10__length1 = 0;
-				gint _tmp11_ = 0;
-				guint8 _tmp12_ = 0U;
+				guint8* _tmp9_ = NULL;
+				gint _tmp9__length1 = 0;
+				gint _tmp10_ = 0;
+				guint8 _tmp11_ = 0U;
+				gint _tmp12_ = 0;
 				gint _tmp13_ = 0;
 				gint _tmp14_ = 0;
 				gint _tmp15_ = 0;
@@ -749,17 +766,16 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 				gint _tmp17_ = 0;
 				gint _tmp18_ = 0;
 				gint _tmp19_ = 0;
-				Vector2d _tmp20_ = {0};
+				Camera _tmp20_ = {0};
 				gdouble _tmp21_ = 0.0;
 				gint _tmp22_ = 0;
 				gint _tmp23_ = 0;
 				gint _tmp24_ = 0;
-				Vector2d _tmp25_ = {0};
+				Camera _tmp25_ = {0};
 				gdouble _tmp26_ = 0.0;
-				SDL_Renderer* _tmp27_ = NULL;
-				SDL_Texture* _tmp28_ = NULL;
+				sdxgraphicsSprite* _tmp27_ = NULL;
+				SDL_Rect _tmp28_ = {0};
 				SDL_Rect _tmp29_ = {0};
-				SDL_Rect _tmp30_ = {0};
 				if (!_tmp6_) {
 					gint _tmp7_ = 0;
 					_tmp7_ = i;
@@ -771,38 +787,37 @@ void map_render (Map* self, SDL_Renderer* renderer, Vector2d* camera) {
 				if (!(i <= (_tmp8__length1 - 1))) {
 					break;
 				}
-				_tmp9_ = i;
-				if (_tmp9_ == 0) {
+				_tmp9_ = self->tiles;
+				_tmp9__length1 = self->tiles_length1;
+				_tmp10_ = i;
+				_tmp11_ = _tmp9_[_tmp10_];
+				tileNr = (gint) _tmp11_;
+				_tmp12_ = tileNr;
+				if (_tmp12_ == MAP_AIR) {
 					continue;
 				}
-				_tmp10_ = self->tiles;
-				_tmp10__length1 = self->tiles_length1;
-				_tmp11_ = i;
-				_tmp12_ = _tmp10_[_tmp11_];
-				tileNr = (gint) _tmp12_;
 				_tmp13_ = tileNr;
-				_tmp14_ = TILES_SIZE.x;
-				clip.x = ((gint) (_tmp13_ % TILES_PER_ROW)) * _tmp14_;
+				_tmp14_ = self->tilewidth;
+				clip.x = ((gint) ((_tmp13_ - 1) % MAP_TILES_PER_ROW)) * _tmp14_;
 				_tmp15_ = tileNr;
-				_tmp16_ = TILES_SIZE.y;
-				clip.y = ((gint) (_tmp15_ / TILES_PER_ROW)) * _tmp16_;
+				_tmp16_ = self->tileheight;
+				clip.y = ((gint) ((_tmp15_ - 1) / MAP_TILES_PER_ROW)) * _tmp16_;
 				_tmp17_ = i;
 				_tmp18_ = self->width;
-				_tmp19_ = TILES_SIZE.x;
+				_tmp19_ = self->tilewidth;
 				_tmp20_ = *camera;
 				_tmp21_ = _tmp20_.x;
 				dest.x = ((_tmp17_ % _tmp18_) * ((gint) _tmp19_)) - ((gint) _tmp21_);
 				_tmp22_ = i;
 				_tmp23_ = self->width;
-				_tmp24_ = TILES_SIZE.y;
+				_tmp24_ = self->tileheight;
 				_tmp25_ = *camera;
 				_tmp26_ = _tmp25_.y;
 				dest.y = (((gint) (_tmp22_ / _tmp23_)) * ((gint) _tmp24_)) - ((gint) _tmp26_);
-				_tmp27_ = renderer;
-				_tmp28_ = self->texture;
-				_tmp29_ = clip;
-				_tmp30_ = dest;
-				SDL_RenderCopy (_tmp27_, _tmp28_, &_tmp29_, &_tmp30_);
+				_tmp27_ = self->sprite;
+				_tmp28_ = clip;
+				_tmp29_ = dest;
+				sdx_graphics_sprite_copy (_tmp27_, &_tmp28_, &_tmp29_);
 			}
 		}
 	}
@@ -815,38 +830,10 @@ static void map_instance_init (Map * self) {
 
 
 void map_free (Map* self) {
+	_g_free0 (self->tileset);
 	self->tiles = (g_free (self->tiles), NULL);
+	_sdx_graphics_sprite_release0 (self->sprite);
 	g_slice_free (Map, self);
-}
-
-
-static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func) {
-	if ((array != NULL) && (destroy_func != NULL)) {
-		int i;
-		for (i = 0; i < array_length; i = i + 1) {
-			if (((gpointer*) array)[i] != NULL) {
-				destroy_func (((gpointer*) array)[i]);
-			}
-		}
-	}
-}
-
-
-static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func) {
-	_vala_array_destroy (array, array_length, destroy_func);
-	g_free (array);
-}
-
-
-static gint _vala_array_length (gpointer array) {
-	int length;
-	length = 0;
-	if (array) {
-		while (((gpointer*) array)[length]) {
-			length++;
-		}
-	}
-	return length;
 }
 
 

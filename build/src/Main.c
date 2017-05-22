@@ -6,56 +6,46 @@
 #include <glib-object.h>
 #include <float.h>
 #include <math.h>
-#include <SDL2/SDL_video.h>
-#include <SDL2/SDL_render.h>
 #include <stdlib.h>
 #include <string.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_hints.h>
+#include <SDL2/SDL_video.h>
 #include <SDL2/SDL_rect.h>
-#include <SDL_ttf.h>
 #include <emscripten.h>
 
 #define _g_free0(var) (var = (g_free (var), NULL))
-#define _SDL_DestroyWindow0(var) ((var == NULL) ? NULL : (var = (SDL_DestroyWindow (var), NULL)))
-#define _SDL_DestroyRenderer0(var) ((var == NULL) ? NULL : (var = (SDL_DestroyRenderer (var), NULL)))
 typedef struct _Game Game;
 void game_release (Game* self);
 void game_free (Game* self);
 Game* game_retain (Game* self);
 #define _game_release0(var) ((var == NULL) ? NULL : (var = (game_release (var), NULL)))
+#define _SDL_DestroyWindow0(var) ((var == NULL) ? NULL : (var = (SDL_DestroyWindow (var), NULL)))
 
 typedef enum  {
 	EXCEPTION_SDLException,
-	EXCEPTION_InvalidValue
+	EXCEPTION_InvalidValue,
+	EXCEPTION_MapFileFormat
 } Exception;
 #define EXCEPTION exception_quark ()
 
-extern gdouble timerFreq;
-gdouble timerFreq = 0.0;
-extern SDL_Window* window;
-SDL_Window* window = NULL;
-extern SDL_Renderer* renderer;
-SDL_Renderer* renderer = NULL;
 extern gdouble startTime;
 gdouble startTime = 0.0;
 extern gint lastTick;
 gint lastTick = 0;
 
 GQuark exception_quark (void);
+gchar* formatTime (gint ticks);
 void sdlFailIf (gboolean cond, const gchar* reason);
-gdouble clamp (gdouble value, gdouble low, gdouble hi);
-gdouble epochTime (void);
-void initialize (void);
+void test (void);
 void game (void);
-void game_release (Game* self);
-Game* game_retain (Game* self);
+SDL_Window* sdx_initialize (gint width, gint height, const gchar* name);
 void game_free (Game* self);
-Game* game_new (SDL_Renderer* renderer);
+Game* game_new (void);
+gdouble sdx_getNow (void);
+void sdx_start (void);
 void mainloop (void* arg);
 static void _mainloop_em_arg_callback_func (void* arg);
-void game_handleInput (Game* self);
+void sdx_processEvents (void);
 void game_update (Game* self, gint tick);
 void game_render (Game* self, gint tick);
 
@@ -63,6 +53,23 @@ extern const SDL_Point WINDOW_SIZE;
 
 GQuark exception_quark (void) {
 	return g_quark_from_static_string ("exception-quark");
+}
+
+
+inline gchar* formatTime (gint ticks) {
+	gchar* result = NULL;
+	gint mins = 0;
+	gint _tmp0_ = 0;
+	gint secs = 0;
+	gint _tmp1_ = 0;
+	gchar* _tmp2_ = NULL;
+	_tmp0_ = ticks;
+	mins = (_tmp0_ / 50) / 60;
+	_tmp1_ = ticks;
+	secs = (_tmp1_ / 50) % 60;
+	_tmp2_ = g_strdup_printf ("%02d:%02d", (gint) mins, (gint) secs);
+	result = _tmp2_;
+	return result;
 }
 
 
@@ -98,79 +105,7 @@ inline void sdlFailIf (gboolean cond, const gchar* reason) {
 }
 
 
-inline gdouble clamp (gdouble value, gdouble low, gdouble hi) {
-	gdouble result = 0.0;
-	gdouble _tmp0_ = 0.0;
-	gdouble _tmp1_ = 0.0;
-	gdouble _tmp3_ = 0.0;
-	gdouble _tmp4_ = 0.0;
-	gdouble _tmp6_ = 0.0;
-	_tmp0_ = value;
-	_tmp1_ = low;
-	if (_tmp0_ < _tmp1_) {
-		gdouble _tmp2_ = 0.0;
-		_tmp2_ = low;
-		result = _tmp2_;
-		return result;
-	}
-	_tmp3_ = value;
-	_tmp4_ = hi;
-	if (_tmp3_ > _tmp4_) {
-		gdouble _tmp5_ = 0.0;
-		_tmp5_ = hi;
-		result = _tmp5_;
-		return result;
-	}
-	_tmp6_ = value;
-	result = _tmp6_;
-	return result;
-}
-
-
-inline gdouble epochTime (void) {
-	gdouble result = 0.0;
-	guint64 _tmp0_ = 0ULL;
-	gdouble _tmp1_ = 0.0;
-	_tmp0_ = SDL_GetPerformanceCounter ();
-	_tmp1_ = timerFreq;
-	result = ((gdouble) _tmp0_) / _tmp1_;
-	return result;
-}
-
-
-void initialize (void) {
-	gint _tmp0_ = 0;
-	gboolean _tmp1_ = FALSE;
-	gint _tmp2_ = 0;
-	gint _tmp3_ = 0;
-	SDL_Window* _tmp4_ = NULL;
-	SDL_Window* _tmp5_ = NULL;
-	SDL_Window* _tmp6_ = NULL;
-	SDL_Renderer* _tmp7_ = NULL;
-	SDL_Renderer* _tmp8_ = NULL;
-	gint _tmp9_ = 0;
-	guint64 _tmp10_ = 0ULL;
-	_tmp0_ = SDL_Init ((guint32) ((SDL_INIT_VIDEO | SDL_INIT_TIMER) | SDL_INIT_EVENTS));
-	sdlFailIf (_tmp0_ < 0, "SDL could not initialize!");
-	_tmp1_ = SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "2");
-	sdlFailIf (!_tmp1_, "Warning: Linear texture filtering not enabled!!");
-	_tmp2_ = WINDOW_SIZE.x;
-	_tmp3_ = WINDOW_SIZE.y;
-	_tmp4_ = SDL_CreateWindow ("Our own 2D platformer", (gint) SDL_WINDOWPOS_CENTERED_MASK, (gint) SDL_WINDOWPOS_CENTERED_MASK, _tmp2_, _tmp3_, (guint32) SDL_WINDOW_SHOWN);
-	_SDL_DestroyWindow0 (window);
-	window = _tmp4_;
-	_tmp5_ = window;
-	sdlFailIf (_tmp5_ == NULL, "Window could not be created!");
-	_tmp6_ = window;
-	_tmp7_ = SDL_CreateRenderer (_tmp6_, -1, (guint32) (SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
-	_SDL_DestroyRenderer0 (renderer);
-	renderer = _tmp7_;
-	_tmp8_ = renderer;
-	sdlFailIf (_tmp8_ == NULL, "Renderer could not be created!");
-	_tmp9_ = TTF_Init ();
-	sdlFailIf (_tmp9_ == (-1), "SDL_ttf could not initialize!");
-	_tmp10_ = SDL_GetPerformanceFrequency ();
-	timerFreq = (gdouble) _tmp10_;
+void test (void) {
 }
 
 
@@ -180,19 +115,27 @@ static void _mainloop_em_arg_callback_func (void* arg) {
 
 
 void game (void) {
+	SDL_Window* window = NULL;
+	gint _tmp0_ = 0;
+	gint _tmp1_ = 0;
+	SDL_Window* _tmp2_ = NULL;
 	Game* game = NULL;
-	SDL_Renderer* _tmp0_ = NULL;
-	Game* _tmp1_ = NULL;
-	gdouble _tmp2_ = 0.0;
-	initialize ();
-	_tmp0_ = renderer;
-	_tmp1_ = game_new (_tmp0_);
-	game = _tmp1_;
-	_tmp2_ = epochTime ();
-	startTime = _tmp2_;
+	Game* _tmp3_ = NULL;
+	gdouble _tmp4_ = 0.0;
+	test ();
+	_tmp0_ = WINDOW_SIZE.x;
+	_tmp1_ = WINDOW_SIZE.y;
+	_tmp2_ = sdx_initialize (_tmp0_, _tmp1_, "Shmupwarz");
+	window = _tmp2_;
+	_tmp3_ = game_new ();
+	game = _tmp3_;
+	_tmp4_ = sdx_getNow ();
+	startTime = _tmp4_;
 	lastTick = 0;
+	sdx_start ();
 	emscripten_set_main_loop_arg (_mainloop_em_arg_callback_func, game, 0, 1);
 	_game_release0 (game);
+	_SDL_DestroyWindow0 (window);
 }
 
 
@@ -205,54 +148,52 @@ void mainloop (void* arg) {
 	Game* game = NULL;
 	void* _tmp0_ = NULL;
 	Game* _tmp1_ = NULL;
-	Game* _tmp2_ = NULL;
 	gint newTick = 0;
+	gdouble _tmp2_ = 0.0;
 	gdouble _tmp3_ = 0.0;
-	gdouble _tmp4_ = 0.0;
-	gint _tmp11_ = 0;
-	Game* _tmp12_ = NULL;
-	gint _tmp13_ = 0;
+	gint _tmp10_ = 0;
+	Game* _tmp11_ = NULL;
+	gint _tmp12_ = 0;
 	_tmp0_ = arg;
 	_tmp1_ = _game_retain0 ((Game*) _tmp0_);
 	game = _tmp1_;
-	_tmp2_ = game;
-	game_handleInput (_tmp2_);
-	_tmp3_ = epochTime ();
-	_tmp4_ = startTime;
-	newTick = (gint) ((_tmp3_ - _tmp4_) * 50);
+	sdx_processEvents ();
+	_tmp2_ = sdx_getNow ();
+	_tmp3_ = startTime;
+	newTick = (gint) ((_tmp2_ - _tmp3_) * 50);
 	{
 		gint tick = 0;
-		gint _tmp5_ = 0;
-		_tmp5_ = lastTick;
-		tick = _tmp5_ + 1;
+		gint _tmp4_ = 0;
+		_tmp4_ = lastTick;
+		tick = _tmp4_ + 1;
 		{
-			gboolean _tmp6_ = FALSE;
-			_tmp6_ = TRUE;
+			gboolean _tmp5_ = FALSE;
+			_tmp5_ = TRUE;
 			while (TRUE) {
-				gint _tmp8_ = 0;
-				Game* _tmp9_ = NULL;
-				gint _tmp10_ = 0;
-				if (!_tmp6_) {
-					gint _tmp7_ = 0;
-					_tmp7_ = tick;
-					tick = _tmp7_ + 1;
+				gint _tmp7_ = 0;
+				Game* _tmp8_ = NULL;
+				gint _tmp9_ = 0;
+				if (!_tmp5_) {
+					gint _tmp6_ = 0;
+					_tmp6_ = tick;
+					tick = _tmp6_ + 1;
 				}
-				_tmp6_ = FALSE;
-				_tmp8_ = newTick;
-				if (!(tick <= _tmp8_)) {
+				_tmp5_ = FALSE;
+				_tmp7_ = newTick;
+				if (!(tick <= _tmp7_)) {
 					break;
 				}
-				_tmp9_ = game;
-				_tmp10_ = tick;
-				game_update (_tmp9_, _tmp10_);
+				_tmp8_ = game;
+				_tmp9_ = tick;
+				game_update (_tmp8_, _tmp9_);
 			}
 		}
 	}
-	_tmp11_ = newTick;
-	lastTick = _tmp11_;
-	_tmp12_ = game;
-	_tmp13_ = lastTick;
-	game_render (_tmp12_, _tmp13_);
+	_tmp10_ = newTick;
+	lastTick = _tmp10_;
+	_tmp11_ = game;
+	_tmp12_ = lastTick;
+	game_render (_tmp11_, _tmp12_);
 	_game_release0 (game);
 }
 

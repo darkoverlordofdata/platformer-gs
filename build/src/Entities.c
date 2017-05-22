@@ -4,17 +4,19 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
 #include <math.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_video.h>
 
+
+#define TYPE_BLIT (blit_get_type ())
+typedef struct _Blit Blit;
+typedef struct _Entities Entities;
 
 #define TYPE_ENTITY (entity_get_type ())
 
@@ -24,9 +26,7 @@
 
 #define TYPE_POINT2D (point2d_get_type ())
 typedef struct _Point2d Point2d;
-
-#define TYPE_SPRITE (sprite_get_type ())
-typedef struct _Sprite Sprite;
+typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
 
 #define TYPE_VECTOR2D (vector2d_get_type ())
 typedef struct _Vector2d Vector2d;
@@ -37,50 +37,50 @@ typedef struct _Timer Timer;
 #define TYPE_HEALTH (health_get_type ())
 typedef struct _Health Health;
 typedef struct _Entity Entity;
+
+#define SDX_TYPE_BLIT (sdx_blit_get_type ())
+typedef struct _sdxBlit sdxBlit;
+
+#define SDX_GRAPHICS_TYPE_SCALE (sdx_graphics_scale_get_type ())
+typedef struct _sdxgraphicsScale sdxgraphicsScale;
 #define _g_free0(var) (var = (g_free (var), NULL))
+void sdx_graphics_sprite_release (sdxgraphicsSprite* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
+sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
+#define _sdx_graphics_sprite_release0(var) ((var == NULL) ? NULL : (var = (sdx_graphics_sprite_release (var), NULL)))
 #define _vector2d_free0(var) ((var == NULL) ? NULL : (var = (vector2d_free (var), NULL)))
 #define _timer_free0(var) ((var == NULL) ? NULL : (var = (timer_free (var), NULL)))
 #define _health_free0(var) ((var == NULL) ? NULL : (var = (health_free (var), NULL)))
 
-#define TYPE_SEGMENT (segment_get_type ())
-typedef struct _Segment Segment;
-#define _SDL_FreeSurface0(var) ((var == NULL) ? NULL : (var = (SDL_FreeSurface (var), NULL)))
-#define _SDL_DestroyTexture0(var) ((var == NULL) ? NULL : (var = (SDL_DestroyTexture (var), NULL)))
+struct _Blit {
+	SDL_Rect source;
+	SDL_Rect dest;
+	SDL_RendererFlip flip;
+};
+
+typedef Blit* (*Compositor) (gint x, gint y, int* result_length1, void* user_data);
+struct _Entities {
+	gint retainCount__;
+};
 
 typedef enum  {
-	CATEGORY_BACKGROUND = 0,
-	CATEGORY_BULLET = 1,
-	CATEGORY_ENEMY = 2,
-	CATEGORY_EXPLOSION = 3,
-	CATEGORY_PARTICLE = 4,
-	CATEGORY_PLAYER = 5
+	CATEGORY_BACKGROUND,
+	CATEGORY_PLAYER,
+	CATEGORY_BONUS
 } Category;
 
 typedef enum  {
-	ACTOR_DEFAULT = 0,
-	ACTOR_BACKGROUND = 1,
-	ACTOR_TEXT = 2,
-	ACTOR_LIVES = 3,
-	ACTOR_ENEMY1 = 4,
-	ACTOR_ENEMY2 = 5,
-	ACTOR_ENEMY3 = 6,
-	ACTOR_PLAYER = 7,
-	ACTOR_BULLET = 8,
-	ACTOR_EXPLOSION = 9,
-	ACTOR_BANG = 10,
-	ACTOR_PARTICLE = 11,
-	ACTOR_HUD = 12
+	ACTOR_DEFAULT,
+	ACTOR_BACKGROUND,
+	ACTOR_TEXT,
+	ACTOR_PLAYER,
+	ACTOR_BONUS,
+	ACTOR_HUD
 } Actor;
 
 struct _Point2d {
 	gdouble x;
 	gdouble y;
-};
-
-struct _Sprite {
-	SDL_Texture* texture;
-	gint width;
-	gint height;
 };
 
 struct _Vector2d {
@@ -107,7 +107,8 @@ struct _Entity {
 	Actor actor;
 	Point2d position;
 	SDL_Rect bounds;
-	Sprite sprite;
+	sdxgraphicsSprite* sprite;
+	Vector2d* size;
 	Vector2d* scale;
 	SDL_Color* tint;
 	Timer* expires;
@@ -115,24 +116,56 @@ struct _Entity {
 	Vector2d* velocity;
 };
 
-struct _Segment {
+struct _sdxBlit {
 	SDL_Rect source;
 	SDL_Rect dest;
 	SDL_RendererFlip flip;
 };
 
-typedef Segment* (*SpriteBuilder) (gint x, gint y, int* result_length1, void* user_data);
+typedef sdxBlit* (*sdxCompositor) (gint x, gint y, int* result_length1, void* user_data);
+struct _sdxgraphicsScale {
+	gdouble x;
+	gdouble y;
+};
+
+struct _sdxgraphicsSprite {
+	gint _retainCount;
+	SDL_Texture* texture;
+	SDL_Surface* surface;
+	gint width;
+	gint height;
+	gint x;
+	gint y;
+	sdxgraphicsScale scale;
+	SDL_Color color;
+	gboolean centered;
+	gint layer;
+	gint id;
+	gchar* path;
+	gboolean isText;
+};
 
 
+extern gint entities_uniqueId;
+gint entities_uniqueId = 0;
+
+GType blit_get_type (void) G_GNUC_CONST;
+Blit* blit_dup (const Blit* self);
+void blit_free (Blit* self);
+void entities_free (Entities* self);
+static void entities_instance_init (Entities * self);
+Entities* entities_retain (Entities* self);
+void entities_release (Entities* self);
+void entities_free (Entities* self);
+Entities* entities_new (void);
+void sdx_graphics_sprite_initialize (gint length);
 GType entity_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
 GType point2d_get_type (void) G_GNUC_CONST;
 Point2d* point2d_dup (const Point2d* self);
 void point2d_free (Point2d* self);
-GType sprite_get_type (void) G_GNUC_CONST;
-Sprite* sprite_dup (const Sprite* self);
-void sprite_free (Sprite* self);
+void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
 GType vector2d_get_type (void) G_GNUC_CONST;
 Vector2d* vector2d_dup (const Vector2d* self);
 void vector2d_free (Vector2d* self);
@@ -146,23 +179,60 @@ Entity* entity_dup (const Entity* self);
 void entity_free (Entity* self);
 void entity_copy (const Entity* self, Entity* dest);
 void entity_destroy (Entity* self);
+void entities_createPlayer (Entities* self, Entity* result);
+GType sdx_blit_get_type (void) G_GNUC_CONST;
+sdxBlit* sdx_blit_dup (const sdxBlit* self);
+void sdx_blit_free (sdxBlit* self);
+sdxgraphicsSprite* sdx_graphics_sprite_composite (const gchar* path, sdxCompositor builder, void* builder_target);
+Blit* entities_composePlayer (Entities* self, gint x, gint y, int* result_length1);
+static sdxBlit* _entities_composePlayer_sdx_compositor (gint x, gint y, int* result_length1, gpointer self);
+GType sdx_graphics_scale_get_type (void) G_GNUC_CONST;
+sdxgraphicsScale* sdx_graphics_scale_dup (const sdxgraphicsScale* self);
+void sdx_graphics_scale_free (sdxgraphicsScale* self);
 static SDL_Color* _sdl_video_color_dup (SDL_Color* self);
-void CreatePlayer (SDL_Texture* texture, gint h, gint w, Entity* result);
-void point2d (gdouble x, gdouble y, Point2d* result);
-void rect (gint x, gint y, gint h, gint w, SDL_Rect* result);
-void sprite (SDL_Texture* texture, gint width, gint height, Sprite* result);
-void vector2d (gdouble x, gdouble y, Vector2d* result);
-SDL_Color color (guint8 r, guint8 g, guint8 b, guint8 a);
-void timer (gint begin, gint finish, gint best, Timer* result);
-void health (gint curHealth, gint maxHealth, Health* result);
-GType segment_get_type (void) G_GNUC_CONST;
-Segment* segment_dup (const Segment* self);
-void segment_free (Segment* self);
-Segment* playerSegments (gint x, gint y, int* result_length1);
-void segment (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Segment* result);
-SDL_Texture* buildSprite (SDL_Renderer* renderer, SDL_Surface* source, SpriteBuilder builder, void* builder_target, gint h, gint w);
-SDL_Texture* loadTexture (SDL_Renderer* renderer, const gchar* path);
-void sdlFailIf (gboolean cond, const gchar* reason);
+void entities_createBerry (Entities* self, Entity* result);
+sdxgraphicsSprite* sdx_graphics_sprite_new (const gchar* path);
+void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result);
+
+
+Entities* entities_retain (Entities* self) {
+	Entities* result = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	g_atomic_int_add ((volatile gint *) (&self->retainCount__), 1);
+	result = self;
+	return result;
+}
+
+
+void entities_release (Entities* self) {
+	gboolean _tmp0_ = FALSE;
+	g_return_if_fail (self != NULL);
+	_tmp0_ = g_atomic_int_dec_and_test ((volatile gint *) (&self->retainCount__));
+	if (_tmp0_) {
+		entities_free (self);
+	}
+}
+
+
+Entities* entities_new (void) {
+	Entities* self;
+	self = g_slice_new0 (Entities);
+	entities_instance_init (self);
+	sdx_graphics_sprite_initialize (10);
+	return self;
+}
+
+
+static sdxBlit* _entities_composePlayer_sdx_compositor (gint x, gint y, int* result_length1, gpointer self) {
+	sdxBlit* result;
+	result = entities_composePlayer ((Entities*) self, x, y, result_length1);
+	return result;
+}
+
+
+static gpointer _sdx_graphics_sprite_retain0 (gpointer self) {
+	return self ? sdx_graphics_sprite_retain (self) : NULL;
+}
 
 
 static gpointer _vector2d_dup0 (gpointer self) {
@@ -193,254 +263,317 @@ static gpointer _health_dup0 (gpointer self) {
 }
 
 
-void entity_copy (const Entity* self, Entity* dest) {
-	gint _tmp0_ = 0;
-	const gchar* _tmp1_ = NULL;
+void entities_createPlayer (Entities* self, Entity* result) {
+	sdxgraphicsSprite* sprite = NULL;
+	sdxgraphicsSprite* _tmp0_ = NULL;
+	gint _tmp1_ = 0;
 	gchar* _tmp2_ = NULL;
-	gboolean _tmp3_ = FALSE;
-	Category _tmp4_ = 0;
-	Actor _tmp5_ = 0;
-	Point2d _tmp6_ = {0};
-	SDL_Rect _tmp7_ = {0};
-	Sprite _tmp8_ = {0};
-	Vector2d* _tmp9_ = NULL;
-	Vector2d* _tmp10_ = NULL;
-	SDL_Color* _tmp11_ = NULL;
-	SDL_Color* _tmp12_ = NULL;
-	Timer* _tmp13_ = NULL;
-	Timer* _tmp14_ = NULL;
-	Health* _tmp15_ = NULL;
-	Health* _tmp16_ = NULL;
-	Vector2d* _tmp17_ = NULL;
-	Vector2d* _tmp18_ = NULL;
-	_tmp0_ = (*self).id;
-	(*dest).id = _tmp0_;
-	_tmp1_ = (*self).name;
-	_tmp2_ = g_strdup (_tmp1_);
-	_g_free0 ((*dest).name);
-	(*dest).name = _tmp2_;
-	_tmp3_ = (*self).active;
-	(*dest).active = _tmp3_;
-	_tmp4_ = (*self).category;
-	(*dest).category = _tmp4_;
-	_tmp5_ = (*self).actor;
-	(*dest).actor = _tmp5_;
-	_tmp6_ = (*self).position;
-	(*dest).position = _tmp6_;
-	_tmp7_ = (*self).bounds;
-	(*dest).bounds = _tmp7_;
-	_tmp8_ = (*self).sprite;
-	(*dest).sprite = _tmp8_;
-	_tmp9_ = (*self).scale;
-	_tmp10_ = _vector2d_dup0 (_tmp9_);
-	_vector2d_free0 ((*dest).scale);
-	(*dest).scale = _tmp10_;
-	_tmp11_ = (*self).tint;
-	_tmp12_ = __sdl_video_color_dup0 (_tmp11_);
-	_g_free0 ((*dest).tint);
-	(*dest).tint = _tmp12_;
-	_tmp13_ = (*self).expires;
-	_tmp14_ = _timer_dup0 (_tmp13_);
-	_timer_free0 ((*dest).expires);
-	(*dest).expires = _tmp14_;
-	_tmp15_ = (*self).health;
-	_tmp16_ = _health_dup0 (_tmp15_);
-	_health_free0 ((*dest).health);
-	(*dest).health = _tmp16_;
-	_tmp17_ = (*self).velocity;
-	_tmp18_ = _vector2d_dup0 (_tmp17_);
-	_vector2d_free0 ((*dest).velocity);
-	(*dest).velocity = _tmp18_;
-}
-
-
-void entity_destroy (Entity* self) {
-	_g_free0 ((*self).name);
-	_vector2d_free0 ((*self).scale);
-	_g_free0 ((*self).tint);
-	_timer_free0 ((*self).expires);
-	_health_free0 ((*self).health);
-	_vector2d_free0 ((*self).velocity);
-}
-
-
-Entity* entity_dup (const Entity* self) {
-	Entity* dup;
-	dup = g_new0 (Entity, 1);
-	entity_copy (self, dup);
-	return dup;
-}
-
-
-void entity_free (Entity* self) {
-	entity_destroy (self);
-	g_free (self);
-}
-
-
-GType entity_get_type (void) {
-	static volatile gsize entity_type_id__volatile = 0;
-	if (g_once_init_enter (&entity_type_id__volatile)) {
-		GType entity_type_id;
-		entity_type_id = g_boxed_type_register_static ("Entity", (GBoxedCopyFunc) entity_dup, (GBoxedFreeFunc) entity_free);
-		g_once_init_leave (&entity_type_id__volatile, entity_type_id);
-	}
-	return entity_type_id__volatile;
-}
-
-
-void CreatePlayer (SDL_Texture* texture, gint h, gint w, Entity* result) {
-	gchar* _tmp0_ = NULL;
-	Point2d _tmp1_ = {0};
-	gint _tmp2_ = 0;
-	gint _tmp3_ = 0;
-	SDL_Rect _tmp4_ = {0};
-	SDL_Texture* _tmp5_ = NULL;
+	sdxgraphicsSprite* _tmp3_ = NULL;
+	Point2d _tmp4_ = {0};
+	gint _tmp5_ = 0;
 	gint _tmp6_ = 0;
-	gint _tmp7_ = 0;
-	Sprite _tmp8_ = {0};
-	Vector2d _tmp9_ = {0};
-	Vector2d* _tmp10_ = NULL;
-	SDL_Color _tmp11_ = {0};
-	SDL_Color* _tmp12_ = NULL;
-	Timer _tmp13_ = {0};
-	Timer* _tmp14_ = NULL;
-	Health _tmp15_ = {0};
-	Health* _tmp16_ = NULL;
-	Vector2d _tmp17_ = {0};
-	Vector2d* _tmp18_ = NULL;
-	Entity _tmp19_ = {0};
-	g_return_if_fail (texture != NULL);
-	_tmp0_ = g_strdup ("Player");
-	point2d ((gdouble) 170, (gdouble) 500, &_tmp1_);
-	_tmp2_ = h;
-	_tmp3_ = w;
-	rect (0, 0, _tmp2_, _tmp3_, &_tmp4_);
-	_tmp5_ = texture;
-	_tmp6_ = h;
-	_tmp7_ = w;
-	sprite (_tmp5_, _tmp6_, _tmp7_, &_tmp8_);
-	vector2d ((gdouble) 1, (gdouble) 1, &_tmp9_);
-	_tmp10_ = _vector2d_dup0 (&_tmp9_);
-	_tmp11_ = color ((guint8) 0, (guint8) 0, (guint8) 0, (guint8) 255);
-	_tmp12_ = __sdl_video_color_dup0 (&_tmp11_);
-	timer (-1, -1, -1, &_tmp13_);
-	_tmp14_ = _timer_dup0 (&_tmp13_);
-	health (0, 0, &_tmp15_);
-	_tmp16_ = _health_dup0 (&_tmp15_);
-	vector2d ((gdouble) 0, (gdouble) 0, &_tmp17_);
-	_tmp18_ = _vector2d_dup0 (&_tmp17_);
-	memset (&_tmp19_, 0, sizeof (Entity));
-	_tmp19_.id = 0;
-	_g_free0 (_tmp19_.name);
-	_tmp19_.name = _tmp0_;
-	_tmp19_.active = TRUE;
-	_tmp19_.category = CATEGORY_PLAYER;
-	_tmp19_.actor = ACTOR_PLAYER;
-	_tmp19_.position = _tmp1_;
-	_tmp19_.bounds = _tmp4_;
-	_tmp19_.sprite = _tmp8_;
-	_vector2d_free0 (_tmp19_.scale);
-	_tmp19_.scale = _tmp10_;
-	_g_free0 (_tmp19_.tint);
-	_tmp19_.tint = _tmp12_;
-	_timer_free0 (_tmp19_.expires);
-	_tmp19_.expires = _tmp14_;
-	_health_free0 (_tmp19_.health);
-	_tmp19_.health = _tmp16_;
-	_vector2d_free0 (_tmp19_.velocity);
-	_tmp19_.velocity = _tmp18_;
-	*result = _tmp19_;
+	SDL_Rect _tmp7_ = {0};
+	gint _tmp8_ = 0;
+	gint _tmp9_ = 0;
+	Vector2d _tmp10_ = {0};
+	Vector2d* _tmp11_ = NULL;
+	Vector2d _tmp12_ = {0};
+	Vector2d* _tmp13_ = NULL;
+	SDL_Color _tmp14_ = {0};
+	SDL_Color* _tmp15_ = NULL;
+	Timer _tmp16_ = {0};
+	Timer* _tmp17_ = NULL;
+	Health _tmp18_ = {0};
+	Health* _tmp19_ = NULL;
+	Vector2d _tmp20_ = {0};
+	Vector2d* _tmp21_ = NULL;
+	Entity _tmp22_ = {0};
+	g_return_if_fail (self != NULL);
+	_tmp0_ = sdx_graphics_sprite_composite ("assets/player.png", _entities_composePlayer_sdx_compositor, self);
+	sprite = _tmp0_;
+	_tmp1_ = entities_uniqueId;
+	entities_uniqueId = _tmp1_ + 1;
+	_tmp2_ = g_strdup ("Player");
+	_tmp3_ = _sdx_graphics_sprite_retain0 (sprite);
+	_tmp4_.x = (gdouble) 170;
+	_tmp4_.y = (gdouble) 500;
+	_tmp5_ = sprite->height;
+	_tmp6_ = sprite->width;
+	_tmp7_.x = 0;
+	_tmp7_.y = 0;
+	_tmp7_.w = (guint) _tmp5_;
+	_tmp7_.h = (guint) _tmp6_;
+	_tmp8_ = sprite->height;
+	_tmp9_ = sprite->width;
+	_tmp10_.x = (gdouble) _tmp8_;
+	_tmp10_.y = (gdouble) _tmp9_;
+	_tmp11_ = _vector2d_dup0 (&_tmp10_);
+	_tmp12_.x = (gdouble) 1;
+	_tmp12_.y = (gdouble) 1;
+	_tmp13_ = _vector2d_dup0 (&_tmp12_);
+	_tmp14_.r = (guint8) 0;
+	_tmp14_.g = (guint8) 0;
+	_tmp14_.b = (guint8) 0;
+	_tmp14_.a = (guint8) 0;
+	_tmp15_ = __sdl_video_color_dup0 (&_tmp14_);
+	_tmp16_.begin = 0;
+	_tmp16_.finish = 0;
+	_tmp16_.best = 0;
+	_tmp17_ = _timer_dup0 (&_tmp16_);
+	_tmp18_.curHealth = 0;
+	_tmp18_.maxHealth = 0;
+	_tmp19_ = _health_dup0 (&_tmp18_);
+	_tmp20_.x = (gdouble) 0;
+	_tmp20_.y = (gdouble) 0;
+	_tmp21_ = _vector2d_dup0 (&_tmp20_);
+	memset (&_tmp22_, 0, sizeof (Entity));
+	_tmp22_.id = _tmp1_;
+	_g_free0 (_tmp22_.name);
+	_tmp22_.name = _tmp2_;
+	_tmp22_.active = TRUE;
+	_tmp22_.category = CATEGORY_PLAYER;
+	_tmp22_.actor = ACTOR_PLAYER;
+	_sdx_graphics_sprite_release0 (_tmp22_.sprite);
+	_tmp22_.sprite = _tmp3_;
+	_tmp22_.position = _tmp4_;
+	_tmp22_.bounds = _tmp7_;
+	_vector2d_free0 (_tmp22_.size);
+	_tmp22_.size = _tmp11_;
+	_vector2d_free0 (_tmp22_.scale);
+	_tmp22_.scale = _tmp13_;
+	_g_free0 (_tmp22_.tint);
+	_tmp22_.tint = _tmp15_;
+	_timer_free0 (_tmp22_.expires);
+	_tmp22_.expires = _tmp17_;
+	_health_free0 (_tmp22_.health);
+	_tmp22_.health = _tmp19_;
+	_vector2d_free0 (_tmp22_.velocity);
+	_tmp22_.velocity = _tmp21_;
+	*result = _tmp22_;
+	_sdx_graphics_sprite_release0 (sprite);
 	return;
 }
 
 
-Segment* playerSegments (gint x, gint y, int* result_length1) {
-	Segment* result = NULL;
+void entities_createBerry (Entities* self, Entity* result) {
+	sdxgraphicsSprite* sprite = NULL;
+	sdxgraphicsSprite* _tmp0_ = NULL;
+	gint _tmp1_ = 0;
+	gchar* _tmp2_ = NULL;
+	Point2d _tmp3_ = {0};
+	SDL_Rect _tmp4_ = {0};
+	sdxgraphicsSprite* _tmp5_ = NULL;
+	Vector2d _tmp6_ = {0};
+	Vector2d* _tmp7_ = NULL;
+	Vector2d _tmp8_ = {0};
+	Vector2d* _tmp9_ = NULL;
+	SDL_Color _tmp10_ = {0};
+	SDL_Color* _tmp11_ = NULL;
+	Timer _tmp12_ = {0};
+	Timer* _tmp13_ = NULL;
+	Health _tmp14_ = {0};
+	Health* _tmp15_ = NULL;
+	Vector2d _tmp16_ = {0};
+	Vector2d* _tmp17_ = NULL;
+	Entity _tmp18_ = {0};
+	g_return_if_fail (self != NULL);
+	_tmp0_ = sdx_graphics_sprite_new ("assets/berry.png");
+	sprite = _tmp0_;
+	_tmp1_ = entities_uniqueId;
+	entities_uniqueId = _tmp1_ + 1;
+	_tmp2_ = g_strdup ("Bonus");
+	_tmp3_.x = (gdouble) 400;
+	_tmp3_.y = (gdouble) 400;
+	_tmp4_.x = 0;
+	_tmp4_.y = 0;
+	_tmp4_.w = (guint) 64;
+	_tmp4_.h = (guint) 64;
+	_tmp5_ = _sdx_graphics_sprite_retain0 (sprite);
+	_tmp6_.x = (gdouble) 64;
+	_tmp6_.y = (gdouble) 64;
+	_tmp7_ = _vector2d_dup0 (&_tmp6_);
+	_tmp8_.x = (gdouble) 1;
+	_tmp8_.y = (gdouble) 1;
+	_tmp9_ = _vector2d_dup0 (&_tmp8_);
+	_tmp10_.r = (guint8) 0;
+	_tmp10_.g = (guint8) 0;
+	_tmp10_.b = (guint8) 0;
+	_tmp10_.a = (guint8) 0;
+	_tmp11_ = __sdl_video_color_dup0 (&_tmp10_);
+	_tmp12_.begin = 0;
+	_tmp12_.finish = 0;
+	_tmp12_.best = 0;
+	_tmp13_ = _timer_dup0 (&_tmp12_);
+	_tmp14_.curHealth = 0;
+	_tmp14_.maxHealth = 0;
+	_tmp15_ = _health_dup0 (&_tmp14_);
+	_tmp16_.x = (gdouble) 0;
+	_tmp16_.y = (gdouble) 0;
+	_tmp17_ = _vector2d_dup0 (&_tmp16_);
+	memset (&_tmp18_, 0, sizeof (Entity));
+	_tmp18_.id = _tmp1_;
+	_g_free0 (_tmp18_.name);
+	_tmp18_.name = _tmp2_;
+	_tmp18_.active = TRUE;
+	_tmp18_.category = CATEGORY_BONUS;
+	_tmp18_.actor = ACTOR_BONUS;
+	_tmp18_.position = _tmp3_;
+	_tmp18_.bounds = _tmp4_;
+	_sdx_graphics_sprite_release0 (_tmp18_.sprite);
+	_tmp18_.sprite = _tmp5_;
+	_vector2d_free0 (_tmp18_.size);
+	_tmp18_.size = _tmp7_;
+	_vector2d_free0 (_tmp18_.scale);
+	_tmp18_.scale = _tmp9_;
+	_g_free0 (_tmp18_.tint);
+	_tmp18_.tint = _tmp11_;
+	_timer_free0 (_tmp18_.expires);
+	_tmp18_.expires = _tmp13_;
+	_health_free0 (_tmp18_.health);
+	_tmp18_.health = _tmp15_;
+	_vector2d_free0 (_tmp18_.velocity);
+	_tmp18_.velocity = _tmp17_;
+	*result = _tmp18_;
+	_sdx_graphics_sprite_release0 (sprite);
+	return;
+}
+
+
+Blit* entities_composePlayer (Entities* self, gint x, gint y, int* result_length1) {
+	Blit* result = NULL;
 	SDL_Rect _tmp0_ = {0};
 	gint _tmp1_ = 0;
 	gint _tmp2_ = 0;
 	SDL_Rect _tmp3_ = {0};
-	Segment _tmp4_ = {0};
+	Blit _tmp4_ = {0};
 	SDL_Rect _tmp5_ = {0};
 	gint _tmp6_ = 0;
 	gint _tmp7_ = 0;
 	SDL_Rect _tmp8_ = {0};
-	Segment _tmp9_ = {0};
+	Blit _tmp9_ = {0};
 	SDL_Rect _tmp10_ = {0};
 	gint _tmp11_ = 0;
 	gint _tmp12_ = 0;
 	SDL_Rect _tmp13_ = {0};
-	Segment _tmp14_ = {0};
+	Blit _tmp14_ = {0};
 	SDL_Rect _tmp15_ = {0};
 	gint _tmp16_ = 0;
 	gint _tmp17_ = 0;
 	SDL_Rect _tmp18_ = {0};
-	Segment _tmp19_ = {0};
+	Blit _tmp19_ = {0};
 	SDL_Rect _tmp20_ = {0};
 	gint _tmp21_ = 0;
 	gint _tmp22_ = 0;
 	SDL_Rect _tmp23_ = {0};
-	Segment _tmp24_ = {0};
+	Blit _tmp24_ = {0};
 	SDL_Rect _tmp25_ = {0};
 	gint _tmp26_ = 0;
 	gint _tmp27_ = 0;
 	SDL_Rect _tmp28_ = {0};
-	Segment _tmp29_ = {0};
+	Blit _tmp29_ = {0};
 	SDL_Rect _tmp30_ = {0};
 	gint _tmp31_ = 0;
 	gint _tmp32_ = 0;
 	SDL_Rect _tmp33_ = {0};
-	Segment _tmp34_ = {0};
+	Blit _tmp34_ = {0};
 	SDL_Rect _tmp35_ = {0};
 	gint _tmp36_ = 0;
 	gint _tmp37_ = 0;
 	SDL_Rect _tmp38_ = {0};
-	Segment _tmp39_ = {0};
-	Segment* _tmp40_ = NULL;
-	Segment* _tmp41_ = NULL;
+	Blit _tmp39_ = {0};
+	Blit* _tmp40_ = NULL;
+	Blit* _tmp41_ = NULL;
 	gint _tmp41__length1 = 0;
-	rect (192, 64, 64, 32, &_tmp0_);
+	g_return_val_if_fail (self != NULL, NULL);
+	_tmp0_.x = 192;
+	_tmp0_.y = 64;
+	_tmp0_.w = (guint) 64;
+	_tmp0_.h = (guint) 32;
 	_tmp1_ = x;
 	_tmp2_ = y;
-	rect (_tmp1_ - 60, _tmp2_, 96, 48, &_tmp3_);
-	segment (&_tmp0_, &_tmp3_, SDL_FLIP_NONE, &_tmp4_);
-	rect (96, 0, 96, 96, &_tmp5_);
+	_tmp3_.x = _tmp1_ - 60;
+	_tmp3_.y = _tmp2_;
+	_tmp3_.w = (guint) 96;
+	_tmp3_.h = (guint) 48;
+	blit (&_tmp0_, &_tmp3_, SDL_FLIP_NONE, &_tmp4_);
+	_tmp5_.x = 96;
+	_tmp5_.y = 0;
+	_tmp5_.w = (guint) 96;
+	_tmp5_.h = (guint) 96;
 	_tmp6_ = x;
 	_tmp7_ = y;
-	rect (_tmp6_ - 48, _tmp7_ - 48, 96, 96, &_tmp8_);
-	segment (&_tmp5_, &_tmp8_, SDL_FLIP_NONE, &_tmp9_);
-	rect (192, 64, 64, 32, &_tmp10_);
+	_tmp8_.x = _tmp6_ - 48;
+	_tmp8_.y = _tmp7_ - 48;
+	_tmp8_.w = (guint) 96;
+	_tmp8_.h = (guint) 96;
+	blit (&_tmp5_, &_tmp8_, SDL_FLIP_NONE, &_tmp9_);
+	_tmp10_.x = 192;
+	_tmp10_.y = 64;
+	_tmp10_.w = (guint) 64;
+	_tmp10_.h = (guint) 32;
 	_tmp11_ = x;
 	_tmp12_ = y;
-	rect (_tmp11_ - 36, _tmp12_, 96, 48, &_tmp13_);
-	segment (&_tmp10_, &_tmp13_, SDL_FLIP_NONE, &_tmp14_);
-	rect (192, 32, 64, 32, &_tmp15_);
+	_tmp13_.x = _tmp11_ - 36;
+	_tmp13_.y = _tmp12_;
+	_tmp13_.w = (guint) 96;
+	_tmp13_.h = (guint) 48;
+	blit (&_tmp10_, &_tmp13_, SDL_FLIP_NONE, &_tmp14_);
+	_tmp15_.x = 192;
+	_tmp15_.y = 32;
+	_tmp15_.w = (guint) 64;
+	_tmp15_.h = (guint) 32;
 	_tmp16_ = x;
 	_tmp17_ = y;
-	rect (_tmp16_ - 60, _tmp17_, 96, 48, &_tmp18_);
-	segment (&_tmp15_, &_tmp18_, SDL_FLIP_NONE, &_tmp19_);
-	rect (0, 0, 96, 96, &_tmp20_);
+	_tmp18_.x = _tmp16_ - 60;
+	_tmp18_.y = _tmp17_;
+	_tmp18_.w = (guint) 96;
+	_tmp18_.h = (guint) 48;
+	blit (&_tmp15_, &_tmp18_, SDL_FLIP_NONE, &_tmp19_);
+	_tmp20_.x = 0;
+	_tmp20_.y = 0;
+	_tmp20_.w = (guint) 96;
+	_tmp20_.h = (guint) 96;
 	_tmp21_ = x;
 	_tmp22_ = y;
-	rect (_tmp21_ - 48, _tmp22_ - 48, 96, 96, &_tmp23_);
-	segment (&_tmp20_, &_tmp23_, SDL_FLIP_NONE, &_tmp24_);
-	rect (192, 32, 64, 32, &_tmp25_);
+	_tmp23_.x = _tmp21_ - 48;
+	_tmp23_.y = _tmp22_ - 48;
+	_tmp23_.w = (guint) 96;
+	_tmp23_.h = (guint) 96;
+	blit (&_tmp20_, &_tmp23_, SDL_FLIP_NONE, &_tmp24_);
+	_tmp25_.x = 192;
+	_tmp25_.y = 32;
+	_tmp25_.w = (guint) 64;
+	_tmp25_.h = (guint) 32;
 	_tmp26_ = x;
 	_tmp27_ = y;
-	rect (_tmp26_ - 36, _tmp27_, 96, 48, &_tmp28_);
-	segment (&_tmp25_, &_tmp28_, SDL_FLIP_NONE, &_tmp29_);
-	rect (64, 96, 32, 32, &_tmp30_);
+	_tmp28_.x = _tmp26_ - 36;
+	_tmp28_.y = _tmp27_;
+	_tmp28_.w = (guint) 96;
+	_tmp28_.h = (guint) 48;
+	blit (&_tmp25_, &_tmp28_, SDL_FLIP_NONE, &_tmp29_);
+	_tmp30_.x = 64;
+	_tmp30_.y = 96;
+	_tmp30_.w = (guint) 32;
+	_tmp30_.h = (guint) 32;
 	_tmp31_ = x;
 	_tmp32_ = y;
-	rect (_tmp31_ - 18, _tmp32_ - 21, 36, 36, &_tmp33_);
-	segment (&_tmp30_, &_tmp33_, SDL_FLIP_NONE, &_tmp34_);
-	rect (64, 96, 32, 32, &_tmp35_);
+	_tmp33_.x = _tmp31_ - 18;
+	_tmp33_.y = _tmp32_ - 21;
+	_tmp33_.w = (guint) 36;
+	_tmp33_.h = (guint) 36;
+	blit (&_tmp30_, &_tmp33_, SDL_FLIP_NONE, &_tmp34_);
+	_tmp35_.x = 64;
+	_tmp35_.y = 96;
+	_tmp35_.w = (guint) 32;
+	_tmp35_.h = (guint) 32;
 	_tmp36_ = x;
 	_tmp37_ = y;
-	rect (_tmp36_ - 6, _tmp37_ - 21, 36, 36, &_tmp38_);
-	segment (&_tmp35_, &_tmp38_, SDL_FLIP_HORIZONTAL, &_tmp39_);
-	_tmp40_ = g_new0 (Segment, 8);
+	_tmp38_.x = _tmp36_ - 6;
+	_tmp38_.y = _tmp37_ - 21;
+	_tmp38_.w = (guint) 36;
+	_tmp38_.h = (guint) 36;
+	blit (&_tmp35_, &_tmp38_, SDL_FLIP_HORIZONTAL, &_tmp39_);
+	_tmp40_ = g_new0 (Blit, 8);
 	_tmp40_[0] = _tmp4_;
 	_tmp40_[1] = _tmp9_;
 	_tmp40_[2] = _tmp14_;
@@ -459,113 +592,13 @@ Segment* playerSegments (gint x, gint y, int* result_length1) {
 }
 
 
-SDL_Texture* buildSprite (SDL_Renderer* renderer, SDL_Surface* source, SpriteBuilder builder, void* builder_target, gint h, gint w) {
-	SDL_Texture* result = NULL;
-	guint32 flags = 0U;
-	guint32 rmask = 0U;
-	guint32 gmask = 0U;
-	guint32 bmask = 0U;
-	guint32 amask = 0U;
-	SDL_Surface* surface = NULL;
-	guint32 _tmp0_ = 0U;
-	gint _tmp1_ = 0;
-	gint _tmp2_ = 0;
-	guint32 _tmp3_ = 0U;
-	guint32 _tmp4_ = 0U;
-	guint32 _tmp5_ = 0U;
-	guint32 _tmp6_ = 0U;
-	SDL_Surface* _tmp7_ = NULL;
-	SpriteBuilder _tmp8_ = NULL;
-	void* _tmp8__target = NULL;
-	gint _tmp9_ = 0;
-	gint _tmp10_ = 0;
-	gint _tmp11_ = 0;
-	Segment* _tmp12_ = NULL;
-	SDL_Texture* texture = NULL;
-	SDL_Renderer* _tmp19_ = NULL;
-	SDL_Surface* _tmp20_ = NULL;
-	SDL_Texture* _tmp21_ = NULL;
-	g_return_val_if_fail (renderer != NULL, NULL);
-	g_return_val_if_fail (source != NULL, NULL);
-	flags = (guint32) 0x00010000;
-	rmask = (guint32) 0x000000ff;
-	gmask = (guint32) 0x0000ff00;
-	bmask = (guint32) 0x00ff0000;
-	amask = (guint32) 0xff000000LL;
-	_tmp0_ = flags;
-	_tmp1_ = h;
-	_tmp2_ = w;
-	_tmp3_ = rmask;
-	_tmp4_ = gmask;
-	_tmp5_ = bmask;
-	_tmp6_ = amask;
-	_tmp7_ = SDL_CreateRGBSurface (_tmp0_, _tmp1_, _tmp2_, 32, _tmp3_, _tmp4_, _tmp5_, _tmp6_);
-	surface = _tmp7_;
-	_tmp8_ = builder;
-	_tmp8__target = builder_target;
-	_tmp9_ = h;
-	_tmp10_ = w;
-	_tmp12_ = _tmp8_ (_tmp9_ / 2, _tmp10_ / 2, &_tmp11_, _tmp8__target);
-	{
-		Segment* segment_collection = NULL;
-		gint segment_collection_length1 = 0;
-		gint _segment_collection_size_ = 0;
-		gint segment_it = 0;
-		segment_collection = _tmp12_;
-		segment_collection_length1 = _tmp11_;
-		for (segment_it = 0; segment_it < _tmp11_; segment_it = segment_it + 1) {
-			Segment segment = {0};
-			segment = segment_collection[segment_it];
-			{
-				SDL_Surface* _tmp13_ = NULL;
-				Segment _tmp14_ = {0};
-				SDL_Rect _tmp15_ = {0};
-				SDL_Surface* _tmp16_ = NULL;
-				Segment _tmp17_ = {0};
-				SDL_Rect _tmp18_ = {0};
-				_tmp13_ = source;
-				_tmp14_ = segment;
-				_tmp15_ = _tmp14_.source;
-				_tmp16_ = surface;
-				_tmp17_ = segment;
-				_tmp18_ = _tmp17_.dest;
-				SDL_BlitScaled (_tmp13_, &_tmp15_, _tmp16_, &_tmp18_);
-			}
-		}
-		segment_collection = (g_free (segment_collection), NULL);
-	}
-	_tmp19_ = renderer;
-	_tmp20_ = surface;
-	_tmp21_ = SDL_CreateTextureFromSurface (_tmp19_, _tmp20_);
-	texture = _tmp21_;
-	result = texture;
-	_SDL_FreeSurface0 (surface);
-	return result;
+static void entities_instance_init (Entities * self) {
+	self->retainCount__ = 1;
 }
 
 
-SDL_Texture* loadTexture (SDL_Renderer* renderer, const gchar* path) {
-	SDL_Texture* result = NULL;
-	SDL_Surface* surface = NULL;
-	const gchar* _tmp0_ = NULL;
-	SDL_Surface* _tmp1_ = NULL;
-	SDL_Texture* texture = NULL;
-	SDL_Renderer* _tmp2_ = NULL;
-	SDL_Texture* _tmp3_ = NULL;
-	g_return_val_if_fail (renderer != NULL, NULL);
-	g_return_val_if_fail (path != NULL, NULL);
-	_tmp0_ = path;
-	_tmp1_ = IMG_Load (_tmp0_);
-	surface = _tmp1_;
-	sdlFailIf (surface == NULL, "Unable to load image!");
-	_tmp2_ = renderer;
-	_tmp3_ = SDL_CreateTextureFromSurface (_tmp2_, surface);
-	texture = _tmp3_;
-	sdlFailIf (texture == NULL, "Unable to load texture!");
-	SDL_SetTextureBlendMode (texture, SDL_BLENDMODE_BLEND);
-	result = texture;
-	_SDL_FreeSurface0 (surface);
-	return result;
+void entities_free (Entities* self) {
+	g_slice_free (Entities, self);
 }
 
 

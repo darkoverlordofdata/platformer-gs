@@ -34,19 +34,13 @@ struct _utilFile {
 
 #define UTIL_pathSeparator "/"
 #define UTIL_pathSeparatorChar '/'
-void util_file_release (utilFile* self);
-utilFile* util_file_retain (utilFile* self);
 void util_file_free (utilFile* self);
-void util_string_release (utilString* self);
-utilString* util_string_retain (utilString* self);
 void util_string_free (utilString* self);
 static void util_file_instance_init (utilFile * self);
 static void _util_string_release0_ (gpointer var);
 static void _g_list_free__util_string_release0_ (GList* self);
 utilFile* util_file_retain (utilFile* self);
 void util_file_release (utilFile* self);
-void util_file_release (utilFile* self);
-utilFile* util_file_retain (utilFile* self);
 void util_file_free (utilFile* self);
 utilFile* util_file_new (const gchar* path);
 gchar* util_file_getPath (utilFile* self);
@@ -299,55 +293,60 @@ gchar* util_file_getName (utilFile* self) {
 /**
  * the parent is everything prior to the final separator
  */
+static gint string_last_index_of (const gchar* self, const gchar* needle, gint start_index) {
+	gint result = 0;
+	gchar* _result_ = NULL;
+	gint _tmp0_ = 0;
+	const gchar* _tmp1_ = NULL;
+	gchar* _tmp2_ = NULL;
+	gchar* _tmp3_ = NULL;
+	g_return_val_if_fail (self != NULL, 0);
+	g_return_val_if_fail (needle != NULL, 0);
+	_tmp0_ = start_index;
+	_tmp1_ = needle;
+	_tmp2_ = g_strrstr (((gchar*) self) + _tmp0_, (gchar*) _tmp1_);
+	_result_ = _tmp2_;
+	_tmp3_ = _result_;
+	if (_tmp3_ != NULL) {
+		gchar* _tmp4_ = NULL;
+		_tmp4_ = _result_;
+		result = (gint) (_tmp4_ - ((gchar*) self));
+		return result;
+	} else {
+		result = -1;
+		return result;
+	}
+}
+
+
 gchar* util_file_getParent (utilFile* self) {
 	gchar* result = NULL;
-	gchar* _tmp12_ = NULL;
+	gint i = 0;
+	const gchar* _tmp0_ = NULL;
+	gint _tmp1_ = 0;
+	gchar* _tmp2_ = NULL;
+	gint _tmp3_ = 0;
 	g_return_val_if_fail (self != NULL, NULL);
-	{
-		gint i = 0;
-		const gchar* _tmp0_ = NULL;
-		gint _tmp1_ = 0;
-		gint _tmp2_ = 0;
-		_tmp0_ = self->path;
-		_tmp1_ = strlen (_tmp0_);
-		_tmp2_ = _tmp1_;
-		i = _tmp2_ - 1;
-		{
-			gboolean _tmp3_ = FALSE;
-			_tmp3_ = TRUE;
-			while (TRUE) {
-				gint _tmp5_ = 0;
-				const gchar* _tmp6_ = NULL;
-				gint _tmp7_ = 0;
-				gchar _tmp8_ = '\0';
-				if (!_tmp3_) {
-					gint _tmp4_ = 0;
-					_tmp4_ = i;
-					i = _tmp4_ - 1;
-				}
-				_tmp3_ = FALSE;
-				_tmp5_ = i;
-				if (!(_tmp5_ > 0)) {
-					break;
-				}
-				_tmp6_ = self->path;
-				_tmp7_ = i;
-				_tmp8_ = string_get (_tmp6_, (glong) _tmp7_);
-				if (_tmp8_ == UTIL_pathSeparatorChar) {
-					const gchar* _tmp9_ = NULL;
-					gint _tmp10_ = 0;
-					gchar* _tmp11_ = NULL;
-					_tmp9_ = self->path;
-					_tmp10_ = i;
-					_tmp11_ = string_substring (_tmp9_, (glong) 0, (glong) (_tmp10_ - 1));
-					result = _tmp11_;
-					return result;
-				}
-			}
-		}
+	_tmp0_ = self->path;
+	_tmp1_ = string_last_index_of (_tmp0_, UTIL_pathSeparator, 0);
+	i = _tmp1_;
+	_tmp3_ = i;
+	if (_tmp3_ < 0) {
+		gchar* _tmp4_ = NULL;
+		_tmp4_ = g_strdup ("");
+		_g_free0 (_tmp2_);
+		_tmp2_ = _tmp4_;
+	} else {
+		const gchar* _tmp5_ = NULL;
+		gint _tmp6_ = 0;
+		gchar* _tmp7_ = NULL;
+		_tmp5_ = self->path;
+		_tmp6_ = i;
+		_tmp7_ = string_substring (_tmp5_, (glong) 0, (glong) _tmp6_);
+		_g_free0 (_tmp2_);
+		_tmp2_ = _tmp7_;
 	}
-	_tmp12_ = g_strdup ("");
-	result = _tmp12_;
+	result = _tmp2_;
 	return result;
 }
 
@@ -477,7 +476,6 @@ gchar* util_file_read (utilFile* self) {
 	gchar* _tmp7_ = NULL;
 	gint ioBuff_length1 = 0;
 	gint _ioBuff_size_ = 0;
-	gint eof = 0;
 	gchar* lines = NULL;
 	gchar* _tmp8_ = NULL;
 	g_return_val_if_fail (self != NULL, NULL);
@@ -499,7 +497,6 @@ gchar* util_file_read (utilFile* self) {
 	ioBuff = _tmp7_;
 	ioBuff_length1 = _tmp6_;
 	_ioBuff_size_ = ioBuff_length1;
-	eof = 0;
 	_tmp8_ = g_strdup ("");
 	lines = _tmp8_;
 	while (TRUE) {
