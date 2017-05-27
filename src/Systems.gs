@@ -19,11 +19,11 @@ class Systems : Object
 			player.expires = { 0, 0, player.expires.best }
 
 		var ground = game.map.onGround(player.position, player.size)
-		if sdx.dir[sdx.Direction.UP]
+		if sdx.direction[sdx.Direction.UP]
 			if ground
 				player.velocity.y = -21
 
-		var direction = (double)((int)sdx.dir[sdx.Direction.RIGHT] - (int)sdx.dir[sdx.Direction.LEFT])
+		var direction = (double)((int)sdx.direction[sdx.Direction.RIGHT] - (int)sdx.direction[sdx.Direction.LEFT])
 
 		player.velocity.y += 0.75
 		if ground

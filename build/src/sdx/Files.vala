@@ -3,11 +3,11 @@ using sdx.files;
 namespace sdx {
 
 	public enum FileType {
-		Internal,
-		Resource,
-		External,
-		Absolute,
-		Local
+		Parent,		/* Placeholder for the parent path  */
+		Resource,	/* Path to memory GResource */
+		Asset,		/* Android asset folder */
+		Absolute,	/* Absolute filesystem path.  */
+		Relative	/* Path relative to the pwd */
 	}
 	[Compact, CCode ( /** reference counting */
 		ref_function = "sdx_files_retain", 
@@ -32,28 +32,5 @@ namespace sdx {
 			this.resourcePath = resourcePath;
 		}
 
-		public FileHandle getHandle(string path, FileType type) {
-			return new FileHandle(path, type);
-		}
-
-		public FileHandle @internal(string path) {
-			return new FileHandle(path, FileType.Internal);
-		}
-
-		public FileHandle resource(string path) {
-			return new FileHandle(path, FileType.Resource);
-		}
-
-		public FileHandle external(string path) {
-			return new FileHandle(path, FileType.External);
-		}
-
-		public FileHandle absolute(string path) {
-			return new FileHandle(path, FileType.Absolute);
-		}
-
-		public FileHandle local(string path) {
-			return new FileHandle(path, FileType.Local);
-		}
 	}
 }

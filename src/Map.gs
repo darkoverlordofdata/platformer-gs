@@ -19,8 +19,8 @@ class Map : Object
 	 * Load json map file created with Tiled
 	 */
 	construct(mapPath: string)
-		var map = new util.File(mapPath)
-		var json = util.Json.parse(map.read());
+		var map = sdx.files.getHandle(mapPath, sdx.platform)
+		var json = sdx.utils.Json.parse(map.read())
 
 		width = (int)json.member("width").number
 		height = (int)json.member("height").number
@@ -28,14 +28,13 @@ class Map : Object
 		tileheight = (int)json.member("tileheight").number
 
 		tileset = json.member("tilesets").at(0).member("image").string
-		sprite = new sdx.graphics.Sprite(map.getParent()+"/"+tileset)
+		sprite = new sdx.graphics.Sprite(map.file.getParent()+"/"+tileset)
 		sprite.centered = false
 
 		var data = json.member("layers").at(0).member("data")
 		tiles = new array of uint8[ data.@array.length() ]
 		var i = 0
 		for d in data.@array do tiles[i++] = (uint8)d.number
-		
 		
 
 	def getTile(x: double, y: double): int

@@ -4,15 +4,6 @@ using SDLImage;
 
 namespace sdx {
 
-	public errordomain SdlException {
-		Initialization,
-		ImageInitialization,
-		TtfInitialization,
-		TextureFilteringNotEnabled,
-		OpenWindow,
-		CreateRenderer
-	}
-
 	public struct Blit {
 		SDL.Video.Rect source;
 		SDL.Video.Rect dest;
@@ -25,13 +16,23 @@ namespace sdx {
 	 * Global vars
 	 * 
 	 */
+#if (DESKTOP)
+	FileType platform = FileType.Resource;
+#elif (ANDROID)
+	FileType platform = FileType.Asset;
+#else
+	FileType platform = FileType.Relative;
+#endif
 	Renderer renderer;
 	sdx.Font font;
 	sdx.Font smallFont;
 	sdx.Font largeFont;
-	sdx.graphics.Sprite fpsSprite;
+	SDL.Video.Display display;
+	SDL.Video.DisplayMode displayMode;
 	SDL.Video.Color fpsColor;
 	SDL.Video.Color bgdColor;
+	sdx.graphics.Sprite fpsSprite;
+	long pixelFactor;
 	bool showFps;
 	double fps;
 	double delta;
@@ -40,7 +41,8 @@ namespace sdx {
 	bool mouseDown;
 	bool running;
 	uint8[] keys;
-	bool[] dir;
+	bool[] direction;
+	string resourceBase;
 
 	int _frames;
 	Event _evt;
@@ -60,11 +62,8 @@ namespace sdx {
 	 * 
 	 */
 	Window initialize(int width, int height, string name) {
-		_width = width;
-		_height = height;
-
 		keys = new uint8[256];
-		dir = new bool[5];
+		direction = new bool[5];
 
 		if (SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0)
 			throw new SdlException.Initialization(SDL.get_error());
@@ -78,8 +77,23 @@ namespace sdx {
 
 		if (SDLTTF.init() == -1)
 			throw new SdlException.TtfInitialization(SDL.get_error());
-    
+
+		display = 0;
+		display.get_mode(0, out displayMode);
+		if (display.get_dpi(null, null, null) == -1) {
+			pixelFactor = 2;
+		} else {
+			pixelFactor = 1;
+		}
+
+#if (ANDROID)    
+
+		_width = displayMode.w;
+		_height = displayMode.h;
+		var window = new Window(name, Window.POS_CENTERED, Window.POS_CENTERED, 0, 0, WindowFlags.SHOWN);
+#else
 		var window = new Window(name, Window.POS_CENTERED, Window.POS_CENTERED, width, height, WindowFlags.SHOWN);
+#endif	
 		if (window == null)
 			throw new SdlException.OpenWindow(SDL.get_error());
 		
@@ -97,6 +111,10 @@ namespace sdx {
 
 	double getRandom() {
 		return MersenneTwister.genrand_real2();
+	}
+
+	void setResource(string path) {
+		sdx.resourceBase = path;
 	}
 
 	void setDefaultFont(string path, int size) {
@@ -152,27 +170,26 @@ namespace sdx {
 
 	void processEvents() {
 		while (SDL.Event.poll(out _evt) != 0) {
-
 			switch (_evt.type) {
 				case SDL.EventType.QUIT:
 					running = false;
 					break;
 				case SDL.EventType.KEYDOWN:
 					switch (_evt.key.keysym.scancode) {
-						case SDL.Input.Scancode.LEFT: 	dir[Direction.LEFT] = true; break;
-						case SDL.Input.Scancode.RIGHT: 	dir[Direction.RIGHT] = true; break;
-						case SDL.Input.Scancode.UP: 	dir[Direction.UP] = true; break;
-						case SDL.Input.Scancode.DOWN: 	dir[Direction.DOWN] = true; break;
+						case SDL.Input.Scancode.LEFT: 	direction[Direction.LEFT] = true; break;
+						case SDL.Input.Scancode.RIGHT: 	direction[Direction.RIGHT] = true; break;
+						case SDL.Input.Scancode.UP: 	direction[Direction.UP] = true; break;
+						case SDL.Input.Scancode.DOWN: 	direction[Direction.DOWN] = true; break;
 					}
 					if (_evt.key.keysym.sym < 0 || _evt.key.keysym.sym > 255) break;
 					keys[_evt.key.keysym.sym] = 1;
 					break;
 				case SDL.EventType.KEYUP:
 					switch (_evt.key.keysym.scancode) {
-						case SDL.Input.Scancode.LEFT: 	dir[Direction.LEFT] = false; break;
-						case SDL.Input.Scancode.RIGHT: 	dir[Direction.RIGHT] = false; break;
-						case SDL.Input.Scancode.UP: 	dir[Direction.UP] = false; break;
-						case SDL.Input.Scancode.DOWN: 	dir[Direction.DOWN] = false; break;
+						case SDL.Input.Scancode.LEFT: 	direction[Direction.LEFT] = false; break;
+						case SDL.Input.Scancode.RIGHT: 	direction[Direction.RIGHT] = false; break;
+						case SDL.Input.Scancode.UP: 	direction[Direction.UP] = false; break;
+						case SDL.Input.Scancode.DOWN: 	direction[Direction.DOWN] = false; break;
 					}
 					if (_evt.key.keysym.sym < 0 || _evt.key.keysym.sym > 255) break;
 					keys[_evt.key.keysym.sym] = 0;
@@ -187,6 +204,7 @@ namespace sdx {
 				case SDL.EventType.MOUSEBUTTONUP:
 					mouseDown = false;
 					break;
+#if (!ANDROID)
 				case SDL.EventType.FINGERMOTION:
 #if (DESKTOP)					
 					mouseX = _evt.tfinger.x;
@@ -202,6 +220,7 @@ namespace sdx {
 				case SDL.EventType.FINGERUP:
 					mouseDown = false;
 					break;
+#endif
 			}
 		}
 	}

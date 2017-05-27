@@ -1,12 +1,15 @@
 {
   "sdx_files": "sdxFiles",
   "sdx_font": "sdxFont",
+  "sdx_audio_sound": "sdxaudioSound",
   "sdx_files_file_handle": "sdxfilesFileHandle",
   "sdx_graphics_sprite": "sdxgraphicsSprite",
   "sdx_graphics_surface": "sdxgraphicsSurface",
-  "util_cache": "utilCache",
-  "util_file": "utilFile",
-  "util_string": "utilString",
-  "util_js_variant": "utilJsVariant",
-  "util_json": "utilJson"
+  "sdx_graphics_texture_atlas": "sdxgraphicsTextureAtlas",
+  "sdx_graphics_texture_atlas_innerclass": "sdxgraphicsTextureAtlasInnerClass",
+  "sdx_utils_cache": "sdxutilsCache",
+  "sdx_utils_file": "sdxutilsFile",
+  "sdx_utils_json": "sdxutilsJson",
+  "sdx_utils_js_variant": "sdxutilsJsVariant",
+  "sdx_utils_string_tokenizer": "sdxutilsStringTokenizer"
 }

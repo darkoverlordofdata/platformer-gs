@@ -5,6 +5,7 @@ namespace sdx.graphics {
 	 * prevents the surface memory from being reclaimed 
 	 * 
 	 */
+	
 	public class Surface : Object {
 		public static int uniqueId = 0;
 		public SDL.Video.Surface surface;
@@ -16,7 +17,17 @@ namespace sdx.graphics {
 		public Surface(string path) {
 
 			this.path = path;
-			surface = SDLImage.load_png(new SDL.RWops.from_file(path, "r"));
+#if (DESKTOP)			
+			// from GResource
+			var file = sdx.files.resource(path);
+#elif (ANDROID)				
+			// from the *.apk asset folder
+			var file = sdx.files.asset(path);
+#else					
+			// just use the path as is
+			var file = sdx.files.relative(path);
+#endif
+			surface = SDLImage.load_png(file.getRWops());
 			width = surface.w;
 			height = surface.h;
 		}

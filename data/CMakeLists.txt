@@ -5,7 +5,7 @@ EXECUTE_PROCESS( COMMAND glib-compile-resources --sourcedir=${CMAKE_CURRENT_SOUR
 EXECUTE_PROCESS( COMMAND glib-compile-resources --sourcedir=${CMAKE_CURRENT_SOURCE_DIR} --generate-header --target=${CMAKE_CURRENT_BINARY_DIR}/resources.gresource.xml.h ${CMAKE_CURRENT_SOURCE_DIR}/resources.gresource.xml)
 ADD_CUSTOM_COMMAND (
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/resources.gresource.xml.c
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources.gresource.xml ${CMAKE_CURRENT_SOURCE_DIR}/res/default.map ${CMAKE_CURRENT_SOURCE_DIR}/res/grass.bmp ${CMAKE_CURRENT_SOURCE_DIR}/res/player.bmp
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources.gresource.xml ${CMAKE_CURRENT_SOURCE_DIR}/assets/banana.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/berry.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/default.json ${CMAKE_CURRENT_SOURCE_DIR}/assets/fruits.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/grass.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/melon.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/OpenDyslexic-Bold.otf ${CMAKE_CURRENT_SOURCE_DIR}/assets/pear.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/player.png ${CMAKE_CURRENT_SOURCE_DIR}/assets/star.png
 	COMMAND glib-compile-resources --sourcedir=${CMAKE_CURRENT_SOURCE_DIR} --generate-source --target=${CMAKE_CURRENT_BINARY_DIR}/resources.gresource.xml.c ${CMAKE_CURRENT_SOURCE_DIR}/resources.gresource.xml
 
 	COMMAND glib-compile-resources --sourcedir=${CMAKE_CURRENT_SOURCE_DIR} --generate-header --target=${CMAKE_CURRENT_BINARY_DIR}/resources.gresource.xml.h ${CMAKE_CURRENT_SOURCE_DIR}/resources.gresource.xml

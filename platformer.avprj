@@ -3,45 +3,54 @@ autovala_version: 24
 project_name: platformer
 *vala_version: 0.34
 
-*define: DESKTOP
+define: ANDROID
+define: DESKTOP
 
-*gresource: resources_gresource_xml data/resources.gresource.xml
+gresource: resources_gresource_xml data/resources.gresource.xml
 
 vapidir: src/vapis
 
 vala_binary: src/platformer
 compile_options: --cc=clang
 compile_c_options: -O3
+use_gresource: resources_gresource_xml
 vala_vapi: vapis/emscripten.vapi
 vala_vapi: vapis/mt19937ar.vapi
 vala_vapi: vapis/posix.vapi
 vala_check_package: SDL2_image
 vala_check_package: SDL2_mixer
 vala_check_package: SDL2_ttf
+vala_check_package: gio-2.0
+vala_check_package: glib-2.0
+vala_check_package: gobject-2.0
 vala_check_package: sdl2
-*vala_check_package: glib-2.0
-*vala_check_package: gobject-2.0
 *c_library: m
 *vala_source: Components.gs
 *vala_source: Entities.gs
 *vala_source: Game.gs
 *vala_source: Hud.gs
-*vala_source: Main.gs
 *vala_source: Map.gs
 *vala_source: Systems.gs
+*vala_source: main.gs
 *vala_source: platformer.vala
 *vala_source: sdx/Color.gs
 *vala_source: sdx/Files.vala
 *vala_source: sdx/Font.vala
+*vala_source: sdx/audio/Sound.vala
+*vala_source: sdx/audio/audio.vala
+*vala_source: sdx/exceptions.gs
 *vala_source: sdx/files/FileHandle.vala
+*vala_source: sdx/files/files.vala
 *vala_source: sdx/graphics/Sprite.vala
 *vala_source: sdx/graphics/Surface.vala
+*vala_source: sdx/graphics/TextureAtlas.vala
+*vala_source: sdx/graphics/graphics.vala
 *vala_source: sdx/sdx.vala
-*vala_source: util/Cache.vala
-*vala_source: util/File.vala
-*vala_source: util/JsVariant.vala
-*vala_source: util/Json.vala
-*vala_source: util/String.vala
+*vala_source: sdx/utils/Cache.vala
+*vala_source: sdx/utils/File.vala
+*vala_source: sdx/utils/Json.vala
+*vala_source: sdx/utils/StringTokenizer.vala
+*vala_source: sdx/utils/utils.vala
 
 
 *po: po
@@ -50,22 +59,28 @@ vala_check_package: sdl2
 *translate: genie src/Entities.gs
 *translate: genie src/Game.gs
 *translate: genie src/Hud.gs
-*translate: genie src/Main.gs
 *translate: genie src/Map.gs
 *translate: genie src/Systems.gs
+*translate: genie src/main.gs
 *translate: vala src/platformer.vala
 *translate: genie src/sdx/Color.gs
 *translate: vala src/sdx/Files.vala
 *translate: vala src/sdx/Font.vala
+*translate: vala src/sdx/audio/Sound.vala
+*translate: vala src/sdx/audio/audio.vala
+*translate: genie src/sdx/exceptions.gs
 *translate: vala src/sdx/files/FileHandle.vala
+*translate: vala src/sdx/files/files.vala
 *translate: vala src/sdx/graphics/Sprite.vala
 *translate: vala src/sdx/graphics/Surface.vala
+*translate: vala src/sdx/graphics/TextureAtlas.vala
+*translate: vala src/sdx/graphics/graphics.vala
 *translate: vala src/sdx/sdx.vala
-*translate: vala src/util/Cache.vala
-*translate: vala src/util/File.vala
-*translate: vala src/util/JsVariant.vala
-*translate: vala src/util/Json.vala
-*translate: vala src/util/String.vala
+*translate: vala src/sdx/utils/Cache.vala
+*translate: vala src/sdx/utils/File.vala
+*translate: vala src/sdx/utils/Json.vala
+*translate: vala src/sdx/utils/StringTokenizer.vala
+*translate: vala src/sdx/utils/utils.vala
 
 *data: data/local
 

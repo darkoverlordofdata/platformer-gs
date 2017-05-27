@@ -3,8 +3,8 @@ uses SDL
 uses SDL.Video
 uses SDLTTF
 
-const UNUSED_Game: Vector2d = { 0, 0 } 
 // unused base type to generate forward reference so that Camera typedef works in this file...
+const UNUSED_Game: Vector2d = { 0, 0 } 
 const WINDOW_SIZE: Point	= { 1280, 720 }
 
 class Game : Object
@@ -20,6 +20,7 @@ class Game : Object
 
 	construct()
 		cameraType = CameraType.SIMPLE_CAMERA 
+		sdx.setResource("/darkoverlordofdata/platformer");
 		sdx.setDefaultFont("assets/OpenDyslexic-Bold.otf", 28);
 		sdx.bgdColor = sdx.Color.LiteSlateBlue
 		factory = new Entities()		 
