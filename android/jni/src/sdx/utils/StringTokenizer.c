@@ -20,7 +20,6 @@ struct _sdxutilsStringTokenizer {
 	gboolean retDelims;
 	gboolean delimsChanged;
 	gint maxDelimCodePoint;
-	gboolean hasSurrogates;
 	gint* delimiterCodePoints;
 	gint delimiterCodePoints_length1;
 };
@@ -34,8 +33,13 @@ typedef enum  {
 	SDX_SDL_EXCEPTION_CreateRenderer,
 	SDX_SDL_EXCEPTION_InvalidForPlatform,
 	SDX_SDL_EXCEPTION_UnableToLoadResource,
+	SDX_SDL_EXCEPTION_UnableToLoadSurface,
+	SDX_SDL_EXCEPTION_UnableToLoadTexture,
 	SDX_SDL_EXCEPTION_NullPointer,
-	SDX_SDL_EXCEPTION_NoSuchElement
+	SDX_SDL_EXCEPTION_NoSuchElement,
+	SDX_SDL_EXCEPTION_IllegalStateException,
+	SDX_SDL_EXCEPTION_RuntimeException,
+	SDX_SDL_EXCEPTION_NotReached
 } sdxSdlException;
 #define SDX_SDL_EXCEPTION sdx_sdl_exception_quark ()
 
@@ -632,7 +636,6 @@ gint sdx_utils_string_tokenizer_countTokens (sdxutilsStringTokenizer* self) {
 
 static void sdx_utils_string_tokenizer_instance_init (sdxutilsStringTokenizer * self) {
 	self->_retainCount = 1;
-	self->hasSurrogates = FALSE;
 }
 
 

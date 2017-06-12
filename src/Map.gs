@@ -1,7 +1,4 @@
-uses SDL
-uses SDL.Video
-uses SDLTTF
-
+ 
 class Map : Object
 	width: int
 	height: int
@@ -28,7 +25,7 @@ class Map : Object
 		tileheight = (int)json.member("tileheight").number
 
 		tileset = json.member("tilesets").at(0).member("image").string
-		sprite = new sdx.graphics.Sprite(map.file.getParent()+"/"+tileset)
+		sprite = new sdx.graphics.Sprite.TextureSprite(map.file.getParent()+"/"+tileset)
 		sprite.centered = false
 
 		var data = json.member("layers").at(0).member("data")
@@ -53,33 +50,34 @@ class Map : Object
 				return false
 		return true
 
-	def onGround(pos: Point2d, size: Vector2d): bool
+	def isOnGround(pos: Point2d, size: Vector2d): bool
 		return (isSolid(pos.x - size.x*0.25, pos.y + size.y*0.25 + 1) 
-			|| isSolid(pos.x + size.x*0.25, pos.y + size.y*0.25 + 1))
+			||  isSolid(pos.x + size.x*0.25, pos.y + size.y*0.25 + 1))
 
-	def testBox(pos: Point2d, size: Vector2d): bool
+	def isHit(pos: Point2d, size: Vector2d): bool
 		return (isSolid(pos.x - size.x*0.25, pos.y - size.y*0.25)
-			|| isSolid(pos.x + size.x*0.25, pos.y - size.y*0.25)
-			|| isSolid(pos.x - size.x*0.25, pos.y + size.y*0.25)
-			|| isSolid(pos.x + size.x*0.25, pos.y + size.y*0.25))
+			||  isSolid(pos.x + size.x*0.25, pos.y - size.y*0.25)
+			||  isSolid(pos.x - size.x*0.25, pos.y + size.y*0.25)
+			||  isSolid(pos.x + size.x*0.25, pos.y + size.y*0.25))
 
+	/**
+	 * updates the position & velocity
+	 */
 	def moveBox(ref pos: Point2d, ref vel: Vector2d, size: Vector2d)
 		var distance = vel.len()
-		var maximum = (int)distance
 		if distance < 0 do return
-		var fraction = 1.0 / (double)(maximum + 1)
-		for var i = 0 to maximum  
+		for var i = 0 to distance  
 
-			var newPos = pos.add(vel.mul(fraction))
-			if testBox(newPos, size)
+			var newPos = pos.add(vel.mul(1.0 / (distance + 1.0)))
+			if isHit(newPos, size)
 				var hit = false
 
-				if testBox({ pos.x, newPos.y }, size)
+				if isHit({ pos.x, newPos.y }, size)
 					newPos.y = pos.y
 					vel.y = 0
 					hit = true
 				
-				if testBox({ newPos.x, pos.y }, size)
+				if isHit({ newPos.x, pos.y }, size)
 					newPos.x = pos.x
 					vel.x = 0
 					hit = true
@@ -90,7 +88,7 @@ class Map : Object
 					
 			pos = newPos
 
-	def render(camera: Camera)
+	def render(camera: sdx.graphics.Camera)
 		var clip = rect(0, 0, tilewidth, tileheight)
 		var dest = rect(0, 0, tilewidth, tileheight)
 		for var i = 0 to (tiles.length-1)
@@ -98,7 +96,7 @@ class Map : Object
 			if tileNr == AIR do continue
 			clip.x = (int)((tileNr-1) % TILES_PER_ROW) * tilewidth
 			clip.y = (int)((tileNr-1) / TILES_PER_ROW) * tileheight
-			dest.x = (i % width) * (int)tilewidth - (int)camera.x
-			dest.y = (int)(i / width) * (int)tileheight - (int)camera.y
+			dest.x = (i % width) * (int)tilewidth - (int)camera.position.x
+			dest.y = (int)(i / width) * (int)tileheight - (int)camera.position.y
 			sprite.copy(clip, dest)
 

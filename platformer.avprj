@@ -5,6 +5,7 @@ project_name: platformer
 
 define: ANDROID
 define: DESKTOP
+*define: EMSCRIPTEN
 
 gresource: resources_gresource_xml data/resources.gresource.xml
 
@@ -14,6 +15,7 @@ vala_binary: src/platformer
 compile_options: --cc=clang
 compile_c_options: -O3
 use_gresource: resources_gresource_xml
+vala_vapi: vapis/chipmunk.vapi
 vala_vapi: vapis/emscripten.vapi
 vala_vapi: vapis/mt19937ar.vapi
 vala_vapi: vapis/posix.vapi
@@ -24,13 +26,12 @@ vala_check_package: gio-2.0
 vala_check_package: glib-2.0
 vala_check_package: gobject-2.0
 vala_check_package: sdl2
-*c_library: m
+c_library: m
 *vala_source: Components.gs
 *vala_source: Entities.gs
 *vala_source: Game.gs
 *vala_source: Hud.gs
 *vala_source: Map.gs
-*vala_source: Systems.gs
 *vala_source: main.gs
 *vala_source: platformer.vala
 *vala_source: sdx/Color.gs
@@ -41,9 +42,13 @@ vala_check_package: sdl2
 *vala_source: sdx/exceptions.gs
 *vala_source: sdx/files/FileHandle.vala
 *vala_source: sdx/files/files.vala
+*vala_source: sdx/graphics/BitmapFont.vala
+*vala_source: sdx/graphics/Camera.vala
 *vala_source: sdx/graphics/Sprite.vala
 *vala_source: sdx/graphics/Surface.vala
 *vala_source: sdx/graphics/TextureAtlas.vala
+*vala_source: sdx/graphics/TextureEnums.vala
+*vala_source: sdx/graphics/TextureRegion.vala
 *vala_source: sdx/graphics/graphics.vala
 *vala_source: sdx/sdx.vala
 *vala_source: sdx/utils/Cache.vala
@@ -51,6 +56,43 @@ vala_check_package: sdl2
 *vala_source: sdx/utils/Json.vala
 *vala_source: sdx/utils/StringTokenizer.vala
 *vala_source: sdx/utils/utils.vala
+*vala_source: systems/LogicSystem.vala
+*vala_source: systems/PhysicsSystem.vala
+*vala_source: systems/System.vala
+*c_source: chipmunk/chipmunk.c
+*c_source: chipmunk/cpArbiter.c
+*c_source: chipmunk/cpArray.c
+*c_source: chipmunk/cpBBTree.c
+*c_source: chipmunk/cpBody.c
+*c_source: chipmunk/cpCollision.c
+*c_source: chipmunk/cpConstraint.c
+*c_source: chipmunk/cpDampedRotarySpring.c
+*c_source: chipmunk/cpDampedSpring.c
+*c_source: chipmunk/cpGearJoint.c
+*c_source: chipmunk/cpGrooveJoint.c
+*c_source: chipmunk/cpHashSet.c
+*c_source: chipmunk/cpMarch.c
+*c_source: chipmunk/cpPinJoint.c
+*c_source: chipmunk/cpPivotJoint.c
+*c_source: chipmunk/cpPolyShape.c
+*c_source: chipmunk/cpPolyline.c
+*c_source: chipmunk/cpRatchetJoint.c
+*c_source: chipmunk/cpRobust.c
+*c_source: chipmunk/cpRotaryLimitJoint.c
+*c_source: chipmunk/cpShape.c
+*c_source: chipmunk/cpSimpleMotor.c
+*c_source: chipmunk/cpSlideJoint.c
+*c_source: chipmunk/cpSpace.c
+*c_source: chipmunk/cpSpaceComponent.c
+*c_source: chipmunk/cpSpaceDebug.c
+*c_source: chipmunk/cpSpaceHash.c
+*c_source: chipmunk/cpSpaceQuery.c
+*c_source: chipmunk/cpSpaceStep.c
+*c_source: chipmunk/cpSpatialIndex.c
+*c_source: chipmunk/cpSweep1D.c
+*c_source: mt19937ar.c
+*h_folder: .
+*h_folder: chipmunk
 
 
 *po: po
@@ -60,8 +102,39 @@ vala_check_package: sdl2
 *translate: genie src/Game.gs
 *translate: genie src/Hud.gs
 *translate: genie src/Map.gs
-*translate: genie src/Systems.gs
+*translate: c src/chipmunk/chipmunk.c
+*translate: c src/chipmunk/cpArbiter.c
+*translate: c src/chipmunk/cpArray.c
+*translate: c src/chipmunk/cpBBTree.c
+*translate: c src/chipmunk/cpBody.c
+*translate: c src/chipmunk/cpCollision.c
+*translate: c src/chipmunk/cpConstraint.c
+*translate: c src/chipmunk/cpDampedRotarySpring.c
+*translate: c src/chipmunk/cpDampedSpring.c
+*translate: c src/chipmunk/cpGearJoint.c
+*translate: c src/chipmunk/cpGrooveJoint.c
+*translate: c src/chipmunk/cpHashSet.c
+*translate: c src/chipmunk/cpMarch.c
+*translate: c src/chipmunk/cpPinJoint.c
+*translate: c src/chipmunk/cpPivotJoint.c
+*translate: c src/chipmunk/cpPolyShape.c
+*translate: c src/chipmunk/cpPolyline.c
+*translate: c src/chipmunk/cpRatchetJoint.c
+*translate: c src/chipmunk/cpRobust.c
+*translate: c src/chipmunk/cpRotaryLimitJoint.c
+*translate: c src/chipmunk/cpShape.c
+*translate: c src/chipmunk/cpSimpleMotor.c
+*translate: c src/chipmunk/cpSlideJoint.c
+*translate: c src/chipmunk/cpSpace.c
+*translate: c src/chipmunk/cpSpaceComponent.c
+*translate: c src/chipmunk/cpSpaceDebug.c
+*translate: c src/chipmunk/cpSpaceHash.c
+*translate: c src/chipmunk/cpSpaceQuery.c
+*translate: c src/chipmunk/cpSpaceStep.c
+*translate: c src/chipmunk/cpSpatialIndex.c
+*translate: c src/chipmunk/cpSweep1D.c
 *translate: genie src/main.gs
+*translate: c src/mt19937ar.c
 *translate: vala src/platformer.vala
 *translate: genie src/sdx/Color.gs
 *translate: vala src/sdx/Files.vala
@@ -71,9 +144,13 @@ vala_check_package: sdl2
 *translate: genie src/sdx/exceptions.gs
 *translate: vala src/sdx/files/FileHandle.vala
 *translate: vala src/sdx/files/files.vala
+*translate: vala src/sdx/graphics/BitmapFont.vala
+*translate: vala src/sdx/graphics/Camera.vala
 *translate: vala src/sdx/graphics/Sprite.vala
 *translate: vala src/sdx/graphics/Surface.vala
 *translate: vala src/sdx/graphics/TextureAtlas.vala
+*translate: vala src/sdx/graphics/TextureEnums.vala
+*translate: vala src/sdx/graphics/TextureRegion.vala
 *translate: vala src/sdx/graphics/graphics.vala
 *translate: vala src/sdx/sdx.vala
 *translate: vala src/sdx/utils/Cache.vala
@@ -81,6 +158,9 @@ vala_check_package: sdl2
 *translate: vala src/sdx/utils/Json.vala
 *translate: vala src/sdx/utils/StringTokenizer.vala
 *translate: vala src/sdx/utils/utils.vala
+*translate: vala src/systems/LogicSystem.vala
+*translate: vala src/systems/PhysicsSystem.vala
+*translate: vala src/systems/System.vala
 
 *data: data/local
 

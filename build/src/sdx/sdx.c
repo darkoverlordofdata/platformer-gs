@@ -19,9 +19,9 @@
 #include <SDL_ttf.h>
 #include <SDL2/SDL_timer.h>
 #include <mt19937ar.h>
-#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_keyboard.h>
+#include <stdio.h>
 
 
 #define SDX_TYPE_BLIT (sdx_blit_get_type ())
@@ -30,6 +30,8 @@ typedef struct _sdxBlit sdxBlit;
 #define SDX_TYPE_FILE_TYPE (sdx_file_type_get_type ())
 typedef struct _sdxFont sdxFont;
 typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
+typedef sdxgraphicsSprite sdxgraphicsSpriteTextSprite;
+typedef sdxgraphicsSprite sdxgraphicsSpriteAnimatedSprite;
 
 #define SDX_TYPE_DIRECTION (sdx_direction_get_type ())
 #define _SDL_DestroyWindow0(var) ((var == NULL) ? NULL : (var = (SDL_DestroyWindow (var), NULL)))
@@ -44,9 +46,6 @@ void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
 sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
 #define _sdx_graphics_sprite_release0(var) ((var == NULL) ? NULL : (var = (sdx_graphics_sprite_release (var), NULL)))
 
-#define SDX_GRAPHICS_TYPE_SCALE (sdx_graphics_scale_get_type ())
-typedef struct _sdxgraphicsScale sdxgraphicsScale;
-
 struct _sdxBlit {
 	SDL_Rect source;
 	SDL_Rect dest;
@@ -55,8 +54,7 @@ struct _sdxBlit {
 
 typedef sdxBlit* (*sdxCompositor) (gint x, gint y, int* result_length1, void* user_data);
 typedef enum  {
-	SDX_FILE_TYPE_Parent,
-	SDX_FILE_TYPE_Resource,
+	SDX_FILE_TYPE_Resource = 1,
 	SDX_FILE_TYPE_Asset,
 	SDX_FILE_TYPE_Absolute,
 	SDX_FILE_TYPE_Relative
@@ -79,35 +77,18 @@ typedef enum  {
 	SDX_SDL_EXCEPTION_CreateRenderer,
 	SDX_SDL_EXCEPTION_InvalidForPlatform,
 	SDX_SDL_EXCEPTION_UnableToLoadResource,
+	SDX_SDL_EXCEPTION_UnableToLoadSurface,
+	SDX_SDL_EXCEPTION_UnableToLoadTexture,
 	SDX_SDL_EXCEPTION_NullPointer,
-	SDX_SDL_EXCEPTION_NoSuchElement
+	SDX_SDL_EXCEPTION_NoSuchElement,
+	SDX_SDL_EXCEPTION_IllegalStateException,
+	SDX_SDL_EXCEPTION_RuntimeException,
+	SDX_SDL_EXCEPTION_NotReached
 } sdxSdlException;
 #define SDX_SDL_EXCEPTION sdx_sdl_exception_quark ()
-struct _sdxgraphicsScale {
-	gdouble x;
-	gdouble y;
-};
-
-struct _sdxgraphicsSprite {
-	gint _retainCount;
-	SDL_Texture* texture;
-	SDL_Surface* surface;
-	gint width;
-	gint height;
-	gint x;
-	gint y;
-	sdxgraphicsScale scale;
-	SDL_Color color;
-	gboolean centered;
-	gint layer;
-	gint id;
-	gchar* path;
-	gboolean isText;
-};
-
 
 extern sdxFileType sdx_platform;
-sdxFileType sdx_platform = SDX_FILE_TYPE_Asset;
+sdxFileType sdx_platform = SDX_FILE_TYPE_Relative;
 extern SDL_Renderer* sdx_renderer;
 SDL_Renderer* sdx_renderer = NULL;
 extern sdxFont* sdx_font;
@@ -124,8 +105,18 @@ extern SDL_Color sdx_fpsColor;
 SDL_Color sdx_fpsColor = {0};
 extern SDL_Color sdx_bgdColor;
 SDL_Color sdx_bgdColor = {0};
-extern sdxgraphicsSprite* sdx_fpsSprite;
-sdxgraphicsSprite* sdx_fpsSprite = NULL;
+extern sdxgraphicsSpriteTextSprite* sdx_fpsSprite;
+sdxgraphicsSpriteTextSprite* sdx_fpsSprite = NULL;
+extern sdxgraphicsSpriteAnimatedSprite* sdx_fps1;
+sdxgraphicsSpriteAnimatedSprite* sdx_fps1 = NULL;
+extern sdxgraphicsSpriteAnimatedSprite* sdx_fps2;
+sdxgraphicsSpriteAnimatedSprite* sdx_fps2 = NULL;
+extern sdxgraphicsSpriteAnimatedSprite* sdx_fps3;
+sdxgraphicsSpriteAnimatedSprite* sdx_fps3 = NULL;
+extern sdxgraphicsSpriteAnimatedSprite* sdx_fps4;
+sdxgraphicsSpriteAnimatedSprite* sdx_fps4 = NULL;
+extern sdxgraphicsSpriteAnimatedSprite* sdx_fps5;
+sdxgraphicsSpriteAnimatedSprite* sdx_fps5 = NULL;
 extern glong sdx_pixelFactor;
 glong sdx_pixelFactor = 0L;
 extern gboolean sdx_showFps;
@@ -166,10 +157,10 @@ extern gdouble sdx__mark1;
 gdouble sdx__mark1 = 0.0;
 extern gdouble sdx__mark2;
 gdouble sdx__mark2 = 0.0;
-extern gint sdx__width;
-gint sdx__width = 0;
-extern gint sdx__height;
-gint sdx__height = 0;
+extern gint sdx_width;
+gint sdx_width = 0;
+extern gint sdx_height;
+gint sdx_height = 0;
 
 GType sdx_blit_get_type (void) G_GNUC_CONST;
 sdxBlit* sdx_blit_dup (const sdxBlit* self);
@@ -181,18 +172,15 @@ GType sdx_direction_get_type (void) G_GNUC_CONST;
 SDL_Window* sdx_initialize (gint width, gint height, const gchar* name);
 GQuark sdx_sdl_exception_quark (void);
 gdouble sdx_getRandom (void);
-void sdx_setResource (const gchar* path);
+void sdx_setResourceBase (const gchar* path);
 void sdx_setDefaultFont (const gchar* path, gint size);
 sdxFont* sdx_font_new (const gchar* path, gint size);
 void sdx_setSmallFont (const gchar* path, gint size);
 void sdx_setLargeFont (const gchar* path, gint size);
 void sdx_setShowFps (gboolean value);
-sdxgraphicsSprite* sdx_graphics_sprite_fromText (const gchar* path, sdxFont* font, SDL_Color color);
-GType sdx_graphics_scale_get_type (void) G_GNUC_CONST;
-sdxgraphicsScale* sdx_graphics_scale_dup (const sdxgraphicsScale* self);
-void sdx_graphics_scale_free (sdxgraphicsScale* self);
+sdxgraphicsSpriteAnimatedSprite* sdx_graphics_sprite_animated_sprite_new (const gchar* path, gint width, gint height);
 void sdx_drawFps (void);
-void sdx_graphics_sprite_setText (sdxgraphicsSprite* self, const gchar* text, sdxFont* font, SDL_Color color);
+void sdx_graphics_sprite_animated_sprite_setFrame (sdxgraphicsSpriteAnimatedSprite* self, gint frame);
 void sdx_graphics_sprite_render (sdxgraphicsSprite* self, gint x, gint y, SDL_Rect* clip);
 gdouble sdx_getNow (void);
 void sdx_start (void);
@@ -200,8 +188,10 @@ void sdx_update (void);
 void sdx_processEvents (void);
 void sdx_begin (void);
 void sdx_end (void);
+void sdx_log (const gchar* text);
 
 extern const SDL_Color SDX_COLOR_AntiqueWhite;
+extern const SDL_Color SDX_COLOR_Black;
 
 sdxBlit* sdx_blit_dup (const sdxBlit* self) {
 	sdxBlit* dup;
@@ -245,106 +235,105 @@ GType sdx_direction_get_type (void) {
  */
 SDL_Window* sdx_initialize (gint width, gint height, const gchar* name) {
 	SDL_Window* result = NULL;
-	guint8* _tmp0_ = NULL;
-	gboolean* _tmp1_ = NULL;
-	gint _tmp2_ = 0;
-	gint _tmp5_ = 0;
-	gboolean _tmp8_ = FALSE;
-	gint _tmp11_ = 0;
-	int _tmp14_ = 0;
-	SDL_DisplayMode _tmp15_ = {0};
+	gint _tmp0_ = 0;
+	gint _tmp1_ = 0;
+	guint8* _tmp2_ = NULL;
+	gboolean* _tmp3_ = NULL;
+	gint _tmp4_ = 0;
+	gint _tmp7_ = 0;
+	gboolean _tmp10_ = FALSE;
+	gint _tmp13_ = 0;
 	int _tmp16_ = 0;
-	gint _tmp17_ = 0;
-	SDL_DisplayMode _tmp18_ = {0};
+	SDL_DisplayMode _tmp17_ = {0};
+	int _tmp18_ = 0;
 	gint _tmp19_ = 0;
-	SDL_DisplayMode _tmp20_ = {0};
-	gint _tmp21_ = 0;
 	SDL_Window* window = NULL;
-	const gchar* _tmp22_ = NULL;
+	const gchar* _tmp20_ = NULL;
+	gint _tmp21_ = 0;
+	gint _tmp22_ = 0;
 	SDL_Window* _tmp23_ = NULL;
 	SDL_Window* _tmp24_ = NULL;
 	SDL_Window* _tmp27_ = NULL;
 	SDL_Renderer* _tmp28_ = NULL;
 	SDL_Renderer* _tmp29_ = NULL;
 	guint64 _tmp32_ = 0ULL;
-	SDL_Color _tmp33_ = {0};
-	guint64 _tmp34_ = 0ULL;
+	guint64 _tmp33_ = 0ULL;
 	GError * _inner_error_ = NULL;
 	g_return_val_if_fail (name != NULL, NULL);
-	_tmp0_ = g_new0 (guint8, 256);
+	_tmp0_ = height;
+	sdx_height = _tmp0_;
+	_tmp1_ = width;
+	sdx_width = _tmp1_;
+	_tmp2_ = g_new0 (guint8, 256);
 	sdx_keys = (g_free (sdx_keys), NULL);
-	sdx_keys = _tmp0_;
+	sdx_keys = _tmp2_;
 	sdx_keys_length1 = 256;
 	_sdx_keys_size_ = sdx_keys_length1;
-	_tmp1_ = g_new0 (gboolean, 5);
+	_tmp3_ = g_new0 (gboolean, 5);
 	sdx_direction = (g_free (sdx_direction), NULL);
-	sdx_direction = _tmp1_;
+	sdx_direction = _tmp3_;
 	sdx_direction_length1 = 5;
 	_sdx_direction_size_ = sdx_direction_length1;
-	_tmp2_ = SDL_Init ((guint32) ((SDL_INIT_VIDEO | SDL_INIT_TIMER) | SDL_INIT_EVENTS));
-	if (_tmp2_ < 0) {
-		const gchar* _tmp3_ = NULL;
-		GError* _tmp4_ = NULL;
-		_tmp3_ = SDL_GetError ();
-		_tmp4_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_Initialization, _tmp3_);
-		_inner_error_ = _tmp4_;
+	_tmp4_ = SDL_Init ((guint32) ((SDL_INIT_VIDEO | SDL_INIT_TIMER) | SDL_INIT_EVENTS));
+	if (_tmp4_ < 0) {
+		const gchar* _tmp5_ = NULL;
+		GError* _tmp6_ = NULL;
+		_tmp5_ = SDL_GetError ();
+		_tmp6_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_Initialization, _tmp5_);
+		_inner_error_ = _tmp6_;
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
 		g_clear_error (&_inner_error_);
 		return NULL;
 	}
-	_tmp5_ = IMG_Init ((gint) IMG_INIT_PNG);
-	if (_tmp5_ < 0) {
-		const gchar* _tmp6_ = NULL;
-		GError* _tmp7_ = NULL;
-		_tmp6_ = SDL_GetError ();
-		_tmp7_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_ImageInitialization, _tmp6_);
-		_inner_error_ = _tmp7_;
+	_tmp7_ = IMG_Init ((gint) IMG_INIT_PNG);
+	if (_tmp7_ < 0) {
+		const gchar* _tmp8_ = NULL;
+		GError* _tmp9_ = NULL;
+		_tmp8_ = SDL_GetError ();
+		_tmp9_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_ImageInitialization, _tmp8_);
+		_inner_error_ = _tmp9_;
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
 		g_clear_error (&_inner_error_);
 		return NULL;
 	}
-	_tmp8_ = SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "1");
-	if (!_tmp8_) {
-		const gchar* _tmp9_ = NULL;
-		GError* _tmp10_ = NULL;
-		_tmp9_ = SDL_GetError ();
-		_tmp10_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_TextureFilteringNotEnabled, _tmp9_);
-		_inner_error_ = _tmp10_;
+	_tmp10_ = SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "1");
+	if (!_tmp10_) {
+		const gchar* _tmp11_ = NULL;
+		GError* _tmp12_ = NULL;
+		_tmp11_ = SDL_GetError ();
+		_tmp12_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_TextureFilteringNotEnabled, _tmp11_);
+		_inner_error_ = _tmp12_;
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
 		g_clear_error (&_inner_error_);
 		return NULL;
 	}
-	_tmp11_ = TTF_Init ();
-	if (_tmp11_ == -1) {
-		const gchar* _tmp12_ = NULL;
-		GError* _tmp13_ = NULL;
-		_tmp12_ = SDL_GetError ();
-		_tmp13_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_TtfInitialization, _tmp12_);
-		_inner_error_ = _tmp13_;
+	_tmp13_ = TTF_Init ();
+	if (_tmp13_ == -1) {
+		const gchar* _tmp14_ = NULL;
+		GError* _tmp15_ = NULL;
+		_tmp14_ = SDL_GetError ();
+		_tmp15_ = g_error_new_literal (SDX_SDL_EXCEPTION, SDX_SDL_EXCEPTION_TtfInitialization, _tmp14_);
+		_inner_error_ = _tmp15_;
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
 		g_clear_error (&_inner_error_);
 		return NULL;
 	}
 	sdx_display = (int) 0;
-	_tmp14_ = sdx_display;
-	SDL_GetDisplayMode (_tmp14_, 0, &_tmp15_);
-	 (&sdx_displayMode);
-	sdx_displayMode = _tmp15_;
 	_tmp16_ = sdx_display;
-	_tmp17_ = SDL_GetDisplayDPI (_tmp16_, NULL, NULL, NULL);
-	if (_tmp17_ == -1) {
-		sdx_pixelFactor = (glong) 2;
+	SDL_GetDisplayMode (_tmp16_, 0, &_tmp17_);
+	 (&sdx_displayMode);
+	sdx_displayMode = _tmp17_;
+	_tmp18_ = sdx_display;
+	_tmp19_ = SDL_GetDisplayDPI (_tmp18_, NULL, NULL, NULL);
+	if (_tmp19_ == -1) {
+		sdx_pixelFactor = (glong) 1;
 	} else {
 		sdx_pixelFactor = (glong) 1;
 	}
-	_tmp18_ = sdx_displayMode;
-	_tmp19_ = _tmp18_.w;
-	sdx__width = _tmp19_;
-	_tmp20_ = sdx_displayMode;
-	_tmp21_ = _tmp20_.h;
-	sdx__height = _tmp21_;
-	_tmp22_ = name;
-	_tmp23_ = SDL_CreateWindow (_tmp22_, (gint) SDL_WINDOWPOS_CENTERED_MASK, (gint) SDL_WINDOWPOS_CENTERED_MASK, 0, 0, (guint32) SDL_WINDOW_SHOWN);
+	_tmp20_ = name;
+	_tmp21_ = width;
+	_tmp22_ = height;
+	_tmp23_ = SDL_CreateWindow (_tmp20_, (gint) SDL_WINDOWPOS_CENTERED_MASK, (gint) SDL_WINDOWPOS_CENTERED_MASK, _tmp21_, _tmp22_, (guint32) SDL_WINDOW_SHOWN);
 	window = _tmp23_;
 	_tmp24_ = window;
 	if (_tmp24_ == NULL) {
@@ -377,13 +366,10 @@ SDL_Window* sdx_initialize (gint width, gint height, const gchar* name) {
 	_tmp32_ = SDL_GetPerformanceFrequency ();
 	sdx__freq = (gdouble) _tmp32_;
 	sdx_fpsColor = SDX_COLOR_AntiqueWhite;
-	_tmp33_.r = (guint8) 0;
-	_tmp33_.g = (guint8) 0;
-	_tmp33_.b = (guint8) 0;
-	_tmp33_.a = (guint8) 0;
-	sdx_bgdColor = _tmp33_;
-	_tmp34_ = SDL_GetPerformanceCounter ();
-	init_genrand ((gulong) _tmp34_);
+	sdx_bgdColor = SDX_COLOR_Black;
+	sdx_fps = (gdouble) 60;
+	_tmp33_ = SDL_GetPerformanceCounter ();
+	init_genrand ((gulong) _tmp33_);
 	result = window;
 	return result;
 }
@@ -398,7 +384,7 @@ gdouble sdx_getRandom (void) {
 }
 
 
-void sdx_setResource (const gchar* path) {
+void sdx_setResourceBase (const gchar* path) {
 	const gchar* _tmp0_ = NULL;
 	gchar* _tmp1_ = NULL;
 	g_return_if_fail (path != NULL);
@@ -455,22 +441,26 @@ void sdx_setShowFps (gboolean value) {
 	sdx_showFps = _tmp0_;
 	_tmp1_ = sdx_showFps;
 	if (_tmp1_ == TRUE) {
-		gchar* _tmp2_ = NULL;
-		gchar* _tmp3_ = NULL;
-		sdxFont* _tmp4_ = NULL;
-		SDL_Color _tmp5_ = {0};
-		sdxgraphicsSprite* _tmp6_ = NULL;
-		sdxgraphicsSprite* _tmp7_ = NULL;
-		_tmp2_ = g_strdup_printf ("%2.2f", (gdouble) 60);
-		_tmp3_ = _tmp2_;
-		_tmp4_ = sdx_font;
-		_tmp5_ = sdx_fpsColor;
-		_tmp6_ = sdx_graphics_sprite_fromText (_tmp3_, _tmp4_, _tmp5_);
-		_sdx_graphics_sprite_release0 (sdx_fpsSprite);
-		sdx_fpsSprite = _tmp6_;
-		_g_free0 (_tmp3_);
-		_tmp7_ = sdx_fpsSprite;
-		_tmp7_->centered = FALSE;
+		sdxgraphicsSpriteAnimatedSprite* _tmp2_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp3_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp4_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp5_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp6_ = NULL;
+		_tmp2_ = sdx_graphics_sprite_animated_sprite_new ("assets/fonts/tom-thumb-white.png", 16, 24);
+		_sdx_graphics_sprite_release0 (sdx_fps1);
+		sdx_fps1 = _tmp2_;
+		_tmp3_ = sdx_graphics_sprite_animated_sprite_new ("assets/fonts/tom-thumb-white.png", 16, 24);
+		_sdx_graphics_sprite_release0 (sdx_fps2);
+		sdx_fps2 = _tmp3_;
+		_tmp4_ = sdx_graphics_sprite_animated_sprite_new ("assets/fonts/tom-thumb-white.png", 16, 24);
+		_sdx_graphics_sprite_release0 (sdx_fps3);
+		sdx_fps3 = _tmp4_;
+		_tmp5_ = sdx_graphics_sprite_animated_sprite_new ("assets/fonts/tom-thumb-white.png", 16, 24);
+		_sdx_graphics_sprite_release0 (sdx_fps4);
+		sdx_fps4 = _tmp5_;
+		_tmp6_ = sdx_graphics_sprite_animated_sprite_new ("assets/fonts/tom-thumb-white.png", 16, 24);
+		_sdx_graphics_sprite_release0 (sdx_fps5);
+		sdx_fps5 = _tmp6_;
 	} else {
 		_sdx_graphics_sprite_release0 (sdx_fpsSprite);
 		sdx_fpsSprite = NULL;
@@ -478,27 +468,79 @@ void sdx_setShowFps (gboolean value) {
 }
 
 
+static gchar string_get (const gchar* self, glong index) {
+	gchar result = '\0';
+	glong _tmp0_ = 0L;
+	gchar _tmp1_ = '\0';
+	g_return_val_if_fail (self != NULL, '\0');
+	_tmp0_ = index;
+	_tmp1_ = ((gchar*) self)[_tmp0_];
+	result = _tmp1_;
+	return result;
+}
+
+
 void sdx_drawFps (void) {
 	gboolean _tmp0_ = FALSE;
 	_tmp0_ = sdx_showFps;
 	if (_tmp0_) {
-		sdxgraphicsSprite* _tmp1_ = NULL;
-		gdouble _tmp2_ = 0.0;
-		gchar* _tmp3_ = NULL;
-		gchar* _tmp4_ = NULL;
-		sdxFont* _tmp5_ = NULL;
-		SDL_Color _tmp6_ = {0};
-		sdxgraphicsSprite* _tmp7_ = NULL;
-		_tmp1_ = sdx_fpsSprite;
-		_tmp2_ = sdx_fps;
-		_tmp3_ = g_strdup_printf ("%2.2f", _tmp2_);
-		_tmp4_ = _tmp3_;
-		_tmp5_ = sdx_font;
-		_tmp6_ = sdx_fpsColor;
-		sdx_graphics_sprite_setText (_tmp1_, _tmp4_, _tmp5_, _tmp6_);
-		_g_free0 (_tmp4_);
-		_tmp7_ = sdx_fpsSprite;
-		sdx_graphics_sprite_render (_tmp7_, 0, 0, NULL);
+		gchar* f = NULL;
+		gdouble _tmp1_ = 0.0;
+		gchar* _tmp2_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp3_ = NULL;
+		const gchar* _tmp4_ = NULL;
+		gchar _tmp5_ = '\0';
+		sdxgraphicsSpriteAnimatedSprite* _tmp6_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp7_ = NULL;
+		const gchar* _tmp8_ = NULL;
+		gchar _tmp9_ = '\0';
+		sdxgraphicsSpriteAnimatedSprite* _tmp10_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp11_ = NULL;
+		const gchar* _tmp12_ = NULL;
+		gchar _tmp13_ = '\0';
+		sdxgraphicsSpriteAnimatedSprite* _tmp14_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp15_ = NULL;
+		const gchar* _tmp16_ = NULL;
+		gchar _tmp17_ = '\0';
+		sdxgraphicsSpriteAnimatedSprite* _tmp18_ = NULL;
+		sdxgraphicsSpriteAnimatedSprite* _tmp19_ = NULL;
+		const gchar* _tmp20_ = NULL;
+		gchar _tmp21_ = '\0';
+		sdxgraphicsSpriteAnimatedSprite* _tmp22_ = NULL;
+		_tmp1_ = sdx_fps;
+		_tmp2_ = g_strdup_printf ("%2.2f", _tmp1_);
+		f = _tmp2_;
+		_tmp3_ = sdx_fps1;
+		_tmp4_ = f;
+		_tmp5_ = string_get (_tmp4_, (glong) 0);
+		sdx_graphics_sprite_animated_sprite_setFrame (_tmp3_, (gint) _tmp5_);
+		_tmp6_ = sdx_fps1;
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp6_, 20, 12, NULL);
+		_tmp7_ = sdx_fps2;
+		_tmp8_ = f;
+		_tmp9_ = string_get (_tmp8_, (glong) 1);
+		sdx_graphics_sprite_animated_sprite_setFrame (_tmp7_, (gint) _tmp9_);
+		_tmp10_ = sdx_fps2;
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp10_, 35, 12, NULL);
+		_tmp11_ = sdx_fps3;
+		_tmp12_ = f;
+		_tmp13_ = string_get (_tmp12_, (glong) 2);
+		sdx_graphics_sprite_animated_sprite_setFrame (_tmp11_, (gint) _tmp13_);
+		_tmp14_ = sdx_fps3;
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp14_, 50, 12, NULL);
+		_tmp15_ = sdx_fps4;
+		_tmp16_ = f;
+		_tmp17_ = string_get (_tmp16_, (glong) 3);
+		sdx_graphics_sprite_animated_sprite_setFrame (_tmp15_, (gint) _tmp17_);
+		_tmp18_ = sdx_fps4;
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp18_, 65, 12, NULL);
+		_tmp19_ = sdx_fps5;
+		_tmp20_ = f;
+		_tmp21_ = string_get (_tmp20_, (glong) 4);
+		sdx_graphics_sprite_animated_sprite_setFrame (_tmp19_, (gint) _tmp21_);
+		_tmp22_ = sdx_fps5;
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp22_, 80, 12, NULL);
+		_g_free0 (f);
 	}
 }
 
@@ -808,6 +850,38 @@ void sdx_processEvents (void) {
 				sdx_mouseDown = FALSE;
 				break;
 			}
+			case SDL_FINGERMOTION:
+			{
+				SDL_Event _tmp64_ = {0};
+				SDL_TouchFingerEvent _tmp65_ = {0};
+				gfloat _tmp66_ = 0.0F;
+				gint _tmp67_ = 0;
+				SDL_Event _tmp68_ = {0};
+				SDL_TouchFingerEvent _tmp69_ = {0};
+				gfloat _tmp70_ = 0.0F;
+				gint _tmp71_ = 0;
+				_tmp64_ = sdx__evt;
+				_tmp65_ = _tmp64_.tfinger;
+				_tmp66_ = _tmp65_.x;
+				_tmp67_ = sdx_width;
+				sdx_mouseX = _tmp66_ * ((gdouble) _tmp67_);
+				_tmp68_ = sdx__evt;
+				_tmp69_ = _tmp68_.tfinger;
+				_tmp70_ = _tmp69_.y;
+				_tmp71_ = sdx_height;
+				sdx_mouseY = _tmp70_ * ((gdouble) _tmp71_);
+				break;
+			}
+			case SDL_FINGERDOWN:
+			{
+				sdx_mouseDown = TRUE;
+				break;
+			}
+			case SDL_FINGERUP:
+			{
+				sdx_mouseDown = FALSE;
+				break;
+			}
 			default:
 			break;
 		}
@@ -845,6 +919,16 @@ void sdx_end (void) {
 	SDL_Renderer* _tmp0_ = NULL;
 	_tmp0_ = sdx_renderer;
 	SDL_RenderPresent (_tmp0_);
+}
+
+
+void sdx_log (const gchar* text) {
+	FILE* _tmp0_ = NULL;
+	const gchar* _tmp1_ = NULL;
+	g_return_if_fail (text != NULL);
+	_tmp0_ = stdout;
+	_tmp1_ = text;
+	fprintf (_tmp0_, "%s\n", _tmp1_);
 }
 
 

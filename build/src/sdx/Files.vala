@@ -3,19 +3,19 @@ using sdx.files;
 namespace sdx {
 
 	public enum FileType {
-		Parent,		/* Placeholder for the parent path  */
-		Resource,	/* Path to memory GResource */
-		Asset,		/* Android asset folder */
-		Absolute,	/* Absolute filesystem path.  */
-		Relative	/* Path relative to the pwd */
+		Resource = 1,		/* Path to memory GResource */
+		Asset,				/* Android asset folder */
+		Absolute,			/* Absolute filesystem path.  */
+		Relative			/* Path relative to the pwd */
+		//  Parent = 0x10		/* Placeholder for the parent path  */
 	}
 	[Compact, CCode ( /** reference counting */
-		ref_function = "sdx_files_retain", 
-		unref_function = "sdx_files_release"
+		ref_function = "sdx_data_input_stream_retain", 
+		unref_function = "sdx_data_input_stream_release"
 	)]
-	public class Files {
+	public class DataInputStream {
 		public int _retainCount = 1;
-		public unowned Files retain() {
+		public unowned DataInputStream retain() {
 			GLib.AtomicInt.add (ref _retainCount, 1);
 			return this;
 		}
@@ -24,13 +24,14 @@ namespace sdx {
 		}
 		public extern void free();
 		
-
-		public bool isResource;
-		public string resourcePath;
-
-		public Files(string resourcePath) { 
-			this.resourcePath = resourcePath;
+		public string[] data; 
+		public int ctr;
+		public DataInputStream(string data) {
+			this.data = data.split("\n");
+			ctr = 0;
 		}
-
+		public string? read_line() {
+			return ctr<data.length ? data[ctr++] : null;
+		}
 	}
 }

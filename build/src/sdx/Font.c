@@ -41,7 +41,7 @@ void sdx_font_release (sdxFont* self);
 void sdx_font_free (sdxFont* self);
 sdxFont* sdx_font_new (const gchar* path, gint size);
 void sdx_files_file_handle_free (sdxfilesFileHandle* self);
-sdxfilesFileHandle* sdx_files_asset (const gchar* path);
+sdxfilesFileHandle* sdx_files_default (const gchar* path);
 SDL_RWops* sdx_files_file_handle_getRWops (sdxfilesFileHandle* self);
 SDL_Surface* sdx_font_render (sdxFont* self, const gchar* text, SDL_Color color);
 
@@ -81,7 +81,7 @@ sdxFont* sdx_font_new (const gchar* path, gint size) {
 	self = g_slice_new0 (sdxFont);
 	sdx_font_instance_init (self);
 	_tmp0_ = path;
-	_tmp1_ = sdx_files_asset (_tmp0_);
+	_tmp1_ = sdx_files_default (_tmp0_);
 	file = _tmp1_;
 	_tmp2_ = sdx_files_file_handle_getRWops (file);
 	_SDL_FreeRW0 (self->raw);

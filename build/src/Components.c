@@ -15,8 +15,6 @@
 
 #define TYPE_COLLISION (collision_get_type ())
 
-#define TYPE_CAMERA_TYPE (camera_type_get_type ())
-
 #define TYPE_ACTOR (actor_get_type ())
 
 #define TYPE_CATEGORY (category_get_type ())
@@ -54,20 +52,11 @@ typedef struct _ScaleTween ScaleTween;
 #define TYPE_SPRITE (sprite_get_type ())
 typedef struct _Sprite Sprite;
 
-#define TYPE_CAMERA (camera_get_type ())
-typedef Vector2d Camera;
-
 typedef enum  {
 	COLLISION_X,
 	COLLISION_Y,
 	COLLISION_CORNER
 } Collision;
-
-typedef enum  {
-	CAMERA_TYPE_FLUID_CAMERA,
-	CAMERA_TYPE_INNER_CAMERA,
-	CAMERA_TYPE_SIMPLE_CAMERA
-} CameraType;
 
 typedef enum  {
 	ACTOR_DEFAULT,
@@ -146,7 +135,6 @@ struct _Sprite {
 
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
 GType collision_get_type (void) G_GNUC_CONST;
-GType camera_type_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
 GType entity_get_type (void) G_GNUC_CONST;
@@ -171,12 +159,16 @@ static SDL_Color* _sdl_video_color_dup (SDL_Color* self);
 GType blit_get_type (void) G_GNUC_CONST;
 Blit* blit_dup (const Blit* self);
 void blit_free (Blit* self);
+void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result);
+void timer (gint begin, gint finish, gint best, Timer* result);
 GType scale_tween_get_type (void) G_GNUC_CONST;
 ScaleTween* scale_tween_dup (const ScaleTween* self);
 void scale_tween_free (ScaleTween* self);
+void scaletween (gdouble min, gdouble max, gdouble speed, gboolean repeat, gboolean active, ScaleTween* result);
 GType sprite_get_type (void) G_GNUC_CONST;
 Sprite* sprite_dup (const Sprite* self);
 void sprite_free (Sprite* self);
+void sprite (SDL_Texture* texture, gint width, gint height, Sprite* result);
 void point2d_add (Point2d *self, Vector2d* v, Point2d* result);
 void point2d (gdouble x, gdouble y, Point2d* result);
 void point2d_sub (Point2d *self, Vector2d* v, Point2d* result);
@@ -184,18 +176,9 @@ void vector2d_mul (Vector2d *self, gdouble f, Vector2d* result);
 void vector2d (gdouble x, gdouble y, Vector2d* result);
 void vector2d_div (Vector2d *self, gdouble f, Vector2d* result);
 gdouble vector2d_len (Vector2d *self);
-GType camera_get_type (void) G_GNUC_CONST;
-Camera* camera_dup (const Camera* self);
-void camera_free (Camera* self);
-void camera_scrollTo (Camera *self, gdouble x);
-void camera_scrollBy (Camera *self, gdouble x);
-void sprite (SDL_Texture* texture, gint width, gint height, Sprite* result);
-void timer (gint begin, gint finish, gint best, Timer* result);
+void health (gint curHealth, gint maxHealth, Health* result);
 void rect (gint x, gint y, gint h, gint w, SDL_Rect* result);
 SDL_Color color (guint8 r, guint8 g, guint8 b, guint8 a);
-void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result);
-void health (gint curHealth, gint maxHealth, Health* result);
-void scaletween (gdouble min, gdouble max, gdouble speed, gboolean repeat, gboolean active, ScaleTween* result);
 
 
 inline gdouble clamp (gdouble value, gdouble low, gdouble hi) {
@@ -240,18 +223,6 @@ GType collision_get_type (void) {
 		g_once_init_leave (&collision_type_id__volatile, collision_type_id);
 	}
 	return collision_type_id__volatile;
-}
-
-
-GType camera_type_get_type (void) {
-	static volatile gsize camera_type_type_id__volatile = 0;
-	if (g_once_init_enter (&camera_type_type_id__volatile)) {
-		static const GEnumValue values[] = {{CAMERA_TYPE_FLUID_CAMERA, "CAMERA_TYPE_FLUID_CAMERA", "fluid-camera"}, {CAMERA_TYPE_INNER_CAMERA, "CAMERA_TYPE_INNER_CAMERA", "inner-camera"}, {CAMERA_TYPE_SIMPLE_CAMERA, "CAMERA_TYPE_SIMPLE_CAMERA", "simple-camera"}, {0, NULL, NULL}};
-		GType camera_type_type_id;
-		camera_type_type_id = g_enum_register_static ("CameraType", values);
-		g_once_init_leave (&camera_type_type_id__volatile, camera_type_type_id);
-	}
-	return camera_type_type_id__volatile;
 }
 
 
@@ -443,6 +414,24 @@ GType blit_get_type (void) {
 }
 
 
+void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result) {
+	SDL_Rect _tmp0_ = {0};
+	SDL_Rect _tmp1_ = {0};
+	SDL_RendererFlip _tmp2_ = 0;
+	Blit _tmp3_ = {0};
+	g_return_if_fail (source != NULL);
+	g_return_if_fail (dest != NULL);
+	_tmp0_ = *source;
+	_tmp1_ = *dest;
+	_tmp2_ = flip;
+	_tmp3_.source = _tmp0_;
+	_tmp3_.dest = _tmp1_;
+	_tmp3_.flip = _tmp2_;
+	*result = _tmp3_;
+	return;
+}
+
+
 Timer* timer_dup (const Timer* self) {
 	Timer* dup;
 	dup = g_new0 (Timer, 1);
@@ -464,6 +453,22 @@ GType timer_get_type (void) {
 		g_once_init_leave (&timer_type_id__volatile, timer_type_id);
 	}
 	return timer_type_id__volatile;
+}
+
+
+void timer (gint begin, gint finish, gint best, Timer* result) {
+	gint _tmp0_ = 0;
+	gint _tmp1_ = 0;
+	gint _tmp2_ = 0;
+	Timer _tmp3_ = {0};
+	_tmp0_ = begin;
+	_tmp1_ = finish;
+	_tmp2_ = best;
+	_tmp3_.begin = _tmp0_;
+	_tmp3_.finish = _tmp1_;
+	_tmp3_.best = _tmp2_;
+	*result = _tmp3_;
+	return;
 }
 
 
@@ -491,6 +496,28 @@ GType scale_tween_get_type (void) {
 }
 
 
+void scaletween (gdouble min, gdouble max, gdouble speed, gboolean repeat, gboolean active, ScaleTween* result) {
+	gdouble _tmp0_ = 0.0;
+	gdouble _tmp1_ = 0.0;
+	gdouble _tmp2_ = 0.0;
+	gboolean _tmp3_ = FALSE;
+	gboolean _tmp4_ = FALSE;
+	ScaleTween _tmp5_ = {0};
+	_tmp0_ = min;
+	_tmp1_ = max;
+	_tmp2_ = speed;
+	_tmp3_ = repeat;
+	_tmp4_ = active;
+	_tmp5_.min = _tmp0_;
+	_tmp5_.max = _tmp1_;
+	_tmp5_.speed = _tmp2_;
+	_tmp5_.repeat = _tmp3_;
+	_tmp5_.active = _tmp4_;
+	*result = _tmp5_;
+	return;
+}
+
+
 Sprite* sprite_dup (const Sprite* self) {
 	Sprite* dup;
 	dup = g_new0 (Sprite, 1);
@@ -512,6 +539,23 @@ GType sprite_get_type (void) {
 		g_once_init_leave (&sprite_type_id__volatile, sprite_type_id);
 	}
 	return sprite_type_id__volatile;
+}
+
+
+void sprite (SDL_Texture* texture, gint width, gint height, Sprite* result) {
+	SDL_Texture* _tmp0_ = NULL;
+	gint _tmp1_ = 0;
+	gint _tmp2_ = 0;
+	Sprite _tmp3_ = {0};
+	g_return_if_fail (texture != NULL);
+	_tmp0_ = texture;
+	_tmp1_ = width;
+	_tmp2_ = height;
+	_tmp3_.texture = _tmp0_;
+	_tmp3_.width = _tmp1_;
+	_tmp3_.height = _tmp2_;
+	*result = _tmp3_;
+	return;
 }
 
 
@@ -578,6 +622,19 @@ GType point2d_get_type (void) {
 		g_once_init_leave (&point2d_type_id__volatile, point2d_type_id);
 	}
 	return point2d_type_id__volatile;
+}
+
+
+void point2d (gdouble x, gdouble y, Point2d* result) {
+	gdouble _tmp0_ = 0.0;
+	gdouble _tmp1_ = 0.0;
+	Point2d _tmp2_ = {0};
+	_tmp0_ = x;
+	_tmp1_ = y;
+	_tmp2_.x = _tmp0_;
+	_tmp2_.y = _tmp1_;
+	*result = _tmp2_;
+	return;
 }
 
 
@@ -654,43 +711,16 @@ GType vector2d_get_type (void) {
 }
 
 
-void camera_scrollTo (Camera *self, gdouble x) {
-	gdouble _tmp0_ = 0.0;
-	_tmp0_ = x;
-	(*self).x = _tmp0_;
-}
-
-
-void camera_scrollBy (Camera *self, gdouble x) {
+void vector2d (gdouble x, gdouble y, Vector2d* result) {
 	gdouble _tmp0_ = 0.0;
 	gdouble _tmp1_ = 0.0;
-	_tmp0_ = (*self).x;
-	_tmp1_ = x;
-	(*self).x = _tmp0_ + _tmp1_;
-}
-
-
-Camera* camera_dup (const Camera* self) {
-	Camera* dup;
-	dup = g_new0 (Camera, 1);
-	memcpy (dup, self, sizeof (Camera));
-	return dup;
-}
-
-
-void camera_free (Camera* self) {
-	g_free (self);
-}
-
-
-GType camera_get_type (void) {
-	static volatile gsize camera_type_id__volatile = 0;
-	if (g_once_init_enter (&camera_type_id__volatile)) {
-		GType camera_type_id;
-		camera_type_id = g_boxed_type_register_static ("Camera", (GBoxedCopyFunc) camera_dup, (GBoxedFreeFunc) camera_free);
-		g_once_init_leave (&camera_type_id__volatile, camera_type_id);
-	}
-	return camera_type_id__volatile;
+	Vector2d _tmp2_ = {0};
+	_tmp0_ = x;
+	_tmp1_ = y;
+	_tmp2_.x = _tmp0_;
+	_tmp2_.y = _tmp1_;
+	*result = _tmp2_;
+	return;
 }
 
 
@@ -718,45 +748,23 @@ GType health_get_type (void) {
 }
 
 
-void sprite (SDL_Texture* texture, gint width, gint height, Sprite* result) {
-	Sprite sprite = {0};
-	SDL_Texture* _tmp0_ = NULL;
-	gint _tmp1_ = 0;
-	gint _tmp2_ = 0;
-	Sprite _tmp3_ = {0};
-	g_return_if_fail (texture != NULL);
-	_tmp0_ = texture;
-	_tmp1_ = width;
-	_tmp2_ = height;
-	_tmp3_.texture = _tmp0_;
-	_tmp3_.width = _tmp1_;
-	_tmp3_.height = _tmp2_;
-	sprite = _tmp3_;
-	*result = sprite;
-	return;
-}
-
-
-void timer (gint begin, gint finish, gint best, Timer* result) {
-	Timer timer = {0};
+void health (gint curHealth, gint maxHealth, Health* result) {
 	gint _tmp0_ = 0;
 	gint _tmp1_ = 0;
-	gint _tmp2_ = 0;
-	Timer _tmp3_ = {0};
-	_tmp0_ = begin;
-	_tmp1_ = finish;
-	_tmp2_ = best;
-	_tmp3_.begin = _tmp0_;
-	_tmp3_.finish = _tmp1_;
-	_tmp3_.best = _tmp2_;
-	timer = _tmp3_;
-	*result = timer;
+	Health _tmp2_ = {0};
+	_tmp0_ = curHealth;
+	_tmp1_ = maxHealth;
+	_tmp2_.curHealth = _tmp0_;
+	_tmp2_.maxHealth = _tmp1_;
+	*result = _tmp2_;
 	return;
 }
 
 
+/**
+ * Component constructor helpers
+ */
 void rect (gint x, gint y, gint h, gint w, SDL_Rect* result) {
-	SDL_Rect rect = {0};
 	gint _tmp0_ = 0;
 	gint _tmp1_ = 0;
 	gint _tmp2_ = 0;
@@ -770,45 +778,13 @@ void rect (gint x, gint y, gint h, gint w, SDL_Rect* result) {
 	_tmp4_.y = _tmp1_;
 	_tmp4_.w = (guint) _tmp2_;
 	_tmp4_.h = (guint) _tmp3_;
-	rect = _tmp4_;
-	*result = rect;
-	return;
-}
-
-
-void point2d (gdouble x, gdouble y, Point2d* result) {
-	Point2d point2d = {0};
-	gdouble _tmp0_ = 0.0;
-	gdouble _tmp1_ = 0.0;
-	Point2d _tmp2_ = {0};
-	_tmp0_ = x;
-	_tmp1_ = y;
-	_tmp2_.x = _tmp0_;
-	_tmp2_.y = _tmp1_;
-	point2d = _tmp2_;
-	*result = point2d;
-	return;
-}
-
-
-void vector2d (gdouble x, gdouble y, Vector2d* result) {
-	Vector2d vector2d = {0};
-	gdouble _tmp0_ = 0.0;
-	gdouble _tmp1_ = 0.0;
-	Vector2d _tmp2_ = {0};
-	_tmp0_ = x;
-	_tmp1_ = y;
-	_tmp2_.x = _tmp0_;
-	_tmp2_.y = _tmp1_;
-	vector2d = _tmp2_;
-	*result = vector2d;
+	*result = _tmp4_;
 	return;
 }
 
 
 SDL_Color color (guint8 r, guint8 g, guint8 b, guint8 a) {
 	SDL_Color result = {0};
-	SDL_Color color = {0};
 	guint8 _tmp0_ = 0U;
 	guint8 _tmp1_ = 0U;
 	guint8 _tmp2_ = 0U;
@@ -822,68 +798,8 @@ SDL_Color color (guint8 r, guint8 g, guint8 b, guint8 a) {
 	_tmp4_.g = _tmp1_;
 	_tmp4_.b = _tmp2_;
 	_tmp4_.a = _tmp3_;
-	color = _tmp4_;
-	result = color;
+	result = _tmp4_;
 	return result;
-}
-
-
-void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result) {
-	Blit blit = {0};
-	SDL_Rect _tmp0_ = {0};
-	SDL_Rect _tmp1_ = {0};
-	SDL_RendererFlip _tmp2_ = 0;
-	Blit _tmp3_ = {0};
-	g_return_if_fail (source != NULL);
-	g_return_if_fail (dest != NULL);
-	_tmp0_ = *source;
-	_tmp1_ = *dest;
-	_tmp2_ = flip;
-	_tmp3_.source = _tmp0_;
-	_tmp3_.dest = _tmp1_;
-	_tmp3_.flip = _tmp2_;
-	blit = _tmp3_;
-	*result = blit;
-	return;
-}
-
-
-void health (gint curHealth, gint maxHealth, Health* result) {
-	Health health = {0};
-	gint _tmp0_ = 0;
-	gint _tmp1_ = 0;
-	Health _tmp2_ = {0};
-	_tmp0_ = curHealth;
-	_tmp1_ = maxHealth;
-	_tmp2_.curHealth = _tmp0_;
-	_tmp2_.maxHealth = _tmp1_;
-	health = _tmp2_;
-	*result = health;
-	return;
-}
-
-
-void scaletween (gdouble min, gdouble max, gdouble speed, gboolean repeat, gboolean active, ScaleTween* result) {
-	ScaleTween scaletween = {0};
-	gdouble _tmp0_ = 0.0;
-	gdouble _tmp1_ = 0.0;
-	gdouble _tmp2_ = 0.0;
-	gboolean _tmp3_ = FALSE;
-	gboolean _tmp4_ = FALSE;
-	ScaleTween _tmp5_ = {0};
-	_tmp0_ = min;
-	_tmp1_ = max;
-	_tmp2_ = speed;
-	_tmp3_ = repeat;
-	_tmp4_ = active;
-	_tmp5_.min = _tmp0_;
-	_tmp5_.max = _tmp1_;
-	_tmp5_.speed = _tmp2_;
-	_tmp5_.repeat = _tmp3_;
-	_tmp5_.active = _tmp4_;
-	scaletween = _tmp5_;
-	*result = scaletween;
-	return;
 }
 
 

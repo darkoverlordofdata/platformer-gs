@@ -1,8 +1,4 @@
 
-uses SDL
-uses SDL.Video
-uses SDLTTF
-
 exception Exception
 	SDLException
 	InvalidValue
@@ -42,7 +38,7 @@ def main(args: array of string)
 #else
 def game()
 
-	var window = sdx.initialize(WINDOW_SIZE.x, WINDOW_SIZE.y, "Shmupwarz")
+	var window = sdx.initialize((int)WINDOW_SIZE.x, (int)WINDOW_SIZE.y, "Shmupwarz")
 	var game = new Game()
 	startTime = sdx.getNow()
 	lastTick = 0

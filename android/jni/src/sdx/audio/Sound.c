@@ -4,17 +4,12 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_rwops.h>
 
 typedef struct _sdxaudioSound sdxaudioSound;
-#define _Mix_FreeChunk0(var) ((var == NULL) ? NULL : (var = (Mix_FreeChunk (var), NULL)))
 typedef struct _sdxfilesFileHandle sdxfilesFileHandle;
-#define _SDL_FreeRW0(var) ((var == NULL) ? NULL : (var = (SDL_FreeRW (var), NULL)))
 
 struct _sdxaudioSound {
 	gint _retainCount;
-	Mix_Chunk* chunk;
 };
 
 
@@ -26,7 +21,6 @@ void sdx_audio_sound_release (sdxaudioSound* self);
 void sdx_audio_sound_free (sdxaudioSound* self);
 void sdx_files_file_handle_free (sdxfilesFileHandle* self);
 sdxaudioSound* sdx_audio_sound_new (sdxfilesFileHandle* file);
-SDL_RWops* sdx_files_file_handle_getRWops (sdxfilesFileHandle* self);
 void sdx_audio_sound_play (sdxaudioSound* self, gint loops);
 
 
@@ -51,31 +45,15 @@ void sdx_audio_sound_release (sdxaudioSound* self) {
 
 sdxaudioSound* sdx_audio_sound_new (sdxfilesFileHandle* file) {
 	sdxaudioSound* self;
-	sdxfilesFileHandle* _tmp0_ = NULL;
-	SDL_RWops* _tmp1_ = NULL;
-	SDL_RWops* _tmp2_ = NULL;
-	Mix_Chunk* _tmp3_ = NULL;
 	g_return_val_if_fail (file != NULL, NULL);
 	self = g_slice_new0 (sdxaudioSound);
 	sdx_audio_sound_instance_init (self);
-	_tmp0_ = file;
-	_tmp1_ = sdx_files_file_handle_getRWops (_tmp0_);
-	_tmp2_ = _tmp1_;
-	_tmp3_ = Mix_LoadWAV_RW (_tmp2_, 0);
-	_Mix_FreeChunk0 (self->chunk);
-	self->chunk = _tmp3_;
-	_SDL_FreeRW0 (_tmp2_);
 	return self;
 }
 
 
 void sdx_audio_sound_play (sdxaudioSound* self, gint loops) {
-	Mix_Chunk* _tmp0_ = NULL;
-	gint _tmp1_ = 0;
 	g_return_if_fail (self != NULL);
-	_tmp0_ = self->chunk;
-	_tmp1_ = loops;
-	Mix_PlayChannel (-1, _tmp0_, _tmp1_);
 }
 
 
@@ -85,7 +63,6 @@ static void sdx_audio_sound_instance_init (sdxaudioSound * self) {
 
 
 void sdx_audio_sound_free (sdxaudioSound* self) {
-	_Mix_FreeChunk0 (self->chunk);
 	g_slice_free (sdxaudioSound, self);
 }
 

@@ -7,6 +7,10 @@
 
 
 typedef enum  {
+	SDX_IO_EXCEPTION_InvalidData
+} sdxIOException;
+#define SDX_IO_EXCEPTION sdx_io_exception_quark ()
+typedef enum  {
 	SDX_SDL_EXCEPTION_Initialization,
 	SDX_SDL_EXCEPTION_ImageInitialization,
 	SDX_SDL_EXCEPTION_TtfInitialization,
@@ -15,13 +19,24 @@ typedef enum  {
 	SDX_SDL_EXCEPTION_CreateRenderer,
 	SDX_SDL_EXCEPTION_InvalidForPlatform,
 	SDX_SDL_EXCEPTION_UnableToLoadResource,
+	SDX_SDL_EXCEPTION_UnableToLoadSurface,
+	SDX_SDL_EXCEPTION_UnableToLoadTexture,
 	SDX_SDL_EXCEPTION_NullPointer,
-	SDX_SDL_EXCEPTION_NoSuchElement
+	SDX_SDL_EXCEPTION_NoSuchElement,
+	SDX_SDL_EXCEPTION_IllegalStateException,
+	SDX_SDL_EXCEPTION_RuntimeException,
+	SDX_SDL_EXCEPTION_NotReached
 } sdxSdlException;
 #define SDX_SDL_EXCEPTION sdx_sdl_exception_quark ()
 
 
+GQuark sdx_io_exception_quark (void);
 GQuark sdx_sdl_exception_quark (void);
+
+
+GQuark sdx_io_exception_quark (void) {
+	return g_quark_from_static_string ("sdx_io_exception-quark");
+}
 
 
 GQuark sdx_sdl_exception_quark (void) {

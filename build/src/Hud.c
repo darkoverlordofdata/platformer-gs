@@ -13,6 +13,7 @@
 
 typedef struct _Hud Hud;
 typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
+typedef sdxgraphicsSprite sdxgraphicsSpriteTextSprite;
 #define _g_free0(var) (var = (g_free (var), NULL))
 void sdx_graphics_sprite_release (sdxgraphicsSprite* self);
 void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
@@ -44,9 +45,9 @@ struct _Hud {
 	gchar* text1;
 	gchar* text2;
 	gchar* text3;
-	sdxgraphicsSprite* hudText1;
-	sdxgraphicsSprite* hudText2;
-	sdxgraphicsSprite* hudText3;
+	sdxgraphicsSpriteTextSprite* hudText1;
+	sdxgraphicsSpriteTextSprite* hudText2;
+	sdxgraphicsSpriteTextSprite* hudText3;
 };
 
 typedef enum  {
@@ -113,7 +114,7 @@ void hud_release (Hud* self);
 void hud_free (Hud* self);
 Hud* hud_new (void);
 void sdx_font_free (sdxFont* self);
-sdxgraphicsSprite* sdx_graphics_sprite_fromText (const gchar* path, sdxFont* font, SDL_Color color);
+sdxgraphicsSpriteTextSprite* sdx_graphics_sprite_text_sprite_new (const gchar* text, sdxFont* font, SDL_Color color);
 GType entity_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
@@ -135,7 +136,7 @@ void entity_copy (const Entity* self, Entity* dest);
 void entity_destroy (Entity* self);
 void hud_render (Hud* self, Entity** player, gint tick);
 gchar* formatTime (gint ticks);
-void sdx_graphics_sprite_setText (sdxgraphicsSprite* self, const gchar* text, sdxFont* font, SDL_Color color);
+void sdx_graphics_sprite_text_sprite_setText (sdxgraphicsSpriteTextSprite* self, const gchar* text, sdxFont* font, SDL_Color color);
 void sdx_graphics_sprite_render (sdxgraphicsSprite* self, gint x, gint y, SDL_Rect* clip);
 
 extern const SDL_Color SDX_COLOR_Cyan;
@@ -162,23 +163,23 @@ void hud_release (Hud* self) {
 Hud* hud_new (void) {
 	Hud* self;
 	sdxFont* _tmp0_ = NULL;
-	sdxgraphicsSprite* _tmp1_ = NULL;
+	sdxgraphicsSpriteTextSprite* _tmp1_ = NULL;
 	sdxFont* _tmp2_ = NULL;
-	sdxgraphicsSprite* _tmp3_ = NULL;
+	sdxgraphicsSpriteTextSprite* _tmp3_ = NULL;
 	sdxFont* _tmp4_ = NULL;
-	sdxgraphicsSprite* _tmp5_ = NULL;
+	sdxgraphicsSpriteTextSprite* _tmp5_ = NULL;
 	self = g_slice_new0 (Hud);
 	hud_instance_init (self);
 	_tmp0_ = sdx_font;
-	_tmp1_ = sdx_graphics_sprite_fromText (" ", _tmp0_, SDX_COLOR_Cyan);
+	_tmp1_ = sdx_graphics_sprite_text_sprite_new (" ", _tmp0_, SDX_COLOR_Cyan);
 	_sdx_graphics_sprite_release0 (self->hudText1);
 	self->hudText1 = _tmp1_;
 	_tmp2_ = sdx_font;
-	_tmp3_ = sdx_graphics_sprite_fromText (" ", _tmp2_, SDX_COLOR_Cyan);
+	_tmp3_ = sdx_graphics_sprite_text_sprite_new (" ", _tmp2_, SDX_COLOR_Cyan);
 	_sdx_graphics_sprite_release0 (self->hudText2);
 	self->hudText2 = _tmp3_;
 	_tmp4_ = sdx_font;
-	_tmp5_ = sdx_graphics_sprite_fromText (" ", _tmp4_, SDX_COLOR_Cyan);
+	_tmp5_ = sdx_graphics_sprite_text_sprite_new (" ", _tmp4_, SDX_COLOR_Cyan);
 	_sdx_graphics_sprite_release0 (self->hudText3);
 	self->hudText3 = _tmp5_;
 	return self;
@@ -205,7 +206,7 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 		gchar* _tmp7_ = NULL;
 		const gchar* _tmp8_ = NULL;
 		const gchar* _tmp9_ = NULL;
-		sdxgraphicsSprite* _tmp15_ = NULL;
+		sdxgraphicsSpriteTextSprite* _tmp15_ = NULL;
 		_tmp3_ = tick;
 		_tmp4_ = *player;
 		_tmp5_ = (*_tmp4_).expires;
@@ -217,7 +218,7 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 		if (g_strcmp0 (_tmp8_, _tmp9_) != 0) {
 			const gchar* _tmp10_ = NULL;
 			gchar* _tmp11_ = NULL;
-			sdxgraphicsSprite* _tmp12_ = NULL;
+			sdxgraphicsSpriteTextSprite* _tmp12_ = NULL;
 			const gchar* _tmp13_ = NULL;
 			sdxFont* _tmp14_ = NULL;
 			_tmp10_ = t1;
@@ -227,10 +228,10 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 			_tmp12_ = self->hudText1;
 			_tmp13_ = self->text1;
 			_tmp14_ = sdx_font;
-			sdx_graphics_sprite_setText (_tmp12_, _tmp13_, _tmp14_, SDX_COLOR_Cyan);
+			sdx_graphics_sprite_text_sprite_setText (_tmp12_, _tmp13_, _tmp14_, SDX_COLOR_Cyan);
 		}
 		_tmp15_ = self->hudText1;
-		sdx_graphics_sprite_render (_tmp15_, 50, 100, NULL);
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp15_, 50, 100, NULL);
 		_g_free0 (t1);
 	} else {
 		Entity* _tmp16_ = NULL;
@@ -247,7 +248,7 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 			gchar* _tmp22_ = NULL;
 			const gchar* _tmp23_ = NULL;
 			const gchar* _tmp24_ = NULL;
-			sdxgraphicsSprite* _tmp30_ = NULL;
+			sdxgraphicsSpriteTextSprite* _tmp30_ = NULL;
 			_tmp19_ = *player;
 			_tmp20_ = (*_tmp19_).expires;
 			_tmp21_ = (*_tmp20_).finish;
@@ -258,7 +259,7 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 			if (g_strcmp0 (_tmp23_, _tmp24_) != 0) {
 				const gchar* _tmp25_ = NULL;
 				gchar* _tmp26_ = NULL;
-				sdxgraphicsSprite* _tmp27_ = NULL;
+				sdxgraphicsSpriteTextSprite* _tmp27_ = NULL;
 				const gchar* _tmp28_ = NULL;
 				sdxFont* _tmp29_ = NULL;
 				_tmp25_ = t2;
@@ -268,10 +269,10 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 				_tmp27_ = self->hudText2;
 				_tmp28_ = self->text2;
 				_tmp29_ = sdx_font;
-				sdx_graphics_sprite_setText (_tmp27_, _tmp28_, _tmp29_, SDX_COLOR_Cyan);
+				sdx_graphics_sprite_text_sprite_setText (_tmp27_, _tmp28_, _tmp29_, SDX_COLOR_Cyan);
 			}
 			_tmp30_ = self->hudText2;
-			sdx_graphics_sprite_render (_tmp30_, 50, 100, NULL);
+			sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp30_, 50, 100, NULL);
 			_g_free0 (t2);
 		}
 	}
@@ -289,7 +290,7 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 		gchar* _tmp40_ = NULL;
 		const gchar* _tmp41_ = NULL;
 		const gchar* _tmp42_ = NULL;
-		sdxgraphicsSprite* _tmp48_ = NULL;
+		sdxgraphicsSpriteTextSprite* _tmp48_ = NULL;
 		_tmp34_ = *player;
 		_tmp35_ = (*_tmp34_).expires;
 		_tmp36_ = (*_tmp35_).best;
@@ -304,7 +305,7 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 		if (g_strcmp0 (_tmp41_, _tmp42_) != 0) {
 			const gchar* _tmp43_ = NULL;
 			gchar* _tmp44_ = NULL;
-			sdxgraphicsSprite* _tmp45_ = NULL;
+			sdxgraphicsSpriteTextSprite* _tmp45_ = NULL;
 			const gchar* _tmp46_ = NULL;
 			sdxFont* _tmp47_ = NULL;
 			_tmp43_ = t3;
@@ -314,10 +315,10 @@ void hud_render (Hud* self, Entity** player, gint tick) {
 			_tmp45_ = self->hudText3;
 			_tmp46_ = self->text3;
 			_tmp47_ = sdx_font;
-			sdx_graphics_sprite_setText (_tmp45_, _tmp46_, _tmp47_, SDX_COLOR_Cyan);
+			sdx_graphics_sprite_text_sprite_setText (_tmp45_, _tmp46_, _tmp47_, SDX_COLOR_Cyan);
 		}
 		_tmp48_ = self->hudText3;
-		sdx_graphics_sprite_render (_tmp48_, 50, 150, NULL);
+		sdx_graphics_sprite_render ((sdxgraphicsSprite*) _tmp48_, 50, 150, NULL);
 		_g_free0 (t3);
 	}
 }

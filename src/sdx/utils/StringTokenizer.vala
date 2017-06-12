@@ -10,7 +10,6 @@ namespace sdx.utils {
         public bool retDelims;
         public bool delimsChanged;
         public int maxDelimCodePoint;
-        public bool hasSurrogates = false;
         public int[] delimiterCodePoints;
 
         public StringTokenizer(string str, string delim = " \t\n\r\f", bool returnDelims = false) {

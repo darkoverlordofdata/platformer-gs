@@ -17,7 +17,13 @@ typedef struct _sdxutilsJson sdxutilsJson;
 void sdx_utils_json_release (sdxutilsJson* self);
 void sdx_utils_json_free (sdxutilsJson* self);
 sdxutilsJson* sdx_utils_json_retain (sdxutilsJson* self);
+void sdx_utils_json_release (sdxutilsJson* self);
+void sdx_utils_json_free (sdxutilsJson* self);
+sdxutilsJson* sdx_utils_json_retain (sdxutilsJson* self);
 #define _sdx_utils_json_release0(var) ((var == NULL) ? NULL : (var = (sdx_utils_json_release (var), NULL)))
+void sdx_utils_js_variant_release (sdxutilsJsVariant* self);
+void sdx_utils_js_variant_free (sdxutilsJsVariant* self);
+sdxutilsJsVariant* sdx_utils_js_variant_retain (sdxutilsJsVariant* self);
 void sdx_utils_js_variant_release (sdxutilsJsVariant* self);
 void sdx_utils_js_variant_free (sdxutilsJsVariant* self);
 sdxutilsJsVariant* sdx_utils_js_variant_retain (sdxutilsJsVariant* self);
@@ -25,6 +31,13 @@ sdxutilsJsVariant* sdx_utils_js_variant_retain (sdxutilsJsVariant* self);
 #define _g_hash_table_unref0(var) ((var == NULL) ? NULL : (var = (g_hash_table_unref (var), NULL)))
 #define __g_list_free__sdx_utils_js_variant_release0_0(var) ((var == NULL) ? NULL : (var = (_g_list_free__sdx_utils_js_variant_release0_ (var), NULL)))
 
+/**
+     * Simple Json Parser
+     * 
+     * based on JSON.parse
+     * 
+     * @see https://github.com/douglascrockford/JSON-js
+     */
 typedef enum  {
 	SDX_UTILS_JSON_EXCEPTION_SyntaxError,
 	SDX_UTILS_JSON_EXCEPTION_UnexpectedCharacter,

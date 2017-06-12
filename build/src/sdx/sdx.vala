@@ -12,6 +12,39 @@ namespace sdx {
 	
 	public delegate Blit[] Compositor(int x, int y);	
 
+	//  public enum CameraType {
+	//  	FLUID_CAMERA,
+	//  	INNER_CAMERA,
+	//  	SIMPLE_CAMERA
+	//  }
+
+
+	//  public class Camera : Object {
+	//  	public CameraType type;
+	//  	public Vector2d position;
+	//  	public Camera(CameraType type = CameraType.INNER_CAMERA, double x = 0, double y = 0) {
+	//  		this.type = type;
+	//  		this.position = { x, y };
+	//  	}
+	//  	public void setPosition(Point2d player) {
+	//  		switch(type) {
+
+	//  			case CameraType.FLUID_CAMERA:
+	//  				var dist = position.x - player.x + (double)WINDOW_SIZE.x/2;
+	//  				position.x += (-0.05 * dist);
+	//  				break;
+
+	//  			case CameraType.INNER_CAMERA:
+	//  				var area = player.x - (double)WINDOW_SIZE.x/2;
+	//  				position.x = clamp(position.x, area-100, area+100);
+	//  				break;
+					
+	//  			case CameraType.SIMPLE_CAMERA:
+	//  				position.x = player.x - (double)WINDOW_SIZE.x/2;
+	//  				break;
+	//  		}
+	//  	}
+	//  }
 	/**
 	 * Global vars
 	 * 
@@ -31,7 +64,12 @@ namespace sdx {
 	SDL.Video.DisplayMode displayMode;
 	SDL.Video.Color fpsColor;
 	SDL.Video.Color bgdColor;
-	sdx.graphics.Sprite fpsSprite;
+	sdx.graphics.Sprite.TextSprite fpsSprite;
+	sdx.graphics.Sprite.AnimatedSprite fps1;
+	sdx.graphics.Sprite.AnimatedSprite fps2;
+	sdx.graphics.Sprite.AnimatedSprite fps3;
+	sdx.graphics.Sprite.AnimatedSprite fps4;
+	sdx.graphics.Sprite.AnimatedSprite fps5;
 	long pixelFactor;
 	bool showFps;
 	double fps;
@@ -50,8 +88,8 @@ namespace sdx {
 	double _freq;
 	double _mark1;
 	double _mark2;
-	int _width;
-	int _height;
+	int width;
+	int height;
 
 	public enum Direction {
 		NONE, LEFT, RIGHT, UP, DOWN
@@ -62,12 +100,13 @@ namespace sdx {
 	 * 
 	 */
 	Window initialize(int width, int height, string name) {
+		sdx.height = height;
+		sdx.width = width;
 		keys = new uint8[256];
 		direction = new bool[5];
 
 		if (SDL.init(SDL.InitFlag.VIDEO | SDL.InitFlag.TIMER | SDL.InitFlag.EVENTS) < 0)
 			throw new SdlException.Initialization(SDL.get_error());
- 
 
 		if (SDLImage.init(SDLImage.InitFlags.PNG) < 0)
 			throw new SdlException.ImageInitialization(SDL.get_error());
@@ -81,15 +120,15 @@ namespace sdx {
 		display = 0;
 		display.get_mode(0, out displayMode);
 		if (display.get_dpi(null, null, null) == -1) {
-			pixelFactor = 2;
+			pixelFactor = 1;
 		} else {
 			pixelFactor = 1;
 		}
 
 #if (ANDROID)    
 
-		_width = displayMode.w;
-		_height = displayMode.h;
+		width = displayMode.w;
+		height = displayMode.h;
 		var window = new Window(name, Window.POS_CENTERED, Window.POS_CENTERED, 0, 0, WindowFlags.SHOWN);
 #else
 		var window = new Window(name, Window.POS_CENTERED, Window.POS_CENTERED, width, height, WindowFlags.SHOWN);
@@ -103,8 +142,9 @@ namespace sdx {
 
 		_freq = SDL.Timer.get_performance_frequency();
 		fpsColor = sdx.Color.AntiqueWhite;
-		bgdColor = { 0, 0, 0, 0 };
+		bgdColor = sdx.Color.Black; //{ 0, 0, 0, 0 };
 
+		fps = 60;
 		MersenneTwister.init_genrand((ulong)SDL.Timer.get_performance_counter());
 		return window;
 	}
@@ -113,7 +153,7 @@ namespace sdx {
 		return MersenneTwister.genrand_real2();
 	}
 
-	void setResource(string path) {
+	void setResourceBase(string path) {
 		sdx.resourceBase = path;
 	}
 
@@ -132,8 +172,13 @@ namespace sdx {
 	void setShowFps(bool value) {
 		showFps = value;
 		if (showFps == true) {
-			fpsSprite = sdx.graphics.Sprite.fromText("%2.2f".printf(60), font, fpsColor);
-			fpsSprite.centered = false;
+
+			fps1 = new sdx.graphics.Sprite.AnimatedSprite("assets/fonts/tom-thumb-white.png", 16, 24);
+			fps2 = new sdx.graphics.Sprite.AnimatedSprite("assets/fonts/tom-thumb-white.png", 16, 24);
+			fps3 = new sdx.graphics.Sprite.AnimatedSprite("assets/fonts/tom-thumb-white.png", 16, 24);
+			fps4 = new sdx.graphics.Sprite.AnimatedSprite("assets/fonts/tom-thumb-white.png", 16, 24);
+			fps5 = new sdx.graphics.Sprite.AnimatedSprite("assets/fonts/tom-thumb-white.png", 16, 24);
+
 		} else {
 			fpsSprite = null;
 		}
@@ -141,8 +186,18 @@ namespace sdx {
 
 	void drawFps() {
 		if (showFps) {
-			fpsSprite.setText("%2.2f".printf(fps), font, fpsColor);
-			fpsSprite.render(0, 0);
+
+			var f = "%2.2f".printf(fps);
+			fps1.setFrame(f[0]);
+			fps1.render(20, 12);
+			fps2.setFrame(f[1]);
+			fps2.render(35, 12);
+			fps3.setFrame(f[2]);
+			fps3.render(50, 12);
+			fps4.setFrame(f[3]);
+			fps4.render(65, 12);
+			fps5.setFrame(f[4]);
+			fps5.render(80, 12);
 		}
 	}
 
@@ -206,12 +261,12 @@ namespace sdx {
 					break;
 #if (!ANDROID)
 				case SDL.EventType.FINGERMOTION:
-#if (DESKTOP)					
+#if (EMSCRIPTEN)					
+					mouseX = _evt.tfinger.x * (double)width;
+					mouseY = _evt.tfinger.y * (double)height;
+#else
 					mouseX = _evt.tfinger.x;
 					mouseY = _evt.tfinger.y;
-#else
-					mouseX = _evt.tfinger.x * (double)_width;
-					mouseY = _evt.tfinger.y * (double)_height;
 #endif
 					break;
 				case SDL.EventType.FINGERDOWN:
@@ -232,6 +287,14 @@ namespace sdx {
 
 	void end() {
 		sdx.renderer.present();
+	}
+
+	void log(string text) {
+#if (ANDROID)
+		Android.logWrite(Android.LogPriority.ERROR, "SDX", text);
+#else
+		stdout.printf("%s\n", text);
+#endif
 	}
 
 }

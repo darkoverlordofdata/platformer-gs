@@ -15,14 +15,14 @@ class Hud
 	text2: string = "" 
 	text3: string = ""
 
-	hudText1: sdx.graphics.Sprite
-	hudText2: sdx.graphics.Sprite
-	hudText3: sdx.graphics.Sprite
+	hudText1: sdx.graphics.Sprite.TextSprite
+	hudText2: sdx.graphics.Sprite.TextSprite
+	hudText3: sdx.graphics.Sprite.TextSprite
 
 	construct()
-		hudText1 = sdx.graphics.Sprite.fromText(" ", sdx.font, sdx.Color.Cyan)
-		hudText2 = sdx.graphics.Sprite.fromText(" ", sdx.font, sdx.Color.Cyan)
-		hudText3 = sdx.graphics.Sprite.fromText(" ", sdx.font, sdx.Color.Cyan)
+		hudText1 = new sdx.graphics.Sprite.TextSprite(" ", sdx.font, sdx.Color.Cyan)
+		hudText2 = new sdx.graphics.Sprite.TextSprite(" ", sdx.font, sdx.Color.Cyan)
+		hudText3 = new sdx.graphics.Sprite.TextSprite(" ", sdx.font, sdx.Color.Cyan)
 	
 
 	def render(ref player: Entity*, tick: int)

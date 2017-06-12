@@ -19,7 +19,7 @@
         },
         {
             "taskName": "update",
-            "args": ["autovala update && cd install && cmake .."]
+            "args": ["autovala refresh && sed -i -n '/*vala_check_package:/!p' ./${workspaceRootFolderName}.avprj && autovala cmake  && cd install && cmake ..  -DDESKTOP=ON -DPROFILING=ON"]
         }
     ]
 }

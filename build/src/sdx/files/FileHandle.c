@@ -20,8 +20,7 @@ sdxutilsFile* sdx_utils_file_retain (sdxutilsFile* self);
 #define _SDL_FreeRW0(var) ((var == NULL) ? NULL : (var = (SDL_FreeRW (var), NULL)))
 
 typedef enum  {
-	SDX_FILE_TYPE_Parent,
-	SDX_FILE_TYPE_Resource,
+	SDX_FILE_TYPE_Resource = 1,
 	SDX_FILE_TYPE_Asset,
 	SDX_FILE_TYPE_Absolute,
 	SDX_FILE_TYPE_Relative
@@ -43,8 +42,13 @@ typedef enum  {
 	SDX_SDL_EXCEPTION_CreateRenderer,
 	SDX_SDL_EXCEPTION_InvalidForPlatform,
 	SDX_SDL_EXCEPTION_UnableToLoadResource,
+	SDX_SDL_EXCEPTION_UnableToLoadSurface,
+	SDX_SDL_EXCEPTION_UnableToLoadTexture,
 	SDX_SDL_EXCEPTION_NullPointer,
-	SDX_SDL_EXCEPTION_NoSuchElement
+	SDX_SDL_EXCEPTION_NoSuchElement,
+	SDX_SDL_EXCEPTION_IllegalStateException,
+	SDX_SDL_EXCEPTION_RuntimeException,
+	SDX_SDL_EXCEPTION_NotReached
 } sdxSdlException;
 #define SDX_SDL_EXCEPTION sdx_sdl_exception_quark ()
 
@@ -345,6 +349,32 @@ static gchar* string_substring (const gchar* self, glong offset, glong len) {
 }
 
 
+static gint string_index_of (const gchar* self, const gchar* needle, gint start_index) {
+	gint result = 0;
+	gchar* _result_ = NULL;
+	gint _tmp0_ = 0;
+	const gchar* _tmp1_ = NULL;
+	gchar* _tmp2_ = NULL;
+	gchar* _tmp3_ = NULL;
+	g_return_val_if_fail (self != NULL, 0);
+	g_return_val_if_fail (needle != NULL, 0);
+	_tmp0_ = start_index;
+	_tmp1_ = needle;
+	_tmp2_ = strstr (((gchar*) self) + _tmp0_, (gchar*) _tmp1_);
+	_result_ = _tmp2_;
+	_tmp3_ = _result_;
+	if (_tmp3_ != NULL) {
+		gchar* _tmp4_ = NULL;
+		_tmp4_ = _result_;
+		result = (gint) (_tmp4_ - ((gchar*) self));
+		return result;
+	} else {
+		result = -1;
+		return result;
+	}
+}
+
+
 gchar* sdx_files_file_handle_getExt (sdxfilesFileHandle* self) {
 	gchar* result = NULL;
 	gchar* name = NULL;
@@ -353,9 +383,12 @@ gchar* sdx_files_file_handle_getExt (sdxfilesFileHandle* self) {
 	const gchar* _tmp1_ = NULL;
 	gint _tmp2_ = 0;
 	gint _tmp3_ = 0;
+	gchar* ext = NULL;
 	const gchar* _tmp5_ = NULL;
 	gint _tmp6_ = 0;
 	gchar* _tmp7_ = NULL;
+	const gchar* _tmp8_ = NULL;
+	gint _tmp9_ = 0;
 	g_return_val_if_fail (self != NULL, NULL);
 	_tmp0_ = sdx_files_file_handle_getName (self);
 	name = _tmp0_;
@@ -373,7 +406,18 @@ gchar* sdx_files_file_handle_getExt (sdxfilesFileHandle* self) {
 	_tmp5_ = name;
 	_tmp6_ = i;
 	_tmp7_ = string_substring (_tmp5_, (glong) _tmp6_, (glong) -1);
-	result = _tmp7_;
+	ext = _tmp7_;
+	_tmp8_ = ext;
+	_tmp9_ = string_index_of (_tmp8_, ".", 0);
+	if (_tmp9_ < 0) {
+		const gchar* _tmp10_ = NULL;
+		gchar* _tmp11_ = NULL;
+		_tmp10_ = ext;
+		_tmp11_ = g_strconcat (".", _tmp10_, NULL);
+		_g_free0 (ext);
+		ext = _tmp11_;
+	}
+	result = ext;
 	_g_free0 (name);
 	return result;
 }
@@ -396,16 +440,18 @@ sdxfilesFileHandle* sdx_files_file_handle_getParent (sdxfilesFileHandle* self) {
 	sdxutilsFile* _tmp0_ = NULL;
 	gchar* _tmp1_ = NULL;
 	gchar* _tmp2_ = NULL;
-	sdxfilesFileHandle* _tmp3_ = NULL;
+	sdxFileType _tmp3_ = 0;
 	sdxfilesFileHandle* _tmp4_ = NULL;
+	sdxfilesFileHandle* _tmp5_ = NULL;
 	g_return_val_if_fail (self != NULL, NULL);
 	_tmp0_ = self->file;
 	_tmp1_ = sdx_utils_file_getParent (_tmp0_);
 	_tmp2_ = _tmp1_;
-	_tmp3_ = sdx_files_file_handle_new (_tmp2_, SDX_FILE_TYPE_Parent);
-	_tmp4_ = _tmp3_;
+	_tmp3_ = self->type;
+	_tmp4_ = sdx_files_file_handle_new (_tmp2_, _tmp3_);
+	_tmp5_ = _tmp4_;
 	_g_free0 (_tmp2_);
-	result = _tmp4_;
+	result = _tmp5_;
 	return result;
 }
 

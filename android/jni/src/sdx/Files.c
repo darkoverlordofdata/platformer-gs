@@ -9,38 +9,41 @@
 
 
 #define SDX_TYPE_FILE_TYPE (sdx_file_type_get_type ())
-typedef struct _sdxFiles sdxFiles;
-#define _g_free0(var) (var = (g_free (var), NULL))
+typedef struct _sdxDataInputStream sdxDataInputStream;
 
 typedef enum  {
-	SDX_FILE_TYPE_Parent,
-	SDX_FILE_TYPE_Resource,
+	SDX_FILE_TYPE_Resource = 1,
 	SDX_FILE_TYPE_Asset,
 	SDX_FILE_TYPE_Absolute,
 	SDX_FILE_TYPE_Relative
 } sdxFileType;
 
-struct _sdxFiles {
+struct _sdxDataInputStream {
 	gint _retainCount;
-	gboolean isResource;
-	gchar* resourcePath;
+	gchar** data;
+	gint data_length1;
+	gint ctr;
 };
 
 
 
 GType sdx_file_type_get_type (void) G_GNUC_CONST;
-void sdx_files_free (sdxFiles* self);
-static void sdx_files_instance_init (sdxFiles * self);
-sdxFiles* sdx_files_retain (sdxFiles* self);
-void sdx_files_release (sdxFiles* self);
-void sdx_files_free (sdxFiles* self);
-sdxFiles* sdx_files_new (const gchar* resourcePath);
+void sdx_data_input_stream_free (sdxDataInputStream* self);
+static void sdx_data_input_stream_instance_init (sdxDataInputStream * self);
+sdxDataInputStream* sdx_data_input_stream_retain (sdxDataInputStream* self);
+void sdx_data_input_stream_release (sdxDataInputStream* self);
+void sdx_data_input_stream_free (sdxDataInputStream* self);
+sdxDataInputStream* sdx_data_input_stream_new (const gchar* data);
+gchar* sdx_data_input_stream_read_line (sdxDataInputStream* self);
+static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
+static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
+static gint _vala_array_length (gpointer array);
 
 
 GType sdx_file_type_get_type (void) {
 	static volatile gsize sdx_file_type_type_id__volatile = 0;
 	if (g_once_init_enter (&sdx_file_type_type_id__volatile)) {
-		static const GEnumValue values[] = {{SDX_FILE_TYPE_Parent, "SDX_FILE_TYPE_Parent", "parent"}, {SDX_FILE_TYPE_Resource, "SDX_FILE_TYPE_Resource", "resource"}, {SDX_FILE_TYPE_Asset, "SDX_FILE_TYPE_Asset", "asset"}, {SDX_FILE_TYPE_Absolute, "SDX_FILE_TYPE_Absolute", "absolute"}, {SDX_FILE_TYPE_Relative, "SDX_FILE_TYPE_Relative", "relative"}, {0, NULL, NULL}};
+		static const GEnumValue values[] = {{SDX_FILE_TYPE_Resource, "SDX_FILE_TYPE_Resource", "resource"}, {SDX_FILE_TYPE_Asset, "SDX_FILE_TYPE_Asset", "asset"}, {SDX_FILE_TYPE_Absolute, "SDX_FILE_TYPE_Absolute", "absolute"}, {SDX_FILE_TYPE_Relative, "SDX_FILE_TYPE_Relative", "relative"}, {0, NULL, NULL}};
 		GType sdx_file_type_type_id;
 		sdx_file_type_type_id = g_enum_register_static ("sdxFileType", values);
 		g_once_init_leave (&sdx_file_type_type_id__volatile, sdx_file_type_type_id);
@@ -49,8 +52,8 @@ GType sdx_file_type_get_type (void) {
 }
 
 
-sdxFiles* sdx_files_retain (sdxFiles* self) {
-	sdxFiles* result = NULL;
+sdxDataInputStream* sdx_data_input_stream_retain (sdxDataInputStream* self) {
+	sdxDataInputStream* result = NULL;
 	g_return_val_if_fail (self != NULL, NULL);
 	g_atomic_int_add ((volatile gint *) (&self->_retainCount), 1);
 	result = self;
@@ -58,39 +61,103 @@ sdxFiles* sdx_files_retain (sdxFiles* self) {
 }
 
 
-void sdx_files_release (sdxFiles* self) {
+void sdx_data_input_stream_release (sdxDataInputStream* self) {
 	gboolean _tmp0_ = FALSE;
 	g_return_if_fail (self != NULL);
 	_tmp0_ = g_atomic_int_dec_and_test ((volatile gint *) (&self->_retainCount));
 	if (_tmp0_) {
-		sdx_files_free (self);
+		sdx_data_input_stream_free (self);
 	}
 }
 
 
-sdxFiles* sdx_files_new (const gchar* resourcePath) {
-	sdxFiles* self;
+sdxDataInputStream* sdx_data_input_stream_new (const gchar* data) {
+	sdxDataInputStream* self;
 	const gchar* _tmp0_ = NULL;
-	gchar* _tmp1_ = NULL;
-	g_return_val_if_fail (resourcePath != NULL, NULL);
-	self = g_slice_new0 (sdxFiles);
-	sdx_files_instance_init (self);
-	_tmp0_ = resourcePath;
-	_tmp1_ = g_strdup (_tmp0_);
-	_g_free0 (self->resourcePath);
-	self->resourcePath = _tmp1_;
+	gchar** _tmp1_ = NULL;
+	gchar** _tmp2_ = NULL;
+	g_return_val_if_fail (data != NULL, NULL);
+	self = g_slice_new0 (sdxDataInputStream);
+	sdx_data_input_stream_instance_init (self);
+	_tmp0_ = data;
+	_tmp2_ = _tmp1_ = g_strsplit (_tmp0_, "\n", 0);
+	self->data = (_vala_array_free (self->data, self->data_length1, (GDestroyNotify) g_free), NULL);
+	self->data = _tmp2_;
+	self->data_length1 = _vala_array_length (_tmp1_);
+	self->ctr = 0;
 	return self;
 }
 
 
-static void sdx_files_instance_init (sdxFiles * self) {
+gchar* sdx_data_input_stream_read_line (sdxDataInputStream* self) {
+	gchar* result = NULL;
+	const gchar* _tmp0_ = NULL;
+	gint _tmp1_ = 0;
+	gchar** _tmp2_ = NULL;
+	gint _tmp2__length1 = 0;
+	gchar* _tmp6_ = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	_tmp1_ = self->ctr;
+	_tmp2_ = self->data;
+	_tmp2__length1 = self->data_length1;
+	if (_tmp1_ < _tmp2__length1) {
+		gchar** _tmp3_ = NULL;
+		gint _tmp3__length1 = 0;
+		gint _tmp4_ = 0;
+		const gchar* _tmp5_ = NULL;
+		_tmp3_ = self->data;
+		_tmp3__length1 = self->data_length1;
+		_tmp4_ = self->ctr;
+		self->ctr = _tmp4_ + 1;
+		_tmp5_ = _tmp3_[_tmp4_];
+		_tmp0_ = _tmp5_;
+	} else {
+		_tmp0_ = NULL;
+	}
+	_tmp6_ = g_strdup (_tmp0_);
+	result = _tmp6_;
+	return result;
+}
+
+
+static void sdx_data_input_stream_instance_init (sdxDataInputStream * self) {
 	self->_retainCount = 1;
 }
 
 
-void sdx_files_free (sdxFiles* self) {
-	_g_free0 (self->resourcePath);
-	g_slice_free (sdxFiles, self);
+void sdx_data_input_stream_free (sdxDataInputStream* self) {
+	self->data = (_vala_array_free (self->data, self->data_length1, (GDestroyNotify) g_free), NULL);
+	g_slice_free (sdxDataInputStream, self);
+}
+
+
+static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func) {
+	if ((array != NULL) && (destroy_func != NULL)) {
+		int i;
+		for (i = 0; i < array_length; i = i + 1) {
+			if (((gpointer*) array)[i] != NULL) {
+				destroy_func (((gpointer*) array)[i]);
+			}
+		}
+	}
+}
+
+
+static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func) {
+	_vala_array_destroy (array, array_length, destroy_func);
+	g_free (array);
+}
+
+
+static gint _vala_array_length (gpointer array) {
+	int length;
+	length = 0;
+	if (array) {
+		while (((gpointer*) array)[length]) {
+			length++;
+		}
+	}
+	return length;
 }
 
 

@@ -42,9 +42,9 @@ typedef struct _Entity Entity;
 typedef struct _Map Map;
 
 #define TYPE_CAMERA (camera_get_type ())
-typedef Vector2d Camera;
 
 #define TYPE_CAMERA_TYPE (camera_type_get_type ())
+typedef struct _Camera Camera;
 typedef struct _Entities Entities;
 typedef struct _Hud Hud;
 
@@ -115,17 +115,22 @@ typedef enum  {
 	CAMERA_TYPE_SIMPLE_CAMERA
 } CameraType;
 
+struct _Camera {
+	CameraType type;
+	Vector2d position;
+};
+
 struct _Game {
 	gint retainCount__;
 	Map* map;
 	Camera camera;
-	CameraType cameraType;
 	Entities* factory;
 	Entity* entities;
 	gint entities_length1;
 	Systems* system;
 	Hud* hud;
 	Entity* player;
+	gboolean touch;
 	GList* sprites;
 };
 
@@ -173,25 +178,21 @@ void entity_destroy (Entity* self);
 void systems_physics (Systems* self, Entity** player, gint tick);
 void map_free (Map* self);
 GType camera_get_type (void) G_GNUC_CONST;
+GType camera_type_get_type (void) G_GNUC_CONST;
 Camera* camera_dup (const Camera* self);
 void camera_free (Camera* self);
-GType camera_type_get_type (void) G_GNUC_CONST;
 void entities_free (Entities* self);
 void hud_free (Hud* self);
 gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size);
 GType sdx_direction_get_type (void) G_GNUC_CONST;
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
 void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size);
-void systems_camera (Systems* self, Entity** player, gint tick);
-void camera_scrollBy (Camera *self, gdouble x);
-void camera_scrollTo (Camera *self, gdouble x);
 void systems_logic (Systems* self, Entity** player, gint tick);
 gint map_getTile (Map* self, gdouble x, gdouble y);
 #define MAP_START 79
 #define MAP_FINISH 111
 gchar* formatTime (gint ticks);
 
-extern const SDL_Point WINDOW_SIZE;
 
 Systems* systems_retain (Systems* self) {
 	Systems* result = NULL;
@@ -395,99 +396,6 @@ void systems_physics (Systems* self, Entity** player, gint tick) {
 	_tmp54_ = (*_tmp53_).size;
 	_tmp55_ = *_tmp54_;
 	map_moveBox (_tmp52_, &(*(*player)).position, (*(*player)).velocity, &_tmp55_);
-}
-
-
-/**
- *  Camera
- */
-void systems_camera (Systems* self, Entity** player, gint tick) {
-	gdouble halfWin = 0.0;
-	gint _tmp0_ = 0;
-	Game* _tmp1_ = NULL;
-	CameraType _tmp2_ = 0;
-	g_return_if_fail (self != NULL);
-	_tmp0_ = WINDOW_SIZE.x;
-	halfWin = ((gdouble) _tmp0_) / 2;
-	_tmp1_ = self->game;
-	_tmp2_ = _tmp1_->cameraType;
-	if (_tmp2_ == CAMERA_TYPE_FLUID_CAMERA) {
-		gdouble dist = 0.0;
-		Game* _tmp3_ = NULL;
-		Camera _tmp4_ = {0};
-		gdouble _tmp5_ = 0.0;
-		Entity* _tmp6_ = NULL;
-		Point2d _tmp7_ = {0};
-		gdouble _tmp8_ = 0.0;
-		gdouble _tmp9_ = 0.0;
-		Game* _tmp10_ = NULL;
-		gdouble _tmp11_ = 0.0;
-		_tmp3_ = self->game;
-		_tmp4_ = _tmp3_->camera;
-		_tmp5_ = _tmp4_.x;
-		_tmp6_ = *player;
-		_tmp7_ = (*_tmp6_).position;
-		_tmp8_ = _tmp7_.x;
-		_tmp9_ = halfWin;
-		dist = (_tmp5_ - _tmp8_) + _tmp9_;
-		_tmp10_ = self->game;
-		_tmp11_ = dist;
-		camera_scrollBy (&_tmp10_->camera, (-0.05) * _tmp11_);
-	} else {
-		Game* _tmp12_ = NULL;
-		CameraType _tmp13_ = 0;
-		_tmp12_ = self->game;
-		_tmp13_ = _tmp12_->cameraType;
-		if (_tmp13_ == CAMERA_TYPE_INNER_CAMERA) {
-			gdouble leftArea = 0.0;
-			Entity* _tmp14_ = NULL;
-			Point2d _tmp15_ = {0};
-			gdouble _tmp16_ = 0.0;
-			gdouble _tmp17_ = 0.0;
-			gdouble rightArea = 0.0;
-			Entity* _tmp18_ = NULL;
-			Point2d _tmp19_ = {0};
-			gdouble _tmp20_ = 0.0;
-			gdouble _tmp21_ = 0.0;
-			Game* _tmp22_ = NULL;
-			Game* _tmp23_ = NULL;
-			Camera _tmp24_ = {0};
-			gdouble _tmp25_ = 0.0;
-			gdouble _tmp26_ = 0.0;
-			gdouble _tmp27_ = 0.0;
-			gdouble _tmp28_ = 0.0;
-			_tmp14_ = *player;
-			_tmp15_ = (*_tmp14_).position;
-			_tmp16_ = _tmp15_.x;
-			_tmp17_ = halfWin;
-			leftArea = (_tmp16_ - _tmp17_) - 100;
-			_tmp18_ = *player;
-			_tmp19_ = (*_tmp18_).position;
-			_tmp20_ = _tmp19_.x;
-			_tmp21_ = halfWin;
-			rightArea = (_tmp20_ - _tmp21_) + 100;
-			_tmp22_ = self->game;
-			_tmp23_ = self->game;
-			_tmp24_ = _tmp23_->camera;
-			_tmp25_ = _tmp24_.x;
-			_tmp26_ = leftArea;
-			_tmp27_ = rightArea;
-			_tmp28_ = clamp (_tmp25_, _tmp26_, _tmp27_);
-			camera_scrollTo (&_tmp22_->camera, _tmp28_);
-		} else {
-			Game* _tmp29_ = NULL;
-			Entity* _tmp30_ = NULL;
-			Point2d _tmp31_ = {0};
-			gdouble _tmp32_ = 0.0;
-			gdouble _tmp33_ = 0.0;
-			_tmp29_ = self->game;
-			_tmp30_ = *player;
-			_tmp31_ = (*_tmp30_).position;
-			_tmp32_ = _tmp31_.x;
-			_tmp33_ = halfWin;
-			camera_scrollTo (&_tmp29_->camera, _tmp32_ - _tmp33_);
-		}
-	}
 }
 
 

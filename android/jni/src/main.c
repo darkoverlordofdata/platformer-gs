@@ -9,11 +9,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
-#include <SDL2/SDL_rect.h>
+#include <emscripten.h>
 
 #define _g_free0(var) (var = (g_free (var), NULL))
+
+#define TYPE_POINT2D (point2d_get_type ())
+typedef struct _Point2d Point2d;
 typedef struct _Game Game;
+void game_release (Game* self);
+void game_free (Game* self);
+Game* game_retain (Game* self);
 void game_release (Game* self);
 void game_free (Game* self);
 Game* game_retain (Game* self);
@@ -26,27 +34,36 @@ typedef enum  {
 	EXCEPTION_MapFileFormat
 } Exception;
 #define EXCEPTION exception_quark ()
+struct _Point2d {
+	gdouble x;
+	gdouble y;
+};
+
 
 extern gdouble startTime;
 gdouble startTime = 0.0;
 extern gint lastTick;
 gint lastTick = 0;
-extern gboolean sdx_running;
 
 GQuark exception_quark (void);
 gchar* formatTime (gint ticks);
 void sdlFailIf (gboolean cond, const gchar* reason);
-void _vala_main (gchar** args, int args_length1);
+void game (void);
 SDL_Window* sdx_initialize (gint width, gint height, const gchar* name);
+GType point2d_get_type (void) G_GNUC_CONST;
+Point2d* point2d_dup (const Point2d* self);
+void point2d_free (Point2d* self);
 void game_free (Game* self);
 Game* game_new (void);
 gdouble sdx_getNow (void);
 void sdx_start (void);
+void mainloop (void* arg);
+static void _mainloop_em_arg_callback_func (void* arg);
 void sdx_processEvents (void);
 void game_update (Game* self, gint tick);
 void game_render (Game* self, gint tick);
 
-extern const SDL_Point WINDOW_SIZE;
+extern const Point2d WINDOW_SIZE;
 
 GQuark exception_quark (void) {
 	return g_quark_from_static_string ("exception-quark");
@@ -102,10 +119,15 @@ inline void sdlFailIf (gboolean cond, const gchar* reason) {
 }
 
 
-void _vala_main (gchar** args, int args_length1) {
+static void _mainloop_em_arg_callback_func (void* arg) {
+	mainloop (arg);
+}
+
+
+void game (void) {
 	SDL_Window* window = NULL;
-	gint _tmp0_ = 0;
-	gint _tmp1_ = 0;
+	gdouble _tmp0_ = 0.0;
+	gdouble _tmp1_ = 0.0;
 	SDL_Window* _tmp2_ = NULL;
 	Game* game = NULL;
 	Game* _tmp3_ = NULL;
@@ -120,67 +142,68 @@ void _vala_main (gchar** args, int args_length1) {
 	startTime = _tmp4_;
 	lastTick = 0;
 	sdx_start ();
-	while (TRUE) {
-		gboolean _tmp5_ = FALSE;
-		gint newTick = 0;
-		gdouble _tmp6_ = 0.0;
-		gdouble _tmp7_ = 0.0;
-		gint _tmp14_ = 0;
-		Game* _tmp15_ = NULL;
-		gint _tmp16_ = 0;
-		_tmp5_ = sdx_running;
-		if (!_tmp5_) {
-			break;
-		}
-		sdx_processEvents ();
-		_tmp6_ = sdx_getNow ();
-		_tmp7_ = startTime;
-		newTick = (gint) ((_tmp6_ - _tmp7_) * 50);
-		{
-			gint tick = 0;
-			gint _tmp8_ = 0;
-			_tmp8_ = lastTick;
-			tick = _tmp8_ + 1;
-			{
-				gboolean _tmp9_ = FALSE;
-				_tmp9_ = TRUE;
-				while (TRUE) {
-					gint _tmp11_ = 0;
-					Game* _tmp12_ = NULL;
-					gint _tmp13_ = 0;
-					if (!_tmp9_) {
-						gint _tmp10_ = 0;
-						_tmp10_ = tick;
-						tick = _tmp10_ + 1;
-					}
-					_tmp9_ = FALSE;
-					_tmp11_ = newTick;
-					if (!(tick <= _tmp11_)) {
-						break;
-					}
-					_tmp12_ = game;
-					_tmp13_ = tick;
-					game_update (_tmp12_, _tmp13_);
-				}
-			}
-		}
-		_tmp14_ = newTick;
-		lastTick = _tmp14_;
-		_tmp15_ = game;
-		_tmp16_ = lastTick;
-		game_render (_tmp15_, _tmp16_);
-	}
+	emscripten_set_main_loop_arg (_mainloop_em_arg_callback_func, game, 0, 1);
 	_game_release0 (game);
 	_SDL_DestroyWindow0 (window);
 }
 
 
-int main (int argc, char ** argv) {
-#if !GLIB_CHECK_VERSION (2,35,0)
-	g_type_init ();
-#endif
-	_vala_main (argv, argc);
-	return 0;
+static gpointer _game_retain0 (gpointer self) {
+	return self ? game_retain (self) : NULL;
+}
+
+
+void mainloop (void* arg) {
+	Game* game = NULL;
+	void* _tmp0_ = NULL;
+	Game* _tmp1_ = NULL;
+	gint newTick = 0;
+	gdouble _tmp2_ = 0.0;
+	gdouble _tmp3_ = 0.0;
+	gint _tmp10_ = 0;
+	Game* _tmp11_ = NULL;
+	gint _tmp12_ = 0;
+	_tmp0_ = arg;
+	_tmp1_ = _game_retain0 ((Game*) _tmp0_);
+	game = _tmp1_;
+	sdx_processEvents ();
+	_tmp2_ = sdx_getNow ();
+	_tmp3_ = startTime;
+	newTick = (gint) ((_tmp2_ - _tmp3_) * 50);
+	{
+		gint tick = 0;
+		gint _tmp4_ = 0;
+		_tmp4_ = lastTick;
+		tick = _tmp4_ + 1;
+		{
+			gboolean _tmp5_ = FALSE;
+			_tmp5_ = TRUE;
+			while (TRUE) {
+				gint _tmp7_ = 0;
+				Game* _tmp8_ = NULL;
+				gint _tmp9_ = 0;
+				if (!_tmp5_) {
+					gint _tmp6_ = 0;
+					_tmp6_ = tick;
+					tick = _tmp6_ + 1;
+				}
+				_tmp5_ = FALSE;
+				_tmp7_ = newTick;
+				if (!(tick <= _tmp7_)) {
+					break;
+				}
+				_tmp8_ = game;
+				_tmp9_ = tick;
+				game_update (_tmp8_, _tmp9_);
+			}
+		}
+	}
+	_tmp10_ = newTick;
+	lastTick = _tmp10_;
+	_tmp11_ = game;
+	_tmp12_ = lastTick;
+	game_render (_tmp11_, _tmp12_);
+	_game_release0 (game);
 }
 
 

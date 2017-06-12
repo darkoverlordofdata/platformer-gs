@@ -10,3 +10,4 @@ mkdir install
 cd install
 cmake .. -DDESKTOP=ON -DPROFILING=ON
 make
+

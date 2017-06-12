@@ -9,7 +9,6 @@
 #include <float.h>
 #include <math.h>
 #include <SDL2/SDL_render.h>
-#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 
@@ -31,9 +30,12 @@ void sdx_utils_js_variant_free (sdxutilsJsVariant* self);
 sdxutilsJsVariant* sdx_utils_js_variant_retain (sdxutilsJsVariant* self);
 #define _sdx_utils_js_variant_release0(var) ((var == NULL) ? NULL : (var = (sdx_utils_js_variant_release (var), NULL)))
 typedef struct _sdxutilsFile sdxutilsFile;
+typedef sdxgraphicsSprite sdxgraphicsSpriteTextureSprite;
 
 #define SDX_GRAPHICS_TYPE_SCALE (sdx_graphics_scale_get_type ())
 typedef struct _sdxgraphicsScale sdxgraphicsScale;
+
+#define SDX_GRAPHICS_SPRITE_TYPE_KIND (sdx_graphics_sprite_kind_get_type ())
 void sdx_files_file_handle_release (sdxfilesFileHandle* self);
 void sdx_files_file_handle_free (sdxfilesFileHandle* self);
 sdxfilesFileHandle* sdx_files_file_handle_retain (sdxfilesFileHandle* self);
@@ -44,9 +46,9 @@ typedef struct _Point2d Point2d;
 
 #define TYPE_VECTOR2D (vector2d_get_type ())
 typedef struct _Vector2d Vector2d;
+typedef struct _sdxgraphicsCamera sdxgraphicsCamera;
 
-#define TYPE_CAMERA (camera_get_type ())
-typedef Vector2d Camera;
+#define SDX_GRAPHICS_CAMERA_TYPE_KIND (sdx_graphics_camera_kind_get_type ())
 
 struct _Map {
 	gint retainCount__;
@@ -61,8 +63,7 @@ struct _Map {
 };
 
 typedef enum  {
-	SDX_FILE_TYPE_Parent,
-	SDX_FILE_TYPE_Resource,
+	SDX_FILE_TYPE_Resource = 1,
 	SDX_FILE_TYPE_Asset,
 	SDX_FILE_TYPE_Absolute,
 	SDX_FILE_TYPE_Relative
@@ -99,21 +100,30 @@ struct _sdxgraphicsScale {
 	gdouble y;
 };
 
+typedef enum  {
+	SDX_GRAPHICS_SPRITE_KIND_AnimatedSprite,
+	SDX_GRAPHICS_SPRITE_KIND_TextureSprite,
+	SDX_GRAPHICS_SPRITE_KIND_AtlasSprite,
+	SDX_GRAPHICS_SPRITE_KIND_CompositeSprite,
+	SDX_GRAPHICS_SPRITE_KIND_TextSprite
+} sdxgraphicsSpriteKind;
+
 struct _sdxgraphicsSprite {
 	gint _retainCount;
+	gint id;
 	SDL_Texture* texture;
-	SDL_Surface* surface;
 	gint width;
 	gint height;
 	gint x;
 	gint y;
+	gint index;
+	gint frame;
 	sdxgraphicsScale scale;
 	SDL_Color color;
 	gboolean centered;
 	gint layer;
-	gint id;
 	gchar* path;
-	gboolean isText;
+	sdxgraphicsSpriteKind kind;
 };
 
 struct _Point2d {
@@ -124,6 +134,22 @@ struct _Point2d {
 struct _Vector2d {
 	gdouble x;
 	gdouble y;
+};
+
+typedef enum  {
+	SDX_GRAPHICS_CAMERA_KIND_FluidCamera,
+	SDX_GRAPHICS_CAMERA_KIND_InnerCamera,
+	SDX_GRAPHICS_CAMERA_KIND_SimpleCamera
+} sdxgraphicsCameraKind;
+
+typedef void (*sdxgraphicsCameraCameraSetPosition) (Point2d* position, void* user_data);
+struct _sdxgraphicsCamera {
+	gint _retainCount;
+	sdxgraphicsCameraKind kind;
+	Vector2d position;
+	sdxgraphicsCameraCameraSetPosition setPosition;
+	gpointer setPosition_target;
+	GDestroyNotify setPosition_target_destroy_notify;
 };
 
 
@@ -151,10 +177,11 @@ GType sdx_utils_js_type_get_type (void) G_GNUC_CONST;
 sdxutilsJsVariant* sdx_utils_js_variant_at (sdxutilsJsVariant* self, gint index);
 void sdx_utils_file_free (sdxutilsFile* self);
 gchar* sdx_utils_file_getParent (sdxutilsFile* self);
-sdxgraphicsSprite* sdx_graphics_sprite_new (const gchar* path);
+sdxgraphicsSpriteTextureSprite* sdx_graphics_sprite_texture_sprite_new (const gchar* path);
 GType sdx_graphics_scale_get_type (void) G_GNUC_CONST;
 sdxgraphicsScale* sdx_graphics_scale_dup (const sdxgraphicsScale* self);
 void sdx_graphics_scale_free (sdxgraphicsScale* self);
+GType sdx_graphics_sprite_kind_get_type (void) G_GNUC_CONST;
 gint map_getTile (Map* self, gdouble x, gdouble y);
 gdouble clamp (gdouble value, gdouble low, gdouble hi);
 gboolean map_isSolid (Map* self, gdouble x, gdouble y);
@@ -164,17 +191,16 @@ void point2d_free (Point2d* self);
 GType vector2d_get_type (void) G_GNUC_CONST;
 Vector2d* vector2d_dup (const Vector2d* self);
 void vector2d_free (Vector2d* self);
-gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size);
-gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size);
+gboolean map_isOnGround (Map* self, Point2d* pos, Vector2d* size);
+gboolean map_isHit (Map* self, Point2d* pos, Vector2d* size);
 void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size);
 gdouble vector2d_len (Vector2d *self);
 void point2d_add (Point2d *self, Vector2d* v, Point2d* result);
 void vector2d_mul (Vector2d *self, gdouble f, Vector2d* result);
-GType camera_get_type (void) G_GNUC_CONST;
-Camera* camera_dup (const Camera* self);
-void camera_free (Camera* self);
-void map_render (Map* self, Camera* camera);
+void sdx_graphics_camera_free (sdxgraphicsCamera* self);
+void map_render (Map* self, sdxgraphicsCamera* camera);
 void rect (gint x, gint y, gint h, gint w, SDL_Rect* result);
+GType sdx_graphics_camera_kind_get_type (void) G_GNUC_CONST;
 void sdx_graphics_sprite_copy (sdxgraphicsSprite* self, SDL_Rect* src, SDL_Rect* dest);
 
 
@@ -251,7 +277,7 @@ Map* map_new (const gchar* mapPath) {
 	const gchar* _tmp39_ = NULL;
 	gchar* _tmp40_ = NULL;
 	gchar* _tmp41_ = NULL;
-	sdxgraphicsSprite* _tmp42_ = NULL;
+	sdxgraphicsSpriteTextureSprite* _tmp42_ = NULL;
 	sdxgraphicsSprite* _tmp43_ = NULL;
 	sdxutilsJsVariant* data = NULL;
 	sdxutilsJsVariant* _tmp44_ = NULL;
@@ -329,9 +355,9 @@ Map* map_new (const gchar* mapPath) {
 	_tmp39_ = self->tileset;
 	_tmp40_ = g_strconcat (_tmp38_, _tmp39_, NULL);
 	_tmp41_ = _tmp40_;
-	_tmp42_ = sdx_graphics_sprite_new (_tmp41_);
+	_tmp42_ = sdx_graphics_sprite_texture_sprite_new (_tmp41_);
 	_sdx_graphics_sprite_release0 (self->sprite);
-	self->sprite = _tmp42_;
+	self->sprite = (sdxgraphicsSprite*) _tmp42_;
 	_g_free0 (_tmp41_);
 	_g_free0 (_tmp38_);
 	_g_free0 (_tmp36_);
@@ -472,7 +498,7 @@ gboolean map_isSolid (Map* self, gdouble x, gdouble y) {
 }
 
 
-gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size) {
+gboolean map_isOnGround (Map* self, Point2d* pos, Vector2d* size) {
 	gboolean result = FALSE;
 	gboolean _tmp0_ = FALSE;
 	Point2d _tmp1_ = {0};
@@ -524,7 +550,7 @@ gboolean map_onGround (Map* self, Point2d* pos, Vector2d* size) {
 }
 
 
-gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
+gboolean map_isHit (Map* self, Point2d* pos, Vector2d* size) {
 	gboolean result = FALSE;
 	gboolean _tmp0_ = FALSE;
 	gboolean _tmp1_ = FALSE;
@@ -624,14 +650,13 @@ gboolean map_testBox (Map* self, Point2d* pos, Vector2d* size) {
 }
 
 
+/**
+ * updates the position & velocity
+ */
 void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 	gdouble distance = 0.0;
 	gdouble _tmp0_ = 0.0;
-	gint maximum = 0;
 	gdouble _tmp1_ = 0.0;
-	gdouble _tmp2_ = 0.0;
-	gdouble fraction = 0.0;
-	gint _tmp3_ = 0;
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (pos != NULL);
 	g_return_if_fail (vel != NULL);
@@ -639,118 +664,114 @@ void map_moveBox (Map* self, Point2d* pos, Vector2d* vel, Vector2d* size) {
 	_tmp0_ = vector2d_len (vel);
 	distance = _tmp0_;
 	_tmp1_ = distance;
-	maximum = (gint) _tmp1_;
-	_tmp2_ = distance;
-	if (_tmp2_ < ((gdouble) 0)) {
+	if (_tmp1_ < ((gdouble) 0)) {
 		return;
 	}
-	_tmp3_ = maximum;
-	fraction = 1.0 / ((gdouble) (_tmp3_ + 1));
 	{
 		gint i = 0;
 		i = 0;
 		{
-			gboolean _tmp4_ = FALSE;
-			_tmp4_ = TRUE;
+			gboolean _tmp2_ = FALSE;
+			_tmp2_ = TRUE;
 			while (TRUE) {
-				gint _tmp6_ = 0;
+				gdouble _tmp4_ = 0.0;
 				Point2d newPos = {0};
-				gdouble _tmp7_ = 0.0;
-				Vector2d _tmp8_ = {0};
-				Point2d _tmp9_ = {0};
-				Point2d _tmp10_ = {0};
-				Vector2d _tmp11_ = {0};
-				gboolean _tmp12_ = FALSE;
-				Point2d _tmp34_ = {0};
-				if (!_tmp4_) {
-					gint _tmp5_ = 0;
-					_tmp5_ = i;
-					i = _tmp5_ + 1;
+				gdouble _tmp5_ = 0.0;
+				Vector2d _tmp6_ = {0};
+				Point2d _tmp7_ = {0};
+				Point2d _tmp8_ = {0};
+				Vector2d _tmp9_ = {0};
+				gboolean _tmp10_ = FALSE;
+				Point2d _tmp32_ = {0};
+				if (!_tmp2_) {
+					gint _tmp3_ = 0;
+					_tmp3_ = i;
+					i = _tmp3_ + 1;
 				}
-				_tmp4_ = FALSE;
-				_tmp6_ = maximum;
-				if (!(i <= _tmp6_)) {
+				_tmp2_ = FALSE;
+				_tmp4_ = distance;
+				if (!(i <= _tmp4_)) {
 					break;
 				}
-				_tmp7_ = fraction;
-				vector2d_mul (vel, _tmp7_, &_tmp8_);
-				point2d_add (pos, &_tmp8_, &_tmp9_);
-				newPos = _tmp9_;
-				_tmp10_ = newPos;
-				_tmp11_ = *size;
-				_tmp12_ = map_testBox (self, &_tmp10_, &_tmp11_);
-				if (_tmp12_) {
+				_tmp5_ = distance;
+				vector2d_mul (vel, 1.0 / (_tmp5_ + 1.0), &_tmp6_);
+				point2d_add (pos, &_tmp6_, &_tmp7_);
+				newPos = _tmp7_;
+				_tmp8_ = newPos;
+				_tmp9_ = *size;
+				_tmp10_ = map_isHit (self, &_tmp8_, &_tmp9_);
+				if (_tmp10_) {
 					gboolean hit = FALSE;
+					Point2d _tmp11_ = {0};
+					gdouble _tmp12_ = 0.0;
 					Point2d _tmp13_ = {0};
 					gdouble _tmp14_ = 0.0;
 					Point2d _tmp15_ = {0};
-					gdouble _tmp16_ = 0.0;
-					Point2d _tmp17_ = {0};
-					Vector2d _tmp18_ = {0};
-					gboolean _tmp19_ = FALSE;
+					Vector2d _tmp16_ = {0};
+					gboolean _tmp17_ = FALSE;
+					Point2d _tmp20_ = {0};
+					gdouble _tmp21_ = 0.0;
 					Point2d _tmp22_ = {0};
 					gdouble _tmp23_ = 0.0;
 					Point2d _tmp24_ = {0};
-					gdouble _tmp25_ = 0.0;
-					Point2d _tmp26_ = {0};
-					Vector2d _tmp27_ = {0};
-					gboolean _tmp28_ = FALSE;
-					gboolean _tmp31_ = FALSE;
+					Vector2d _tmp25_ = {0};
+					gboolean _tmp26_ = FALSE;
+					gboolean _tmp29_ = FALSE;
 					hit = FALSE;
-					_tmp13_ = *pos;
-					_tmp14_ = _tmp13_.x;
-					_tmp15_ = newPos;
-					_tmp16_ = _tmp15_.y;
-					_tmp17_.x = _tmp14_;
-					_tmp17_.y = _tmp16_;
-					_tmp18_ = *size;
-					_tmp19_ = map_testBox (self, &_tmp17_, &_tmp18_);
-					if (_tmp19_) {
-						Point2d _tmp20_ = {0};
-						gdouble _tmp21_ = 0.0;
-						_tmp20_ = *pos;
-						_tmp21_ = _tmp20_.y;
-						newPos.y = _tmp21_;
+					_tmp11_ = *pos;
+					_tmp12_ = _tmp11_.x;
+					_tmp13_ = newPos;
+					_tmp14_ = _tmp13_.y;
+					_tmp15_.x = _tmp12_;
+					_tmp15_.y = _tmp14_;
+					_tmp16_ = *size;
+					_tmp17_ = map_isHit (self, &_tmp15_, &_tmp16_);
+					if (_tmp17_) {
+						Point2d _tmp18_ = {0};
+						gdouble _tmp19_ = 0.0;
+						_tmp18_ = *pos;
+						_tmp19_ = _tmp18_.y;
+						newPos.y = _tmp19_;
 						(*vel).y = (gdouble) 0;
 						hit = TRUE;
 					}
-					_tmp22_ = newPos;
-					_tmp23_ = _tmp22_.x;
-					_tmp24_ = *pos;
-					_tmp25_ = _tmp24_.y;
-					_tmp26_.x = _tmp23_;
-					_tmp26_.y = _tmp25_;
-					_tmp27_ = *size;
-					_tmp28_ = map_testBox (self, &_tmp26_, &_tmp27_);
-					if (_tmp28_) {
-						Point2d _tmp29_ = {0};
-						gdouble _tmp30_ = 0.0;
-						_tmp29_ = *pos;
-						_tmp30_ = _tmp29_.x;
-						newPos.x = _tmp30_;
+					_tmp20_ = newPos;
+					_tmp21_ = _tmp20_.x;
+					_tmp22_ = *pos;
+					_tmp23_ = _tmp22_.y;
+					_tmp24_.x = _tmp21_;
+					_tmp24_.y = _tmp23_;
+					_tmp25_ = *size;
+					_tmp26_ = map_isHit (self, &_tmp24_, &_tmp25_);
+					if (_tmp26_) {
+						Point2d _tmp27_ = {0};
+						gdouble _tmp28_ = 0.0;
+						_tmp27_ = *pos;
+						_tmp28_ = _tmp27_.x;
+						newPos.x = _tmp28_;
 						(*vel).x = (gdouble) 0;
 						hit = TRUE;
 					}
-					_tmp31_ = hit;
-					if (!_tmp31_) {
-						Point2d _tmp32_ = {0};
-						Vector2d _tmp33_ = {0};
-						_tmp32_ = *pos;
-						newPos = _tmp32_;
-						_tmp33_.x = (gdouble) 0;
-						_tmp33_.y = (gdouble) 0;
-						*vel = _tmp33_;
+					_tmp29_ = hit;
+					if (!_tmp29_) {
+						Point2d _tmp30_ = {0};
+						Vector2d _tmp31_ = {0};
+						_tmp30_ = *pos;
+						newPos = _tmp30_;
+						_tmp31_.x = (gdouble) 0;
+						_tmp31_.y = (gdouble) 0;
+						*vel = _tmp31_;
 					}
 				}
-				_tmp34_ = newPos;
-				*pos = _tmp34_;
+				_tmp32_ = newPos;
+				*pos = _tmp32_;
 			}
 		}
 	}
 }
 
 
-void map_render (Map* self, Camera* camera) {
+void map_render (Map* self, sdxgraphicsCamera* camera) {
 	SDL_Rect clip = {0};
 	gint _tmp0_ = 0;
 	gint _tmp1_ = 0;
@@ -791,16 +812,18 @@ void map_render (Map* self, Camera* camera) {
 				gint _tmp17_ = 0;
 				gint _tmp18_ = 0;
 				gint _tmp19_ = 0;
-				Camera _tmp20_ = {0};
-				gdouble _tmp21_ = 0.0;
-				gint _tmp22_ = 0;
+				sdxgraphicsCamera* _tmp20_ = NULL;
+				Vector2d _tmp21_ = {0};
+				gdouble _tmp22_ = 0.0;
 				gint _tmp23_ = 0;
 				gint _tmp24_ = 0;
-				Camera _tmp25_ = {0};
-				gdouble _tmp26_ = 0.0;
-				sdxgraphicsSprite* _tmp27_ = NULL;
-				SDL_Rect _tmp28_ = {0};
-				SDL_Rect _tmp29_ = {0};
+				gint _tmp25_ = 0;
+				sdxgraphicsCamera* _tmp26_ = NULL;
+				Vector2d _tmp27_ = {0};
+				gdouble _tmp28_ = 0.0;
+				sdxgraphicsSprite* _tmp29_ = NULL;
+				SDL_Rect _tmp30_ = {0};
+				SDL_Rect _tmp31_ = {0};
 				if (!_tmp6_) {
 					gint _tmp7_ = 0;
 					_tmp7_ = i;
@@ -830,19 +853,21 @@ void map_render (Map* self, Camera* camera) {
 				_tmp17_ = i;
 				_tmp18_ = self->width;
 				_tmp19_ = self->tilewidth;
-				_tmp20_ = *camera;
-				_tmp21_ = _tmp20_.x;
-				dest.x = ((_tmp17_ % _tmp18_) * ((gint) _tmp19_)) - ((gint) _tmp21_);
-				_tmp22_ = i;
-				_tmp23_ = self->width;
-				_tmp24_ = self->tileheight;
-				_tmp25_ = *camera;
-				_tmp26_ = _tmp25_.y;
-				dest.y = (((gint) (_tmp22_ / _tmp23_)) * ((gint) _tmp24_)) - ((gint) _tmp26_);
-				_tmp27_ = self->sprite;
-				_tmp28_ = clip;
-				_tmp29_ = dest;
-				sdx_graphics_sprite_copy (_tmp27_, &_tmp28_, &_tmp29_);
+				_tmp20_ = camera;
+				_tmp21_ = _tmp20_->position;
+				_tmp22_ = _tmp21_.x;
+				dest.x = ((_tmp17_ % _tmp18_) * ((gint) _tmp19_)) - ((gint) _tmp22_);
+				_tmp23_ = i;
+				_tmp24_ = self->width;
+				_tmp25_ = self->tileheight;
+				_tmp26_ = camera;
+				_tmp27_ = _tmp26_->position;
+				_tmp28_ = _tmp27_.y;
+				dest.y = (((gint) (_tmp23_ / _tmp24_)) * ((gint) _tmp25_)) - ((gint) _tmp28_);
+				_tmp29_ = self->sprite;
+				_tmp30_ = clip;
+				_tmp31_ = dest;
+				sdx_graphics_sprite_copy (_tmp29_, &_tmp30_, &_tmp31_);
 			}
 		}
 	}

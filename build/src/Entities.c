@@ -11,7 +11,6 @@
 #include <float.h>
 #include <math.h>
 #include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL_surface.h>
 
 
 #define TYPE_BLIT (blit_get_type ())
@@ -37,12 +36,15 @@ typedef struct _Timer Timer;
 #define TYPE_HEALTH (health_get_type ())
 typedef struct _Health Health;
 typedef struct _Entity Entity;
+typedef sdxgraphicsSprite sdxgraphicsSpriteCompositeSprite;
 
 #define SDX_TYPE_BLIT (sdx_blit_get_type ())
 typedef struct _sdxBlit sdxBlit;
 
 #define SDX_GRAPHICS_TYPE_SCALE (sdx_graphics_scale_get_type ())
 typedef struct _sdxgraphicsScale sdxgraphicsScale;
+
+#define SDX_GRAPHICS_SPRITE_TYPE_KIND (sdx_graphics_sprite_kind_get_type ())
 #define _g_free0(var) (var = (g_free (var), NULL))
 void sdx_graphics_sprite_release (sdxgraphicsSprite* self);
 void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
@@ -51,6 +53,7 @@ sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
 #define _vector2d_free0(var) ((var == NULL) ? NULL : (var = (vector2d_free (var), NULL)))
 #define _timer_free0(var) ((var == NULL) ? NULL : (var = (timer_free (var), NULL)))
 #define _health_free0(var) ((var == NULL) ? NULL : (var = (health_free (var), NULL)))
+typedef sdxgraphicsSprite sdxgraphicsSpriteTextureSprite;
 
 struct _Blit {
 	SDL_Rect source;
@@ -128,21 +131,30 @@ struct _sdxgraphicsScale {
 	gdouble y;
 };
 
+typedef enum  {
+	SDX_GRAPHICS_SPRITE_KIND_AnimatedSprite,
+	SDX_GRAPHICS_SPRITE_KIND_TextureSprite,
+	SDX_GRAPHICS_SPRITE_KIND_AtlasSprite,
+	SDX_GRAPHICS_SPRITE_KIND_CompositeSprite,
+	SDX_GRAPHICS_SPRITE_KIND_TextSprite
+} sdxgraphicsSpriteKind;
+
 struct _sdxgraphicsSprite {
 	gint _retainCount;
+	gint id;
 	SDL_Texture* texture;
-	SDL_Surface* surface;
 	gint width;
 	gint height;
 	gint x;
 	gint y;
+	gint index;
+	gint frame;
 	sdxgraphicsScale scale;
 	SDL_Color color;
 	gboolean centered;
 	gint layer;
-	gint id;
 	gchar* path;
-	gboolean isText;
+	sdxgraphicsSpriteKind kind;
 };
 
 
@@ -158,7 +170,7 @@ Entities* entities_retain (Entities* self);
 void entities_release (Entities* self);
 void entities_free (Entities* self);
 Entities* entities_new (void);
-void sdx_graphics_sprite_initialize (gint length);
+void sdx_graphics_surface_cached_surface_initialize (gint size);
 GType entity_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
@@ -180,18 +192,19 @@ void entity_free (Entity* self);
 void entity_copy (const Entity* self, Entity* dest);
 void entity_destroy (Entity* self);
 void entities_createPlayer (Entities* self, Entity* result);
+Blit* entities_composePlayer (Entities* self, gint x, gint y, int* result_length1);
+static sdxBlit* _entities_composePlayer_sdx_compositor (gint x, gint y, int* result_length1, gpointer self);
 GType sdx_blit_get_type (void) G_GNUC_CONST;
 sdxBlit* sdx_blit_dup (const sdxBlit* self);
 void sdx_blit_free (sdxBlit* self);
-sdxgraphicsSprite* sdx_graphics_sprite_composite (const gchar* path, sdxCompositor builder, void* builder_target);
-Blit* entities_composePlayer (Entities* self, gint x, gint y, int* result_length1);
-static sdxBlit* _entities_composePlayer_sdx_compositor (gint x, gint y, int* result_length1, gpointer self);
+sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (const gchar* path, sdxCompositor builder, void* builder_target);
 GType sdx_graphics_scale_get_type (void) G_GNUC_CONST;
 sdxgraphicsScale* sdx_graphics_scale_dup (const sdxgraphicsScale* self);
 void sdx_graphics_scale_free (sdxgraphicsScale* self);
+GType sdx_graphics_sprite_kind_get_type (void) G_GNUC_CONST;
 static SDL_Color* _sdl_video_color_dup (SDL_Color* self);
 void entities_createBerry (Entities* self, Entity* result);
-sdxgraphicsSprite* sdx_graphics_sprite_new (const gchar* path);
+sdxgraphicsSpriteTextureSprite* sdx_graphics_sprite_texture_sprite_new (const gchar* path);
 void blit (SDL_Rect* source, SDL_Rect* dest, SDL_RendererFlip flip, Blit* result);
 
 
@@ -218,7 +231,7 @@ Entities* entities_new (void) {
 	Entities* self;
 	self = g_slice_new0 (Entities);
 	entities_instance_init (self);
-	sdx_graphics_sprite_initialize (10);
+	sdx_graphics_surface_cached_surface_initialize (10);
 	return self;
 }
 
@@ -264,12 +277,12 @@ static gpointer _health_dup0 (gpointer self) {
 
 
 void entities_createPlayer (Entities* self, Entity* result) {
-	sdxgraphicsSprite* sprite = NULL;
-	sdxgraphicsSprite* _tmp0_ = NULL;
+	sdxgraphicsSpriteCompositeSprite* sprite = NULL;
+	sdxgraphicsSpriteCompositeSprite* _tmp0_ = NULL;
 	gint _tmp1_ = 0;
 	gchar* _tmp2_ = NULL;
-	sdxgraphicsSprite* _tmp3_ = NULL;
-	Point2d _tmp4_ = {0};
+	Point2d _tmp3_ = {0};
+	sdxgraphicsSprite* _tmp4_ = NULL;
 	gint _tmp5_ = 0;
 	gint _tmp6_ = 0;
 	SDL_Rect _tmp7_ = {0};
@@ -289,22 +302,22 @@ void entities_createPlayer (Entities* self, Entity* result) {
 	Vector2d* _tmp21_ = NULL;
 	Entity _tmp22_ = {0};
 	g_return_if_fail (self != NULL);
-	_tmp0_ = sdx_graphics_sprite_composite ("assets/player.png", _entities_composePlayer_sdx_compositor, self);
+	_tmp0_ = sdx_graphics_sprite_composite_sprite_new ("assets/player.png", _entities_composePlayer_sdx_compositor, self);
 	sprite = _tmp0_;
 	_tmp1_ = entities_uniqueId;
 	entities_uniqueId = _tmp1_ + 1;
 	_tmp2_ = g_strdup ("Player");
-	_tmp3_ = _sdx_graphics_sprite_retain0 (sprite);
-	_tmp4_.x = (gdouble) 170;
-	_tmp4_.y = (gdouble) 500;
-	_tmp5_ = sprite->height;
-	_tmp6_ = sprite->width;
+	_tmp3_.x = (gdouble) 170;
+	_tmp3_.y = (gdouble) 500;
+	_tmp4_ = _sdx_graphics_sprite_retain0 ((sdxgraphicsSprite*) sprite);
+	_tmp5_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp6_ = ((sdxgraphicsSprite*) sprite)->width;
 	_tmp7_.x = 0;
 	_tmp7_.y = 0;
 	_tmp7_.w = (guint) _tmp5_;
 	_tmp7_.h = (guint) _tmp6_;
-	_tmp8_ = sprite->height;
-	_tmp9_ = sprite->width;
+	_tmp8_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp9_ = ((sdxgraphicsSprite*) sprite)->width;
 	_tmp10_.x = (gdouble) _tmp8_;
 	_tmp10_.y = (gdouble) _tmp9_;
 	_tmp11_ = _vector2d_dup0 (&_tmp10_);
@@ -333,9 +346,9 @@ void entities_createPlayer (Entities* self, Entity* result) {
 	_tmp22_.active = TRUE;
 	_tmp22_.category = CATEGORY_PLAYER;
 	_tmp22_.actor = ACTOR_PLAYER;
+	_tmp22_.position = _tmp3_;
 	_sdx_graphics_sprite_release0 (_tmp22_.sprite);
-	_tmp22_.sprite = _tmp3_;
-	_tmp22_.position = _tmp4_;
+	_tmp22_.sprite = _tmp4_;
 	_tmp22_.bounds = _tmp7_;
 	_vector2d_free0 (_tmp22_.size);
 	_tmp22_.size = _tmp11_;
@@ -356,84 +369,92 @@ void entities_createPlayer (Entities* self, Entity* result) {
 
 
 void entities_createBerry (Entities* self, Entity* result) {
-	sdxgraphicsSprite* sprite = NULL;
-	sdxgraphicsSprite* _tmp0_ = NULL;
+	sdxgraphicsSpriteTextureSprite* sprite = NULL;
+	sdxgraphicsSpriteTextureSprite* _tmp0_ = NULL;
 	gint _tmp1_ = 0;
 	gchar* _tmp2_ = NULL;
 	Point2d _tmp3_ = {0};
-	SDL_Rect _tmp4_ = {0};
-	sdxgraphicsSprite* _tmp5_ = NULL;
-	Vector2d _tmp6_ = {0};
-	Vector2d* _tmp7_ = NULL;
-	Vector2d _tmp8_ = {0};
-	Vector2d* _tmp9_ = NULL;
-	SDL_Color _tmp10_ = {0};
-	SDL_Color* _tmp11_ = NULL;
-	Timer _tmp12_ = {0};
-	Timer* _tmp13_ = NULL;
-	Health _tmp14_ = {0};
-	Health* _tmp15_ = NULL;
-	Vector2d _tmp16_ = {0};
-	Vector2d* _tmp17_ = NULL;
-	Entity _tmp18_ = {0};
+	sdxgraphicsSprite* _tmp4_ = NULL;
+	gint _tmp5_ = 0;
+	gint _tmp6_ = 0;
+	SDL_Rect _tmp7_ = {0};
+	gint _tmp8_ = 0;
+	gint _tmp9_ = 0;
+	Vector2d _tmp10_ = {0};
+	Vector2d* _tmp11_ = NULL;
+	Vector2d _tmp12_ = {0};
+	Vector2d* _tmp13_ = NULL;
+	SDL_Color _tmp14_ = {0};
+	SDL_Color* _tmp15_ = NULL;
+	Timer _tmp16_ = {0};
+	Timer* _tmp17_ = NULL;
+	Health _tmp18_ = {0};
+	Health* _tmp19_ = NULL;
+	Vector2d _tmp20_ = {0};
+	Vector2d* _tmp21_ = NULL;
+	Entity _tmp22_ = {0};
 	g_return_if_fail (self != NULL);
-	_tmp0_ = sdx_graphics_sprite_new ("assets/berry.png");
+	_tmp0_ = sdx_graphics_sprite_texture_sprite_new ("assets/berry.png");
 	sprite = _tmp0_;
 	_tmp1_ = entities_uniqueId;
 	entities_uniqueId = _tmp1_ + 1;
 	_tmp2_ = g_strdup ("Bonus");
 	_tmp3_.x = (gdouble) 400;
 	_tmp3_.y = (gdouble) 400;
-	_tmp4_.x = 0;
-	_tmp4_.y = 0;
-	_tmp4_.w = (guint) 64;
-	_tmp4_.h = (guint) 64;
-	_tmp5_ = _sdx_graphics_sprite_retain0 (sprite);
-	_tmp6_.x = (gdouble) 64;
-	_tmp6_.y = (gdouble) 64;
-	_tmp7_ = _vector2d_dup0 (&_tmp6_);
-	_tmp8_.x = (gdouble) 1;
-	_tmp8_.y = (gdouble) 1;
-	_tmp9_ = _vector2d_dup0 (&_tmp8_);
-	_tmp10_.r = (guint8) 0;
-	_tmp10_.g = (guint8) 0;
-	_tmp10_.b = (guint8) 0;
-	_tmp10_.a = (guint8) 0;
-	_tmp11_ = __sdl_video_color_dup0 (&_tmp10_);
-	_tmp12_.begin = 0;
-	_tmp12_.finish = 0;
-	_tmp12_.best = 0;
-	_tmp13_ = _timer_dup0 (&_tmp12_);
-	_tmp14_.curHealth = 0;
-	_tmp14_.maxHealth = 0;
-	_tmp15_ = _health_dup0 (&_tmp14_);
-	_tmp16_.x = (gdouble) 0;
-	_tmp16_.y = (gdouble) 0;
-	_tmp17_ = _vector2d_dup0 (&_tmp16_);
-	memset (&_tmp18_, 0, sizeof (Entity));
-	_tmp18_.id = _tmp1_;
-	_g_free0 (_tmp18_.name);
-	_tmp18_.name = _tmp2_;
-	_tmp18_.active = TRUE;
-	_tmp18_.category = CATEGORY_BONUS;
-	_tmp18_.actor = ACTOR_BONUS;
-	_tmp18_.position = _tmp3_;
-	_tmp18_.bounds = _tmp4_;
-	_sdx_graphics_sprite_release0 (_tmp18_.sprite);
-	_tmp18_.sprite = _tmp5_;
-	_vector2d_free0 (_tmp18_.size);
-	_tmp18_.size = _tmp7_;
-	_vector2d_free0 (_tmp18_.scale);
-	_tmp18_.scale = _tmp9_;
-	_g_free0 (_tmp18_.tint);
-	_tmp18_.tint = _tmp11_;
-	_timer_free0 (_tmp18_.expires);
-	_tmp18_.expires = _tmp13_;
-	_health_free0 (_tmp18_.health);
-	_tmp18_.health = _tmp15_;
-	_vector2d_free0 (_tmp18_.velocity);
-	_tmp18_.velocity = _tmp17_;
-	*result = _tmp18_;
+	_tmp4_ = _sdx_graphics_sprite_retain0 ((sdxgraphicsSprite*) sprite);
+	_tmp5_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp6_ = ((sdxgraphicsSprite*) sprite)->width;
+	_tmp7_.x = 0;
+	_tmp7_.y = 0;
+	_tmp7_.w = (guint) _tmp5_;
+	_tmp7_.h = (guint) _tmp6_;
+	_tmp8_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp9_ = ((sdxgraphicsSprite*) sprite)->width;
+	_tmp10_.x = (gdouble) _tmp8_;
+	_tmp10_.y = (gdouble) _tmp9_;
+	_tmp11_ = _vector2d_dup0 (&_tmp10_);
+	_tmp12_.x = (gdouble) 1;
+	_tmp12_.y = (gdouble) 1;
+	_tmp13_ = _vector2d_dup0 (&_tmp12_);
+	_tmp14_.r = (guint8) 0;
+	_tmp14_.g = (guint8) 0;
+	_tmp14_.b = (guint8) 0;
+	_tmp14_.a = (guint8) 0;
+	_tmp15_ = __sdl_video_color_dup0 (&_tmp14_);
+	_tmp16_.begin = 0;
+	_tmp16_.finish = 0;
+	_tmp16_.best = 0;
+	_tmp17_ = _timer_dup0 (&_tmp16_);
+	_tmp18_.curHealth = 0;
+	_tmp18_.maxHealth = 0;
+	_tmp19_ = _health_dup0 (&_tmp18_);
+	_tmp20_.x = (gdouble) 0;
+	_tmp20_.y = (gdouble) 0;
+	_tmp21_ = _vector2d_dup0 (&_tmp20_);
+	memset (&_tmp22_, 0, sizeof (Entity));
+	_tmp22_.id = _tmp1_;
+	_g_free0 (_tmp22_.name);
+	_tmp22_.name = _tmp2_;
+	_tmp22_.active = TRUE;
+	_tmp22_.category = CATEGORY_BONUS;
+	_tmp22_.actor = ACTOR_BONUS;
+	_tmp22_.position = _tmp3_;
+	_sdx_graphics_sprite_release0 (_tmp22_.sprite);
+	_tmp22_.sprite = _tmp4_;
+	_tmp22_.bounds = _tmp7_;
+	_vector2d_free0 (_tmp22_.size);
+	_tmp22_.size = _tmp11_;
+	_vector2d_free0 (_tmp22_.scale);
+	_tmp22_.scale = _tmp13_;
+	_g_free0 (_tmp22_.tint);
+	_tmp22_.tint = _tmp15_;
+	_timer_free0 (_tmp22_.expires);
+	_tmp22_.expires = _tmp17_;
+	_health_free0 (_tmp22_.health);
+	_tmp22_.health = _tmp19_;
+	_vector2d_free0 (_tmp22_.velocity);
+	_tmp22_.velocity = _tmp21_;
+	*result = _tmp22_;
 	_sdx_graphics_sprite_release0 (sprite);
 	return;
 }

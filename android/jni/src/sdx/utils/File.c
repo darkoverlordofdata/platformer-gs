@@ -39,7 +39,7 @@ gboolean sdx_utils_file_isDirectory (sdxutilsFile* self);
 gint sdx_utils_file_length (sdxutilsFile* self);
 gchar* sdx_utils_file_read (sdxutilsFile* self);
 gchar** sdx_utils_file_list (sdxutilsFile* self, int* result_length1);
-static gchar** _vala_array_dup1 (gchar** self, int length);
+static gchar** _vala_array_dup3 (gchar** self, int length);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
 static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
 
@@ -458,7 +458,7 @@ gchar* sdx_utils_file_read (sdxutilsFile* self) {
 /**
  * return the list of files in the folder
  */
-static gchar** _vala_array_dup1 (gchar** self, int length) {
+static gchar** _vala_array_dup3 (gchar** self, int length) {
 	gchar** result;
 	int i;
 	result = g_new0 (gchar*, length + 1);
@@ -487,7 +487,7 @@ gchar** sdx_utils_file_list (sdxutilsFile* self, int* result_length1) {
 	self->files_length1 = 0;
 	_tmp1_ = self->files;
 	_tmp1__length1 = self->files_length1;
-	_tmp2_ = (_tmp1_ != NULL) ? _vala_array_dup1 (_tmp1_, _tmp1__length1) : ((gpointer) _tmp1_);
+	_tmp2_ = (_tmp1_ != NULL) ? _vala_array_dup3 (_tmp1_, _tmp1__length1) : ((gpointer) _tmp1_);
 	_tmp2__length1 = _tmp1__length1;
 	_tmp3_ = _tmp2_;
 	_tmp3__length1 = _tmp2__length1;

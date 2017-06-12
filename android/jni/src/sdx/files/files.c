@@ -12,8 +12,7 @@
 typedef struct _sdxfilesFileHandle sdxfilesFileHandle;
 
 typedef enum  {
-	SDX_FILE_TYPE_Parent,
-	SDX_FILE_TYPE_Resource,
+	SDX_FILE_TYPE_Resource = 1,
 	SDX_FILE_TYPE_Asset,
 	SDX_FILE_TYPE_Absolute,
 	SDX_FILE_TYPE_Relative
@@ -29,6 +28,7 @@ sdxfilesFileHandle* sdx_files_resource (const gchar* path);
 sdxfilesFileHandle* sdx_files_asset (const gchar* path);
 sdxfilesFileHandle* sdx_files_absolute (const gchar* path);
 sdxfilesFileHandle* sdx_files_relative (const gchar* path);
+sdxfilesFileHandle* sdx_files_default (const gchar* path);
 
 
 sdxfilesFileHandle* sdx_files_getHandle (const gchar* path, sdxFileType type) {
@@ -82,6 +82,18 @@ sdxfilesFileHandle* sdx_files_absolute (const gchar* path) {
 
 
 sdxfilesFileHandle* sdx_files_relative (const gchar* path) {
+	sdxfilesFileHandle* result = NULL;
+	const gchar* _tmp0_ = NULL;
+	sdxfilesFileHandle* _tmp1_ = NULL;
+	g_return_val_if_fail (path != NULL, NULL);
+	_tmp0_ = path;
+	_tmp1_ = sdx_files_file_handle_new (_tmp0_, SDX_FILE_TYPE_Relative);
+	result = _tmp1_;
+	return result;
+}
+
+
+sdxfilesFileHandle* sdx_files_default (const gchar* path) {
 	sdxfilesFileHandle* result = NULL;
 	const gchar* _tmp0_ = NULL;
 	sdxfilesFileHandle* _tmp1_ = NULL;
