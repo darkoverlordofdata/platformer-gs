@@ -11,16 +11,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/darkoverlordofdata/platformer-gs.git"
+    "url": "git+https://github.com/darkoverlordofdata/zerog-platformer.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/darkoverlordofdata/platformer-gs/issues"
+    "url": "https://github.com/darkoverlordofdata/zerog-platformer/issues"
   },
-  "homepage": "https://github.com/darkoverlordofdata/platformer-gs#readme",
+  "homepage": "https://github.com/darkoverlordofdata/zerog-platformer#readme",
   "devDependencies": {
-    "entitas-cli": "^0.1.3"
+    "entitas-cli": "^0.2.0",
+    "coffee-script": "1.12.4",
+    "gulp": "^3.9.0",
+    "gulp-gh-pages": "^0.5.2",
+    "gulp-shell": "^0.4.2",
+    "liquid.coffee": "^0.1.8"
   }
 }
