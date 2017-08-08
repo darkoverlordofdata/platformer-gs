@@ -1,3 +1,4 @@
+using sdx.math;
 namespace sdx.graphics {
 
 	public class Camera : Object {
@@ -6,10 +7,11 @@ namespace sdx.graphics {
             FluidCamera, InnerCamera, SimpleCamera
 		}
         
-	    public delegate void CameraSetPosition(Point2d position);
+	    //  public delegate void CameraSetPosition(Point2d position);
+	    public delegate void CameraSetPosition(Vector2 position);
 
 		public Kind kind;
-		public Vector2d position;
+		public Vector2 position;
         public CameraSetPosition setPosition = (position) => {};
 
 
@@ -18,12 +20,13 @@ namespace sdx.graphics {
              * InnerCamera
              * 
              */
-            public InnerCamera(double x = 0, double y = 0) {
+            public InnerCamera(float x = 0, float y = 0) {
                 kind = Kind.InnerCamera;
                 position = { x, y };
 
+
                 setPosition = (player) => {
-                    var area = player.x - (double)sdx.width/2;
+                    var area = player.x - (float)sdx.width/2;
                     position = { clamp(position.x, area-100, area+100), position.y };
                 };
             }
@@ -34,13 +37,13 @@ namespace sdx.graphics {
              * FluidCamera
              * 
              */
-            public FluidCamera(double x = 0, double y = 0) {
+            public FluidCamera(float x = 0, float y = 0) {
                 kind = Kind.FluidCamera;
                 position = { x, y };
 
                 setPosition = (player) => {
-                    var dist = position.x - player.x + (double)sdx.width/2;
-                    position = { position.x += (-0.05 * dist), position.y };
+                    var dist = position.x - player.x + (float)sdx.width/2;
+                    position = { position.x += (-0.05f * dist), position.y };
                 };
             }
         }
@@ -50,12 +53,12 @@ namespace sdx.graphics {
              * SimpleCamera
              * 
              */
-            public SimpleCamera(double x = 0, double y = 0) {
+            public SimpleCamera(float x = 0, float y = 0) {
                 kind = Kind.SimpleCamera;
                 position = { x, y };
 
                 setPosition = (player) => {
-                    position = { player.x - (double)sdx.width/2, position.y };
+                    position = { player.x - (float)sdx.width/2, position.y };
                 };
             }
         }

@@ -1,6 +1,7 @@
 uses sdx.graphics
+uses sdx.math
 
-const WINDOW_SIZE: Point2d = { 1280, 720 }
+const WINDOW_SIZE: Vector2 = { 1280, 720 }
 
 [Compact, CCode ( /** reference counting */
 	ref_function = "game_retain", 
@@ -23,13 +24,21 @@ class Game
 	sprites: List of Entity* = new List of Entity*()
 	pool: array of Entity
 	sys: array of systems.System
-	space: cp.Space
-	body: cp.Body
-	shape: cp.CircleShape
-	groundBody: unowned cp.Body
-	groundShape: cp.SegmentShape
+
+	// space: cp.Space
+	// body: cp.Body
+	// shape: cp.CircleShape
+	// groundBody: unowned cp.Body
+	// groundShape: cp.SegmentShape
 
 	construct()
+
+		// space: cp.Space
+		// body: cp.Body
+		// shape: cp.CircleShape
+		// groundBody: unowned cp.Body
+		// groundShape: cp.SegmentShape
+	
 		sdx.setResourceBase("/darkoverlordofdata/platformer")
 		sdx.setDefaultFont("assets/OpenDyslexic-Bold.otf", 28)
 
@@ -52,23 +61,27 @@ class Game
 		player = &pool[1]
 		for var i=0 to (pool.length-1) do sprites.append(&pool[i])
 
-		space = new cp.Space()
-		space.set_gravity({ 0, 100 })
-		body = new cp.Body(100, cp.INFINITY)
-		body.set_position({ player.position.x, player.position.y })
-		space.add_body(body)
-		shape = new cp.CircleShape(body, 20, { 0, 0 })
-		shape.set_elasticity(0.5)
-		shape.set_friction(0.8)
-		shape.set_user_data(player)
-		shape.set_collision_type(1)
-		space.add_shape(shape)
+		// update = updateImpl
+		// render = renderImpl
+		// space = new cp.Space()
+		// space.set_gravity({ 0, 100 })
+		// body = new cp.Body(100, cp.INFINITY)
+		// body.set_position({ player.position.x, player.position.y })
+		// space.add_body(body)
+		// shape = new cp.CircleShape(body, 20, { 0, 0 })
+		// shape.set_elasticity(0.5)
+		// shape.set_friction(0.8)
+		// shape.set_user_data(player)
+		// shape.set_collision_type(1)
+		// space.add_shape(shape)
 
-		groundBody = cp.Body.new_static()
-		groundShape = new cp.SegmentShape(groundBody, { 0, sdx.height-150 }, { sdx.width, sdx.height-150 }, 10)
-		groundShape.set_elasticity(0.5)
-		groundShape.set_friction(1.0)
-		space.add_shape(groundShape)
+		// groundBody = cp.Body.new_static()
+		// groundShape = new cp.SegmentShape(groundBody, { 0, sdx.height-150 }, { sdx.width, sdx.height-150 }, 10)
+		// groundShape.set_elasticity(0.5)
+		// groundShape.set_friction(1.0)
+		// space.add_shape(groundShape)
+
+
 
 
 	/**
@@ -76,11 +89,12 @@ class Game
 	 */
 	def update(tick: int)
 		mapInput()
-		space.step(0.1)
-		var pos = body.get_position()
+		print "%f,%f", sdx.mouseX, sdx.mouseY
+		// space.step(0.01)
+		// var pos = body.get_position()
 
 		sdx.update()
-		player.position = { pos.x, pos.y }
+		// player.position = { pos.x, pos.y }
 		camera.setPosition(player.position)
 		for var system in sys do system.execute(ref player, tick)
 

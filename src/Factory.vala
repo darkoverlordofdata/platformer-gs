@@ -1,56 +1,58 @@
+
+using sdx.graphics;
 /**
  * Entity Factory
  */
 
-delegate Compositor(x:int, y:int): array of Blit	
 
-class Entities : Object
-	uniqueId: static int = 0
+public class Factory : Object {
+	static int uniqueId = 0;
 
-	construct() 
-		sdx.graphics.Surface.CachedSurface.initialize(10)
+	public Factory() {
+		Surface.CachedSurface.initialize(10);
+	}
 
 
-	def createPlayer(): Entity
-		var sprite = new sdx.graphics.Sprite.CompositeSprite("assets/player.png", composePlayer)
+	public Entity createPlayer() {
+		var sprite = new Sprite.CompositeSprite("assets/player.png", composePlayer);
 		return Entity() {
 			id 		 = uniqueId++,
 			name 	 = "Player",
 			active 	 = true,
-			category = Category.PLAYER,
-			actor 	 = Actor.PLAYER,
+			aabb 	 = { 170, 500, sprite.height, sprite.width },
 			position = { 170, 500 },
-			sprite 	 = sprite, 
-			bounds 	 = { 0, 0, sprite.height, sprite.width },
 			size 	 = { sprite.height, sprite.width },
 			scale 	 = { 1, 1 },
+			sprite 	 = sprite, 
 			tint 	 = { 0, 0, 0, 0 },
 			expires  = { 0, 0, 0 },
 			health 	 = { 0, 0 },
 			velocity = { 0, 0 }
-		}
+		};
+	}
 
-	def createBerry(): Entity
-		var sprite = new sdx.graphics.Sprite.TextureSprite("assets/berry.png")
+	public Entity createBerry() {
+		var sprite = new Sprite.TextureSprite("assets/berry.png");
 		return Entity() {
 			id 		 = uniqueId++,
 			name 	 = "Bonus",
 			active 	 = true,
-			category = Category.BONUS,
-			actor 	 = Actor.BONUS,
+			aabb 	 = { 400, 400, sprite.height, sprite.width },
 			position = { 400, 400 },
-			sprite 	 = sprite,
-			bounds 	 = { 0, 0, sprite.height, sprite.width },
 			size 	 = { sprite.height, sprite.width },
 			scale 	 = { 1, 1 },
+			sprite 	 = sprite,
 			tint 	 = { 0, 0, 0, 0 },
 			expires  = { 0, 0, 0 },
 			health 	 = { 0, 0 },
 			velocity = { 0, 0 }
-		}
-		
+		};
+	}
 
-	def composePlayer(x:int, y:int): array of Blit
+	/**
+	 * make the player sprite by blitting the pieces together
+	 */
+	public Blit[] composePlayer(int x, int y) {
 		return {
 			blit({ 192,  64, 64, 32 }, { x-60, y,	 96, 48 }, SDL.Video.RendererFlip.NONE),
 			blit({  96,   0, 96, 96 }, { x-48, y-48, 96, 96 }, SDL.Video.RendererFlip.NONE),
@@ -60,6 +62,13 @@ class Entities : Object
 			blit({ 192,  32, 64, 32 }, { x-36, y,    96, 48 }, SDL.Video.RendererFlip.NONE),
 			blit({  64,  96, 32, 32 }, { x-18, y-21, 36, 36 }, SDL.Video.RendererFlip.NONE),
 			blit({  64,  96, 32, 32 }, { x- 6, y-21, 36, 36 }, SDL.Video.RendererFlip.HORIZONTAL)
-		}
+		};
+	}
+
+	public inline Blit blit(SDL.Video.Rect source, SDL.Video.Rect dest, SDL.Video.RendererFlip flip) {
+		return { source, dest, flip };
+	} /* helper - struct constructors are not accessable outside of their namespace */
+}
+
 
 

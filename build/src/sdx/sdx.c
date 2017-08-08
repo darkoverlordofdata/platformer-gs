@@ -4,14 +4,13 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
-#include <string.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_pixels.h>
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -19,13 +18,18 @@
 #include <SDL_ttf.h>
 #include <SDL2/SDL_timer.h>
 #include <mt19937ar.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_keyboard.h>
 #include <stdio.h>
 
-
-#define SDX_TYPE_BLIT (sdx_blit_get_type ())
-typedef struct _sdxBlit sdxBlit;
+typedef struct _sdxAbstractPlatform sdxAbstractPlatform;
+typedef struct _sdxLambdaReference sdxLambdaReference;
+void sdx_lambda_reference_release (sdxLambdaReference* self);
+void sdx_lambda_reference_free (sdxLambdaReference* self);
+sdxLambdaReference* sdx_lambda_reference_retain (sdxLambdaReference* self);
+#define _sdx_lambda_reference_release0(var) ((var == NULL) ? NULL : (var = (sdx_lambda_reference_release (var), NULL)))
+typedef struct _sdxAbstractGame sdxAbstractGame;
 
 #define SDX_TYPE_FILE_TYPE (sdx_file_type_get_type ())
 typedef struct _sdxFont sdxFont;
@@ -46,13 +50,36 @@ void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
 sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
 #define _sdx_graphics_sprite_release0(var) ((var == NULL) ? NULL : (var = (sdx_graphics_sprite_release (var), NULL)))
 
-struct _sdxBlit {
-	SDL_Rect source;
-	SDL_Rect dest;
-	SDL_RendererFlip flip;
+typedef void (*sdxAbstractPlatformPlatformUpdate) (gint tick, void* user_data);
+typedef void (*sdxAbstractPlatformPlatformRender) (gint tick, void* user_data);
+struct _sdxAbstractPlatform {
+	gint _retainCount;
+	sdxAbstractPlatformPlatformUpdate update;
+	gpointer update_target;
+	GDestroyNotify update_target_destroy_notify;
+	sdxAbstractPlatformPlatformRender render;
+	gpointer render_target;
+	GDestroyNotify render_target_destroy_notify;
 };
 
-typedef sdxBlit* (*sdxCompositor) (gint x, gint y, int* result_length1, void* user_data);
+typedef void (*sdxAbstractGameGameUpdate) (void* user_data);
+typedef void (*sdxAbstractGameGameRender) (void* user_data);
+struct _sdxAbstractGame {
+	gint _retainCount;
+	gint width;
+	gint height;
+	sdxAbstractGameGameUpdate update;
+	gpointer update_target;
+	GDestroyNotify update_target_destroy_notify;
+	sdxAbstractGameGameRender render;
+	gpointer render_target;
+	GDestroyNotify render_target_destroy_notify;
+};
+
+struct _sdxLambdaReference {
+	gint _retainCount;
+};
+
 typedef enum  {
 	SDX_FILE_TYPE_Resource = 1,
 	SDX_FILE_TYPE_Asset,
@@ -121,14 +148,14 @@ extern glong sdx_pixelFactor;
 glong sdx_pixelFactor = 0L;
 extern gboolean sdx_showFps;
 gboolean sdx_showFps = FALSE;
-extern gdouble sdx_fps;
-gdouble sdx_fps = 0.0;
-extern gdouble sdx_delta;
-gdouble sdx_delta = 0.0;
-extern gdouble sdx_mouseX;
-gdouble sdx_mouseX = 0.0;
-extern gdouble sdx_mouseY;
-gdouble sdx_mouseY = 0.0;
+extern gfloat sdx_fps;
+gfloat sdx_fps = 0.0F;
+extern gfloat sdx_delta;
+gfloat sdx_delta = 0.0F;
+extern gint sdx_mouseX;
+gint sdx_mouseX = 0;
+extern gint sdx_mouseY;
+gint sdx_mouseY = 0;
 extern gboolean sdx_mouseDown;
 gboolean sdx_mouseDown = FALSE;
 extern gboolean sdx_running;
@@ -162,9 +189,34 @@ gint sdx_width = 0;
 extern gint sdx_height;
 gint sdx_height = 0;
 
-GType sdx_blit_get_type (void) G_GNUC_CONST;
-sdxBlit* sdx_blit_dup (const sdxBlit* self);
-void sdx_blit_free (sdxBlit* self);
+void sdx_abstract_platform_free (sdxAbstractPlatform* self);
+static void sdx_abstract_platform_instance_init (sdxAbstractPlatform * self);
+static void _sdx_abstract_platform_update_lambda4_ (gint tick);
+static void __sdx_abstract_platform_update_lambda4__sdx_abstract_platform_platform_update (gint tick, gpointer self);
+static void _sdx_abstract_platform_render_lambda5_ (gint tick);
+static void __sdx_abstract_platform_render_lambda5__sdx_abstract_platform_platform_render (gint tick, gpointer self);
+sdxAbstractPlatform* sdx_abstract_platform_retain (sdxAbstractPlatform* self);
+void sdx_abstract_platform_release (sdxAbstractPlatform* self);
+void sdx_abstract_platform_free (sdxAbstractPlatform* self);
+sdxAbstractPlatform* sdx_abstract_platform_new (void);
+void sdx_lambda_reference_free (sdxLambdaReference* self);
+sdxLambdaReference* sdx_lambda_reference_new (void);
+void sdx_abstract_game_free (sdxAbstractGame* self);
+static void sdx_abstract_game_instance_init (sdxAbstractGame * self);
+static void _sdx_abstract_game_update_lambda18_ (void);
+static void __sdx_abstract_game_update_lambda18__sdx_abstract_game_game_update (gpointer self);
+static void _sdx_abstract_game_render_lambda19_ (void);
+static void __sdx_abstract_game_render_lambda19__sdx_abstract_game_game_render (gpointer self);
+sdxAbstractGame* sdx_abstract_game_retain (sdxAbstractGame* self);
+void sdx_abstract_game_release (sdxAbstractGame* self);
+void sdx_abstract_game_free (sdxAbstractGame* self);
+sdxAbstractGame* sdx_abstract_game_new (void);
+void sdx_abstract_game_start (sdxAbstractGame* self);
+void sdx_start (void);
+static void sdx_lambda_reference_instance_init (sdxLambdaReference * self);
+sdxLambdaReference* sdx_lambda_reference_retain (sdxLambdaReference* self);
+void sdx_lambda_reference_release (sdxLambdaReference* self);
+void sdx_lambda_reference_free (sdxLambdaReference* self);
 GType sdx_file_type_get_type (void) G_GNUC_CONST;
 void sdx_font_free (sdxFont* self);
 void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
@@ -172,6 +224,7 @@ GType sdx_direction_get_type (void) G_GNUC_CONST;
 SDL_Window* sdx_initialize (gint width, gint height, const gchar* name);
 GQuark sdx_sdl_exception_quark (void);
 gdouble sdx_getRandom (void);
+gint sdx_nextInt (gint max);
 void sdx_setResourceBase (const gchar* path);
 void sdx_setDefaultFont (const gchar* path, gint size);
 sdxFont* sdx_font_new (const gchar* path, gint size);
@@ -183,8 +236,7 @@ void sdx_drawFps (void);
 void sdx_graphics_sprite_animated_sprite_setFrame (sdxgraphicsSpriteAnimatedSprite* self, gint frame);
 void sdx_graphics_sprite_render (sdxgraphicsSprite* self, gint x, gint y, SDL_Rect* clip);
 gdouble sdx_getNow (void);
-void sdx_start (void);
-void sdx_update (void);
+gfloat sdx_update (void);
 void sdx_processEvents (void);
 void sdx_begin (void);
 void sdx_end (void);
@@ -193,27 +245,194 @@ void sdx_log (const gchar* text);
 extern const SDL_Color SDX_COLOR_AntiqueWhite;
 extern const SDL_Color SDX_COLOR_Black;
 
-sdxBlit* sdx_blit_dup (const sdxBlit* self) {
-	sdxBlit* dup;
-	dup = g_new0 (sdxBlit, 1);
-	memcpy (dup, self, sizeof (sdxBlit));
-	return dup;
+static void _sdx_abstract_platform_update_lambda4_ (gint tick) {
 }
 
 
-void sdx_blit_free (sdxBlit* self) {
-	g_free (self);
+static void __sdx_abstract_platform_update_lambda4__sdx_abstract_platform_platform_update (gint tick, gpointer self) {
+	_sdx_abstract_platform_update_lambda4_ (tick);
 }
 
 
-GType sdx_blit_get_type (void) {
-	static volatile gsize sdx_blit_type_id__volatile = 0;
-	if (g_once_init_enter (&sdx_blit_type_id__volatile)) {
-		GType sdx_blit_type_id;
-		sdx_blit_type_id = g_boxed_type_register_static ("sdxBlit", (GBoxedCopyFunc) sdx_blit_dup, (GBoxedFreeFunc) sdx_blit_free);
-		g_once_init_leave (&sdx_blit_type_id__volatile, sdx_blit_type_id);
+static void _sdx_abstract_platform_render_lambda5_ (gint tick) {
+}
+
+
+static void __sdx_abstract_platform_render_lambda5__sdx_abstract_platform_platform_render (gint tick, gpointer self) {
+	_sdx_abstract_platform_render_lambda5_ (tick);
+}
+
+
+sdxAbstractPlatform* sdx_abstract_platform_retain (sdxAbstractPlatform* self) {
+	sdxAbstractPlatform* result = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	g_atomic_int_add ((volatile gint *) (&self->_retainCount), 1);
+	result = self;
+	return result;
+}
+
+
+void sdx_abstract_platform_release (sdxAbstractPlatform* self) {
+	gboolean _tmp0_ = FALSE;
+	g_return_if_fail (self != NULL);
+	_tmp0_ = g_atomic_int_dec_and_test ((volatile gint *) (&self->_retainCount));
+	if (_tmp0_) {
+		sdx_abstract_platform_free (self);
 	}
-	return sdx_blit_type_id__volatile;
+}
+
+
+sdxAbstractPlatform* sdx_abstract_platform_new (void) {
+	sdxAbstractPlatform* self;
+	sdxLambdaReference* r = NULL;
+	sdxLambdaReference* _tmp0_ = NULL;
+	self = g_slice_new0 (sdxAbstractPlatform);
+	sdx_abstract_platform_instance_init (self);
+	_tmp0_ = sdx_lambda_reference_new ();
+	r = _tmp0_;
+	_sdx_lambda_reference_release0 (r);
+	return self;
+}
+
+
+static void sdx_abstract_platform_instance_init (sdxAbstractPlatform * self) {
+	self->_retainCount = 1;
+	self->update = __sdx_abstract_platform_update_lambda4__sdx_abstract_platform_platform_update;
+	self->update_target = self;
+	self->update_target_destroy_notify = NULL;
+	self->render = __sdx_abstract_platform_render_lambda5__sdx_abstract_platform_platform_render;
+	self->render_target = self;
+	self->render_target_destroy_notify = NULL;
+}
+
+
+void sdx_abstract_platform_free (sdxAbstractPlatform* self) {
+	(self->update_target_destroy_notify == NULL) ? NULL : (self->update_target_destroy_notify (self->update_target), NULL);
+	self->update = NULL;
+	self->update_target = NULL;
+	self->update_target_destroy_notify = NULL;
+	(self->render_target_destroy_notify == NULL) ? NULL : (self->render_target_destroy_notify (self->render_target), NULL);
+	self->render = NULL;
+	self->render_target = NULL;
+	self->render_target_destroy_notify = NULL;
+	g_slice_free (sdxAbstractPlatform, self);
+}
+
+
+static void _sdx_abstract_game_update_lambda18_ (void) {
+}
+
+
+static void __sdx_abstract_game_update_lambda18__sdx_abstract_game_game_update (gpointer self) {
+	_sdx_abstract_game_update_lambda18_ ();
+}
+
+
+static void _sdx_abstract_game_render_lambda19_ (void) {
+}
+
+
+static void __sdx_abstract_game_render_lambda19__sdx_abstract_game_game_render (gpointer self) {
+	_sdx_abstract_game_render_lambda19_ ();
+}
+
+
+sdxAbstractGame* sdx_abstract_game_retain (sdxAbstractGame* self) {
+	sdxAbstractGame* result = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	g_atomic_int_add ((volatile gint *) (&self->_retainCount), 1);
+	result = self;
+	return result;
+}
+
+
+void sdx_abstract_game_release (sdxAbstractGame* self) {
+	gboolean _tmp0_ = FALSE;
+	g_return_if_fail (self != NULL);
+	_tmp0_ = g_atomic_int_dec_and_test ((volatile gint *) (&self->_retainCount));
+	if (_tmp0_) {
+		sdx_abstract_game_free (self);
+	}
+}
+
+
+sdxAbstractGame* sdx_abstract_game_new (void) {
+	sdxAbstractGame* self;
+	sdxLambdaReference* r = NULL;
+	sdxLambdaReference* _tmp0_ = NULL;
+	self = g_slice_new0 (sdxAbstractGame);
+	sdx_abstract_game_instance_init (self);
+	_tmp0_ = sdx_lambda_reference_new ();
+	r = _tmp0_;
+	_sdx_lambda_reference_release0 (r);
+	return self;
+}
+
+
+void sdx_abstract_game_start (sdxAbstractGame* self) {
+	g_return_if_fail (self != NULL);
+	sdx_start ();
+}
+
+
+static void sdx_abstract_game_instance_init (sdxAbstractGame * self) {
+	self->_retainCount = 1;
+	self->update = __sdx_abstract_game_update_lambda18__sdx_abstract_game_game_update;
+	self->update_target = self;
+	self->update_target_destroy_notify = NULL;
+	self->render = __sdx_abstract_game_render_lambda19__sdx_abstract_game_game_render;
+	self->render_target = self;
+	self->render_target_destroy_notify = NULL;
+}
+
+
+void sdx_abstract_game_free (sdxAbstractGame* self) {
+	(self->update_target_destroy_notify == NULL) ? NULL : (self->update_target_destroy_notify (self->update_target), NULL);
+	self->update = NULL;
+	self->update_target = NULL;
+	self->update_target_destroy_notify = NULL;
+	(self->render_target_destroy_notify == NULL) ? NULL : (self->render_target_destroy_notify (self->render_target), NULL);
+	self->render = NULL;
+	self->render_target = NULL;
+	self->render_target_destroy_notify = NULL;
+	g_slice_free (sdxAbstractGame, self);
+}
+
+
+sdxLambdaReference* sdx_lambda_reference_retain (sdxLambdaReference* self) {
+	sdxLambdaReference* result = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	g_atomic_int_add ((volatile gint *) (&self->_retainCount), 1);
+	result = self;
+	return result;
+}
+
+
+void sdx_lambda_reference_release (sdxLambdaReference* self) {
+	gboolean _tmp0_ = FALSE;
+	g_return_if_fail (self != NULL);
+	_tmp0_ = g_atomic_int_dec_and_test ((volatile gint *) (&self->_retainCount));
+	if (_tmp0_) {
+		sdx_lambda_reference_free (self);
+	}
+}
+
+
+sdxLambdaReference* sdx_lambda_reference_new (void) {
+	sdxLambdaReference* self;
+	self = g_slice_new0 (sdxLambdaReference);
+	sdx_lambda_reference_instance_init (self);
+	return self;
+}
+
+
+static void sdx_lambda_reference_instance_init (sdxLambdaReference * self) {
+	self->_retainCount = 1;
+}
+
+
+void sdx_lambda_reference_free (sdxLambdaReference* self) {
+	g_slice_free (sdxLambdaReference, self);
 }
 
 
@@ -367,7 +586,7 @@ SDL_Window* sdx_initialize (gint width, gint height, const gchar* name) {
 	sdx__freq = (gdouble) _tmp32_;
 	sdx_fpsColor = SDX_COLOR_AntiqueWhite;
 	sdx_bgdColor = SDX_COLOR_Black;
-	sdx_fps = (gdouble) 60;
+	sdx_fps = (gfloat) 60;
 	_tmp33_ = SDL_GetPerformanceCounter ();
 	init_genrand ((gulong) _tmp33_);
 	result = window;
@@ -380,6 +599,17 @@ gdouble sdx_getRandom (void) {
 	gdouble _tmp0_ = 0.0;
 	_tmp0_ = genrand_real2 ();
 	result = _tmp0_;
+	return result;
+}
+
+
+gint sdx_nextInt (gint max) {
+	gint result = 0;
+	gdouble _tmp0_ = 0.0;
+	gint _tmp1_ = 0;
+	_tmp0_ = genrand_real2 ();
+	_tmp1_ = max;
+	result = (gint) (_tmp0_ * _tmp1_);
 	return result;
 }
 
@@ -485,7 +715,7 @@ void sdx_drawFps (void) {
 	_tmp0_ = sdx_showFps;
 	if (_tmp0_) {
 		gchar* f = NULL;
-		gdouble _tmp1_ = 0.0;
+		gfloat _tmp1_ = 0.0F;
 		gchar* _tmp2_ = NULL;
 		sdxgraphicsSpriteAnimatedSprite* _tmp3_ = NULL;
 		const gchar* _tmp4_ = NULL;
@@ -508,7 +738,7 @@ void sdx_drawFps (void) {
 		gchar _tmp21_ = '\0';
 		sdxgraphicsSpriteAnimatedSprite* _tmp22_ = NULL;
 		_tmp1_ = sdx_fps;
-		_tmp2_ = g_strdup_printf ("%2.2f", _tmp1_);
+		_tmp2_ = g_strdup_printf ("%2.2f", (gdouble) _tmp1_);
 		f = _tmp2_;
 		_tmp3_ = sdx_fps1;
 		_tmp4_ = f;
@@ -566,7 +796,8 @@ void sdx_start (void) {
 }
 
 
-void sdx_update (void) {
+gfloat sdx_update (void) {
+	gfloat result = 0.0F;
 	guint64 _tmp0_ = 0ULL;
 	gdouble _tmp1_ = 0.0;
 	gdouble _tmp2_ = 0.0;
@@ -574,14 +805,15 @@ void sdx_update (void) {
 	gdouble _tmp4_ = 0.0;
 	gint _tmp5_ = 0;
 	gdouble _tmp6_ = 0.0;
-	gdouble _tmp7_ = 0.0;
+	gfloat _tmp7_ = 0.0F;
 	gdouble _tmp8_ = 0.0;
+	gfloat _tmp11_ = 0.0F;
 	_tmp0_ = SDL_GetPerformanceCounter ();
 	_tmp1_ = sdx__freq;
 	sdx__mark2 = ((gdouble) _tmp0_) / _tmp1_;
 	_tmp2_ = sdx__mark2;
 	_tmp3_ = sdx__mark1;
-	sdx_delta = _tmp2_ - _tmp3_;
+	sdx_delta = (gfloat) (_tmp2_ - _tmp3_);
 	_tmp4_ = sdx__mark2;
 	sdx__mark1 = _tmp4_;
 	_tmp5_ = sdx__frames;
@@ -590,15 +822,18 @@ void sdx_update (void) {
 	_tmp7_ = sdx_delta;
 	sdx__elapsed = _tmp6_ + _tmp7_;
 	_tmp8_ = sdx__elapsed;
-	if (_tmp8_ > 1.0) {
+	if (_tmp8_ > ((gdouble) 1)) {
 		gint _tmp9_ = 0;
 		gdouble _tmp10_ = 0.0;
 		_tmp9_ = sdx__frames;
 		_tmp10_ = sdx__elapsed;
-		sdx_fps = (gdouble) ((gint) (((gdouble) _tmp9_) / _tmp10_));
-		sdx__elapsed = 0.0;
+		sdx_fps = (gfloat) ((gint) (((gdouble) _tmp9_) / _tmp10_));
+		sdx__elapsed = (gdouble) 0;
 		sdx__frames = 0;
 	}
+	_tmp11_ = sdx_delta;
+	result = _tmp11_;
+	return result;
 }
 
 
@@ -833,11 +1068,11 @@ void sdx_processEvents (void) {
 				_tmp58_ = sdx__evt;
 				_tmp59_ = _tmp58_.motion;
 				_tmp60_ = _tmp59_.x;
-				sdx_mouseX = (gdouble) _tmp60_;
+				sdx_mouseX = (gint) _tmp60_;
 				_tmp61_ = sdx__evt;
 				_tmp62_ = _tmp61_.motion;
 				_tmp63_ = _tmp62_.y;
-				sdx_mouseY = (gdouble) _tmp63_;
+				sdx_mouseY = (gint) _tmp63_;
 				break;
 			}
 			case SDL_MOUSEBUTTONDOWN:
@@ -864,12 +1099,12 @@ void sdx_processEvents (void) {
 				_tmp65_ = _tmp64_.tfinger;
 				_tmp66_ = _tmp65_.x;
 				_tmp67_ = sdx_width;
-				sdx_mouseX = _tmp66_ * ((gdouble) _tmp67_);
+				sdx_mouseX = (gint) (_tmp66_ * ((gfloat) _tmp67_));
 				_tmp68_ = sdx__evt;
 				_tmp69_ = _tmp68_.tfinger;
 				_tmp70_ = _tmp69_.y;
 				_tmp71_ = sdx_height;
-				sdx_mouseY = _tmp70_ * ((gdouble) _tmp71_);
+				sdx_mouseY = (gint) (_tmp70_ * ((gfloat) _tmp71_));
 				break;
 			}
 			case SDL_FINGERDOWN:

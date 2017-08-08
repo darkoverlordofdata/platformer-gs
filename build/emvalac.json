@@ -1,4 +1,7 @@
 {
+  "factory": "Factory",
+  "game": "Game",
+  "map": "Map",
   "sdx_data_input_stream": "sdxDataInputStream",
   "sdx_font": "sdxFont",
   "sdx_audio_sound": "sdxaudioSound",
@@ -25,13 +28,16 @@
   "sdx_graphics_region": "sdxgraphicsRegion",
   "sdx_graphics_texture_atlas_data": "sdxgraphicsTextureAtlasData",
   "sdx_graphics_texture_region": "sdxgraphicsTextureRegion",
-  "sdx_camera": "sdxCamera",
+  "sdx_abstract_platform": "sdxAbstractPlatform",
+  "sdx_abstract_game": "sdxAbstractGame",
+  "sdx_lambda_reference": "sdxLambdaReference",
   "sdx_utils_cache": "sdxutilsCache",
   "sdx_utils_file": "sdxutilsFile",
   "sdx_utils_json": "sdxutilsJson",
   "sdx_utils_js_variant": "sdxutilsJsVariant",
   "sdx_utils_string_tokenizer": "sdxutilsStringTokenizer",
-  "systems_logic_system": "systemsLogicSystem",
-  "systems_physics_system": "systemsPhysicsSystem",
-  "systems_system": "systemsSystem"
+  "hud_system": "HudSystem",
+  "logic_system": "LogicSystem",
+  "physics_system": "PhysicsSystem",
+  "system": "System"
 }

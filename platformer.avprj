@@ -17,6 +17,7 @@ compile_c_options: -O3
 use_gresource: resources_gresource_xml
 vala_vapi: vapis/chipmunk.vapi
 vala_vapi: vapis/emscripten.vapi
+vala_vapi: vapis/lua.vapi
 vala_vapi: vapis/mt19937ar.vapi
 vala_vapi: vapis/posix.vapi
 vala_check_package: SDL2_image
@@ -26,13 +27,12 @@ vala_check_package: gio-2.0
 vala_check_package: glib-2.0
 vala_check_package: gobject-2.0
 vala_check_package: sdl2
-c_library: m
-*vala_source: Components.gs
-*vala_source: Entities.gs
-*vala_source: Game.gs
-*vala_source: Hud.gs
-*vala_source: Map.gs
-*vala_source: main.gs
+c_library: m lua5.2
+*vala_source: Components.vala
+*vala_source: Factory.vala
+*vala_source: Game.vala
+*vala_source: Map.vala
+*vala_source: main.vala
 *vala_source: platformer.vala
 *vala_source: sdx/Color.gs
 *vala_source: sdx/Files.vala
@@ -50,12 +50,15 @@ c_library: m
 *vala_source: sdx/graphics/TextureEnums.vala
 *vala_source: sdx/graphics/TextureRegion.vala
 *vala_source: sdx/graphics/graphics.vala
+*vala_source: sdx/math/Vector2.vala
+*vala_source: sdx/math/math.vala
 *vala_source: sdx/sdx.vala
 *vala_source: sdx/utils/Cache.vala
 *vala_source: sdx/utils/File.vala
 *vala_source: sdx/utils/Json.vala
 *vala_source: sdx/utils/StringTokenizer.vala
 *vala_source: sdx/utils/utils.vala
+*vala_source: systems/HudSystem.vala
 *vala_source: systems/LogicSystem.vala
 *vala_source: systems/PhysicsSystem.vala
 *vala_source: systems/System.vala
@@ -97,11 +100,10 @@ c_library: m
 
 *po: po
 
-*translate: genie src/Components.gs
-*translate: genie src/Entities.gs
-*translate: genie src/Game.gs
-*translate: genie src/Hud.gs
-*translate: genie src/Map.gs
+*translate: vala src/Components.vala
+*translate: vala src/Factory.vala
+*translate: vala src/Game.vala
+*translate: vala src/Map.vala
 *translate: c src/chipmunk/chipmunk.c
 *translate: c src/chipmunk/cpArbiter.c
 *translate: c src/chipmunk/cpArray.c
@@ -133,7 +135,7 @@ c_library: m
 *translate: c src/chipmunk/cpSpaceStep.c
 *translate: c src/chipmunk/cpSpatialIndex.c
 *translate: c src/chipmunk/cpSweep1D.c
-*translate: genie src/main.gs
+*translate: vala src/main.vala
 *translate: c src/mt19937ar.c
 *translate: vala src/platformer.vala
 *translate: genie src/sdx/Color.gs
@@ -152,12 +154,15 @@ c_library: m
 *translate: vala src/sdx/graphics/TextureEnums.vala
 *translate: vala src/sdx/graphics/TextureRegion.vala
 *translate: vala src/sdx/graphics/graphics.vala
+*translate: vala src/sdx/math/Vector2.vala
+*translate: vala src/sdx/math/math.vala
 *translate: vala src/sdx/sdx.vala
 *translate: vala src/sdx/utils/Cache.vala
 *translate: vala src/sdx/utils/File.vala
 *translate: vala src/sdx/utils/Json.vala
 *translate: vala src/sdx/utils/StringTokenizer.vala
 *translate: vala src/sdx/utils/utils.vala
+*translate: vala src/systems/HudSystem.vala
 *translate: vala src/systems/LogicSystem.vala
 *translate: vala src/systems/PhysicsSystem.vala
 *translate: vala src/systems/System.vala

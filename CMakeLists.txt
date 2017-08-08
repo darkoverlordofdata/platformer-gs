@@ -61,5 +61,6 @@ add_subdirectory(src/sdx/audio)
 add_subdirectory(src/sdx)
 add_subdirectory(src/sdx/files)
 add_subdirectory(src/sdx/utils)
+add_subdirectory(src/sdx/math)
 add_subdirectory(src)
 

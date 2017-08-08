@@ -23,12 +23,9 @@ typedef struct _Entities Entities;
 
 #define TYPE_ACTOR (actor_get_type ())
 
-#define TYPE_POINT2D (point2d_get_type ())
-typedef struct _Point2d Point2d;
+#define SDX_MATH_TYPE_VECTOR2 (sdx_math_vector2_get_type ())
+typedef struct _sdxmathVector2 sdxmathVector2;
 typedef struct _sdxgraphicsSprite sdxgraphicsSprite;
-
-#define TYPE_VECTOR2D (vector2d_get_type ())
-typedef struct _Vector2d Vector2d;
 
 #define TYPE_TIMER (timer_get_type ())
 typedef struct _Timer Timer;
@@ -46,11 +43,11 @@ typedef struct _sdxgraphicsScale sdxgraphicsScale;
 
 #define SDX_GRAPHICS_SPRITE_TYPE_KIND (sdx_graphics_sprite_kind_get_type ())
 #define _g_free0(var) (var = (g_free (var), NULL))
+#define _sdx_math_vector2_free0(var) ((var == NULL) ? NULL : (var = (sdx_math_vector2_free (var), NULL)))
 void sdx_graphics_sprite_release (sdxgraphicsSprite* self);
 void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
 sdxgraphicsSprite* sdx_graphics_sprite_retain (sdxgraphicsSprite* self);
 #define _sdx_graphics_sprite_release0(var) ((var == NULL) ? NULL : (var = (sdx_graphics_sprite_release (var), NULL)))
-#define _vector2d_free0(var) ((var == NULL) ? NULL : (var = (vector2d_free (var), NULL)))
 #define _timer_free0(var) ((var == NULL) ? NULL : (var = (timer_free (var), NULL)))
 #define _health_free0(var) ((var == NULL) ? NULL : (var = (health_free (var), NULL)))
 typedef sdxgraphicsSprite sdxgraphicsSpriteTextureSprite;
@@ -81,14 +78,9 @@ typedef enum  {
 	ACTOR_HUD
 } Actor;
 
-struct _Point2d {
-	gdouble x;
-	gdouble y;
-};
-
-struct _Vector2d {
-	gdouble x;
-	gdouble y;
+struct _sdxmathVector2 {
+	gfloat x;
+	gfloat y;
 };
 
 struct _Timer {
@@ -108,15 +100,15 @@ struct _Entity {
 	gboolean active;
 	Category category;
 	Actor actor;
-	Point2d position;
+	sdxmathVector2 position;
 	SDL_Rect bounds;
 	sdxgraphicsSprite* sprite;
-	Vector2d* size;
-	Vector2d* scale;
+	sdxmathVector2* size;
+	sdxmathVector2* scale;
 	SDL_Color* tint;
 	Timer* expires;
 	Health* health;
-	Vector2d* velocity;
+	sdxmathVector2* velocity;
 };
 
 struct _sdxBlit {
@@ -127,8 +119,8 @@ struct _sdxBlit {
 
 typedef sdxBlit* (*sdxCompositor) (gint x, gint y, int* result_length1, void* user_data);
 struct _sdxgraphicsScale {
-	gdouble x;
-	gdouble y;
+	gfloat x;
+	gfloat y;
 };
 
 typedef enum  {
@@ -174,13 +166,10 @@ void sdx_graphics_surface_cached_surface_initialize (gint size);
 GType entity_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
-GType point2d_get_type (void) G_GNUC_CONST;
-Point2d* point2d_dup (const Point2d* self);
-void point2d_free (Point2d* self);
+GType sdx_math_vector2_get_type (void) G_GNUC_CONST;
+sdxmathVector2* sdx_math_vector2_dup (const sdxmathVector2* self);
+void sdx_math_vector2_free (sdxmathVector2* self);
 void sdx_graphics_sprite_free (sdxgraphicsSprite* self);
-GType vector2d_get_type (void) G_GNUC_CONST;
-Vector2d* vector2d_dup (const Vector2d* self);
-void vector2d_free (Vector2d* self);
 GType timer_get_type (void) G_GNUC_CONST;
 Timer* timer_dup (const Timer* self);
 void timer_free (Timer* self);
@@ -243,13 +232,13 @@ static sdxBlit* _entities_composePlayer_sdx_compositor (gint x, gint y, int* res
 }
 
 
-static gpointer _sdx_graphics_sprite_retain0 (gpointer self) {
-	return self ? sdx_graphics_sprite_retain (self) : NULL;
+static gpointer _sdx_math_vector2_dup0 (gpointer self) {
+	return self ? sdx_math_vector2_dup (self) : NULL;
 }
 
 
-static gpointer _vector2d_dup0 (gpointer self) {
-	return self ? vector2d_dup (self) : NULL;
+static gpointer _sdx_graphics_sprite_retain0 (gpointer self) {
+	return self ? sdx_graphics_sprite_retain (self) : NULL;
 }
 
 
@@ -281,25 +270,25 @@ void entities_createPlayer (Entities* self, Entity* result) {
 	sdxgraphicsSpriteCompositeSprite* _tmp0_ = NULL;
 	gint _tmp1_ = 0;
 	gchar* _tmp2_ = NULL;
-	Point2d _tmp3_ = {0};
-	sdxgraphicsSprite* _tmp4_ = NULL;
-	gint _tmp5_ = 0;
-	gint _tmp6_ = 0;
-	SDL_Rect _tmp7_ = {0};
+	sdxmathVector2 _tmp3_ = {0};
+	sdxmathVector2 _tmp4_ = {0};
+	sdxmathVector2* _tmp5_ = NULL;
+	sdxgraphicsSprite* _tmp6_ = NULL;
+	gint _tmp7_ = 0;
 	gint _tmp8_ = 0;
-	gint _tmp9_ = 0;
-	Vector2d _tmp10_ = {0};
-	Vector2d* _tmp11_ = NULL;
-	Vector2d _tmp12_ = {0};
-	Vector2d* _tmp13_ = NULL;
+	SDL_Rect _tmp9_ = {0};
+	gint _tmp10_ = 0;
+	gint _tmp11_ = 0;
+	sdxmathVector2 _tmp12_ = {0};
+	sdxmathVector2* _tmp13_ = NULL;
 	SDL_Color _tmp14_ = {0};
 	SDL_Color* _tmp15_ = NULL;
 	Timer _tmp16_ = {0};
 	Timer* _tmp17_ = NULL;
 	Health _tmp18_ = {0};
 	Health* _tmp19_ = NULL;
-	Vector2d _tmp20_ = {0};
-	Vector2d* _tmp21_ = NULL;
+	sdxmathVector2 _tmp20_ = {0};
+	sdxmathVector2* _tmp21_ = NULL;
 	Entity _tmp22_ = {0};
 	g_return_if_fail (self != NULL);
 	_tmp0_ = sdx_graphics_sprite_composite_sprite_new ("assets/player.png", _entities_composePlayer_sdx_compositor, self);
@@ -307,23 +296,23 @@ void entities_createPlayer (Entities* self, Entity* result) {
 	_tmp1_ = entities_uniqueId;
 	entities_uniqueId = _tmp1_ + 1;
 	_tmp2_ = g_strdup ("Player");
-	_tmp3_.x = (gdouble) 170;
-	_tmp3_.y = (gdouble) 500;
-	_tmp4_ = _sdx_graphics_sprite_retain0 ((sdxgraphicsSprite*) sprite);
-	_tmp5_ = ((sdxgraphicsSprite*) sprite)->height;
-	_tmp6_ = ((sdxgraphicsSprite*) sprite)->width;
-	_tmp7_.x = 0;
-	_tmp7_.y = 0;
-	_tmp7_.w = (guint) _tmp5_;
-	_tmp7_.h = (guint) _tmp6_;
-	_tmp8_ = ((sdxgraphicsSprite*) sprite)->height;
-	_tmp9_ = ((sdxgraphicsSprite*) sprite)->width;
-	_tmp10_.x = (gdouble) _tmp8_;
-	_tmp10_.y = (gdouble) _tmp9_;
-	_tmp11_ = _vector2d_dup0 (&_tmp10_);
-	_tmp12_.x = (gdouble) 1;
-	_tmp12_.y = (gdouble) 1;
-	_tmp13_ = _vector2d_dup0 (&_tmp12_);
+	_tmp3_.x = (gfloat) 170;
+	_tmp3_.y = (gfloat) 500;
+	_tmp4_.x = (gfloat) 1;
+	_tmp4_.y = (gfloat) 1;
+	_tmp5_ = _sdx_math_vector2_dup0 (&_tmp4_);
+	_tmp6_ = _sdx_graphics_sprite_retain0 ((sdxgraphicsSprite*) sprite);
+	_tmp7_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp8_ = ((sdxgraphicsSprite*) sprite)->width;
+	_tmp9_.x = 0;
+	_tmp9_.y = 0;
+	_tmp9_.w = (guint) _tmp7_;
+	_tmp9_.h = (guint) _tmp8_;
+	_tmp10_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp11_ = ((sdxgraphicsSprite*) sprite)->width;
+	_tmp12_.x = (gfloat) _tmp10_;
+	_tmp12_.y = (gfloat) _tmp11_;
+	_tmp13_ = _sdx_math_vector2_dup0 (&_tmp12_);
 	_tmp14_.r = (guint8) 0;
 	_tmp14_.g = (guint8) 0;
 	_tmp14_.b = (guint8) 0;
@@ -336,9 +325,9 @@ void entities_createPlayer (Entities* self, Entity* result) {
 	_tmp18_.curHealth = 0;
 	_tmp18_.maxHealth = 0;
 	_tmp19_ = _health_dup0 (&_tmp18_);
-	_tmp20_.x = (gdouble) 0;
-	_tmp20_.y = (gdouble) 0;
-	_tmp21_ = _vector2d_dup0 (&_tmp20_);
+	_tmp20_.x = (gfloat) 0;
+	_tmp20_.y = (gfloat) 0;
+	_tmp21_ = _sdx_math_vector2_dup0 (&_tmp20_);
 	memset (&_tmp22_, 0, sizeof (Entity));
 	_tmp22_.id = _tmp1_;
 	_g_free0 (_tmp22_.name);
@@ -347,20 +336,20 @@ void entities_createPlayer (Entities* self, Entity* result) {
 	_tmp22_.category = CATEGORY_PLAYER;
 	_tmp22_.actor = ACTOR_PLAYER;
 	_tmp22_.position = _tmp3_;
+	_sdx_math_vector2_free0 (_tmp22_.scale);
+	_tmp22_.scale = _tmp5_;
 	_sdx_graphics_sprite_release0 (_tmp22_.sprite);
-	_tmp22_.sprite = _tmp4_;
-	_tmp22_.bounds = _tmp7_;
-	_vector2d_free0 (_tmp22_.size);
-	_tmp22_.size = _tmp11_;
-	_vector2d_free0 (_tmp22_.scale);
-	_tmp22_.scale = _tmp13_;
+	_tmp22_.sprite = _tmp6_;
+	_tmp22_.bounds = _tmp9_;
+	_sdx_math_vector2_free0 (_tmp22_.size);
+	_tmp22_.size = _tmp13_;
 	_g_free0 (_tmp22_.tint);
 	_tmp22_.tint = _tmp15_;
 	_timer_free0 (_tmp22_.expires);
 	_tmp22_.expires = _tmp17_;
 	_health_free0 (_tmp22_.health);
 	_tmp22_.health = _tmp19_;
-	_vector2d_free0 (_tmp22_.velocity);
+	_sdx_math_vector2_free0 (_tmp22_.velocity);
 	_tmp22_.velocity = _tmp21_;
 	*result = _tmp22_;
 	_sdx_graphics_sprite_release0 (sprite);
@@ -373,25 +362,25 @@ void entities_createBerry (Entities* self, Entity* result) {
 	sdxgraphicsSpriteTextureSprite* _tmp0_ = NULL;
 	gint _tmp1_ = 0;
 	gchar* _tmp2_ = NULL;
-	Point2d _tmp3_ = {0};
-	sdxgraphicsSprite* _tmp4_ = NULL;
-	gint _tmp5_ = 0;
-	gint _tmp6_ = 0;
-	SDL_Rect _tmp7_ = {0};
+	sdxmathVector2 _tmp3_ = {0};
+	sdxmathVector2 _tmp4_ = {0};
+	sdxmathVector2* _tmp5_ = NULL;
+	sdxgraphicsSprite* _tmp6_ = NULL;
+	gint _tmp7_ = 0;
 	gint _tmp8_ = 0;
-	gint _tmp9_ = 0;
-	Vector2d _tmp10_ = {0};
-	Vector2d* _tmp11_ = NULL;
-	Vector2d _tmp12_ = {0};
-	Vector2d* _tmp13_ = NULL;
+	SDL_Rect _tmp9_ = {0};
+	gint _tmp10_ = 0;
+	gint _tmp11_ = 0;
+	sdxmathVector2 _tmp12_ = {0};
+	sdxmathVector2* _tmp13_ = NULL;
 	SDL_Color _tmp14_ = {0};
 	SDL_Color* _tmp15_ = NULL;
 	Timer _tmp16_ = {0};
 	Timer* _tmp17_ = NULL;
 	Health _tmp18_ = {0};
 	Health* _tmp19_ = NULL;
-	Vector2d _tmp20_ = {0};
-	Vector2d* _tmp21_ = NULL;
+	sdxmathVector2 _tmp20_ = {0};
+	sdxmathVector2* _tmp21_ = NULL;
 	Entity _tmp22_ = {0};
 	g_return_if_fail (self != NULL);
 	_tmp0_ = sdx_graphics_sprite_texture_sprite_new ("assets/berry.png");
@@ -399,23 +388,23 @@ void entities_createBerry (Entities* self, Entity* result) {
 	_tmp1_ = entities_uniqueId;
 	entities_uniqueId = _tmp1_ + 1;
 	_tmp2_ = g_strdup ("Bonus");
-	_tmp3_.x = (gdouble) 400;
-	_tmp3_.y = (gdouble) 400;
-	_tmp4_ = _sdx_graphics_sprite_retain0 ((sdxgraphicsSprite*) sprite);
-	_tmp5_ = ((sdxgraphicsSprite*) sprite)->height;
-	_tmp6_ = ((sdxgraphicsSprite*) sprite)->width;
-	_tmp7_.x = 0;
-	_tmp7_.y = 0;
-	_tmp7_.w = (guint) _tmp5_;
-	_tmp7_.h = (guint) _tmp6_;
-	_tmp8_ = ((sdxgraphicsSprite*) sprite)->height;
-	_tmp9_ = ((sdxgraphicsSprite*) sprite)->width;
-	_tmp10_.x = (gdouble) _tmp8_;
-	_tmp10_.y = (gdouble) _tmp9_;
-	_tmp11_ = _vector2d_dup0 (&_tmp10_);
-	_tmp12_.x = (gdouble) 1;
-	_tmp12_.y = (gdouble) 1;
-	_tmp13_ = _vector2d_dup0 (&_tmp12_);
+	_tmp3_.x = (gfloat) 400;
+	_tmp3_.y = (gfloat) 400;
+	_tmp4_.x = (gfloat) 1;
+	_tmp4_.y = (gfloat) 1;
+	_tmp5_ = _sdx_math_vector2_dup0 (&_tmp4_);
+	_tmp6_ = _sdx_graphics_sprite_retain0 ((sdxgraphicsSprite*) sprite);
+	_tmp7_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp8_ = ((sdxgraphicsSprite*) sprite)->width;
+	_tmp9_.x = 0;
+	_tmp9_.y = 0;
+	_tmp9_.w = (guint) _tmp7_;
+	_tmp9_.h = (guint) _tmp8_;
+	_tmp10_ = ((sdxgraphicsSprite*) sprite)->height;
+	_tmp11_ = ((sdxgraphicsSprite*) sprite)->width;
+	_tmp12_.x = (gfloat) _tmp10_;
+	_tmp12_.y = (gfloat) _tmp11_;
+	_tmp13_ = _sdx_math_vector2_dup0 (&_tmp12_);
 	_tmp14_.r = (guint8) 0;
 	_tmp14_.g = (guint8) 0;
 	_tmp14_.b = (guint8) 0;
@@ -428,9 +417,9 @@ void entities_createBerry (Entities* self, Entity* result) {
 	_tmp18_.curHealth = 0;
 	_tmp18_.maxHealth = 0;
 	_tmp19_ = _health_dup0 (&_tmp18_);
-	_tmp20_.x = (gdouble) 0;
-	_tmp20_.y = (gdouble) 0;
-	_tmp21_ = _vector2d_dup0 (&_tmp20_);
+	_tmp20_.x = (gfloat) 0;
+	_tmp20_.y = (gfloat) 0;
+	_tmp21_ = _sdx_math_vector2_dup0 (&_tmp20_);
 	memset (&_tmp22_, 0, sizeof (Entity));
 	_tmp22_.id = _tmp1_;
 	_g_free0 (_tmp22_.name);
@@ -439,20 +428,20 @@ void entities_createBerry (Entities* self, Entity* result) {
 	_tmp22_.category = CATEGORY_BONUS;
 	_tmp22_.actor = ACTOR_BONUS;
 	_tmp22_.position = _tmp3_;
+	_sdx_math_vector2_free0 (_tmp22_.scale);
+	_tmp22_.scale = _tmp5_;
 	_sdx_graphics_sprite_release0 (_tmp22_.sprite);
-	_tmp22_.sprite = _tmp4_;
-	_tmp22_.bounds = _tmp7_;
-	_vector2d_free0 (_tmp22_.size);
-	_tmp22_.size = _tmp11_;
-	_vector2d_free0 (_tmp22_.scale);
-	_tmp22_.scale = _tmp13_;
+	_tmp22_.sprite = _tmp6_;
+	_tmp22_.bounds = _tmp9_;
+	_sdx_math_vector2_free0 (_tmp22_.size);
+	_tmp22_.size = _tmp13_;
 	_g_free0 (_tmp22_.tint);
 	_tmp22_.tint = _tmp15_;
 	_timer_free0 (_tmp22_.expires);
 	_tmp22_.expires = _tmp17_;
 	_health_free0 (_tmp22_.health);
 	_tmp22_.health = _tmp19_;
-	_vector2d_free0 (_tmp22_.velocity);
+	_sdx_math_vector2_free0 (_tmp22_.velocity);
 	_tmp22_.velocity = _tmp21_;
 	*result = _tmp22_;
 	_sdx_graphics_sprite_release0 (sprite);

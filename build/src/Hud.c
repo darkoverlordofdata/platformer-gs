@@ -27,11 +27,11 @@ typedef struct _sdxFont sdxFont;
 
 #define TYPE_ACTOR (actor_get_type ())
 
-#define TYPE_POINT2D (point2d_get_type ())
-typedef struct _Point2d Point2d;
+#define SDX_MATH_TYPE_VECTOR2 (sdx_math_vector2_get_type ())
+typedef struct _sdxmathVector2 sdxmathVector2;
 
-#define TYPE_VECTOR2D (vector2d_get_type ())
-typedef struct _Vector2d Vector2d;
+#define SDX_GRAPHICS_TYPE_BBOX (sdx_graphics_bbox_get_type ())
+typedef SDL_Rect sdxgraphicsBBox;
 
 #define TYPE_TIMER (timer_get_type ())
 typedef struct _Timer Timer;
@@ -65,14 +65,9 @@ typedef enum  {
 	ACTOR_HUD
 } Actor;
 
-struct _Point2d {
-	gdouble x;
-	gdouble y;
-};
-
-struct _Vector2d {
-	gdouble x;
-	gdouble y;
+struct _sdxmathVector2 {
+	gfloat x;
+	gfloat y;
 };
 
 struct _Timer {
@@ -92,15 +87,15 @@ struct _Entity {
 	gboolean active;
 	Category category;
 	Actor actor;
-	Point2d position;
-	SDL_Rect bounds;
+	sdxmathVector2 position;
+	sdxgraphicsBBox bounds;
 	sdxgraphicsSprite* sprite;
-	Vector2d* size;
-	Vector2d* scale;
+	sdxmathVector2* size;
+	sdxmathVector2* scale;
 	SDL_Color* tint;
 	Timer* expires;
 	Health* health;
-	Vector2d* velocity;
+	sdxmathVector2* velocity;
 };
 
 
@@ -118,12 +113,12 @@ sdxgraphicsSpriteTextSprite* sdx_graphics_sprite_text_sprite_new (const gchar* t
 GType entity_get_type (void) G_GNUC_CONST;
 GType category_get_type (void) G_GNUC_CONST;
 GType actor_get_type (void) G_GNUC_CONST;
-GType point2d_get_type (void) G_GNUC_CONST;
-Point2d* point2d_dup (const Point2d* self);
-void point2d_free (Point2d* self);
-GType vector2d_get_type (void) G_GNUC_CONST;
-Vector2d* vector2d_dup (const Vector2d* self);
-void vector2d_free (Vector2d* self);
+GType sdx_math_vector2_get_type (void) G_GNUC_CONST;
+sdxmathVector2* sdx_math_vector2_dup (const sdxmathVector2* self);
+void sdx_math_vector2_free (sdxmathVector2* self);
+GType sdx_graphics_bbox_get_type (void) G_GNUC_CONST;
+sdxgraphicsBBox* sdx_graphics_bbox_dup (const sdxgraphicsBBox* self);
+void sdx_graphics_bbox_free (sdxgraphicsBBox* self);
 GType timer_get_type (void) G_GNUC_CONST;
 Timer* timer_dup (const Timer* self);
 void timer_free (Timer* self);

@@ -3,48 +3,75 @@ using SDL.Video;
 using SDLImage;
 
 namespace sdx {
-
-	public struct Blit {
-		SDL.Video.Rect source;
-		SDL.Video.Rect dest;
-		SDL.Video.RendererFlip flip;
+[Compact, CCode ( /** reference counting */
+	ref_function = "sdx_abstract_platform_retain", 
+	unref_function = "sdx_abstract_platform_release"
+)]
+public class AbstractPlatform {
+	public int _retainCount = 1;
+	public unowned AbstractPlatform retain() {
+		GLib.AtomicInt.add (ref _retainCount, 1);
+		return this;
 	}
-	
-	public delegate Blit[] Compositor(int x, int y);	
+	public void release() { 
+		if (GLib.AtomicInt.dec_and_test (ref _retainCount)) this.free ();
+	}
+	public extern void free();
+		
+		public delegate void PlatformUpdate(int tick);
+		public delegate void PlatformRender(int tick);
+		public PlatformUpdate update = (tick) => {};
+		public PlatformRender render = (tick) => {};
+		public AbstractPlatform() {
+			var r = new LambdaReference();
+		}
+	}
+[Compact, CCode ( /** reference counting */
+	ref_function = "sdx_abstract_game_retain", 
+	unref_function = "sdx_abstract_game_release"
+)]
+public class AbstractGame {
+	public int _retainCount = 1;
+	public unowned AbstractGame retain() {
+		GLib.AtomicInt.add (ref _retainCount, 1);
+		return this;
+	}
+	public void release() { 
+		if (GLib.AtomicInt.dec_and_test (ref _retainCount)) this.free ();
+	}
+	public extern void free();
+		
+		public delegate void GameUpdate();
+		public delegate void GameRender();
+		public int width;
+		public int height;
+		public GameUpdate update = () => {};
+		public GameRender render = () => {};
+		public AbstractGame() {
+			var r = new LambdaReference();
+		}
+		public void start() {
+			sdx.start();
+		}
+	}
 
-	//  public enum CameraType {
-	//  	FLUID_CAMERA,
-	//  	INNER_CAMERA,
-	//  	SIMPLE_CAMERA
-	//  }
+	// forces the subclassed lambda context to be reference counted
+[Compact, CCode ( /** reference counting */
+	ref_function = "sdx_lambda_reference_retain", 
+	unref_function = "sdx_lambda_reference_release"
+)]
+public class LambdaReference {
+	public int _retainCount = 1;
+	public unowned LambdaReference retain() {
+		GLib.AtomicInt.add (ref _retainCount, 1);
+		return this;
+	}
+	public void release() { 
+		if (GLib.AtomicInt.dec_and_test (ref _retainCount)) this.free ();
+	}
+	public extern void free();
+		}
 
-
-	//  public class Camera : Object {
-	//  	public CameraType type;
-	//  	public Vector2d position;
-	//  	public Camera(CameraType type = CameraType.INNER_CAMERA, double x = 0, double y = 0) {
-	//  		this.type = type;
-	//  		this.position = { x, y };
-	//  	}
-	//  	public void setPosition(Point2d player) {
-	//  		switch(type) {
-
-	//  			case CameraType.FLUID_CAMERA:
-	//  				var dist = position.x - player.x + (double)WINDOW_SIZE.x/2;
-	//  				position.x += (-0.05 * dist);
-	//  				break;
-
-	//  			case CameraType.INNER_CAMERA:
-	//  				var area = player.x - (double)WINDOW_SIZE.x/2;
-	//  				position.x = clamp(position.x, area-100, area+100);
-	//  				break;
-					
-	//  			case CameraType.SIMPLE_CAMERA:
-	//  				position.x = player.x - (double)WINDOW_SIZE.x/2;
-	//  				break;
-	//  		}
-	//  	}
-	//  }
 	/**
 	 * Global vars
 	 * 
@@ -72,10 +99,10 @@ namespace sdx {
 	sdx.graphics.Sprite.AnimatedSprite fps5;
 	long pixelFactor;
 	bool showFps;
-	double fps;
-	double delta;
-	double mouseX;
-	double mouseY;
+	float fps;
+	float delta;
+	int mouseX;
+	int mouseY;
 	bool mouseDown;
 	bool running;
 	uint8[] keys;
@@ -153,6 +180,10 @@ namespace sdx {
 		return MersenneTwister.genrand_real2();
 	}
 
+	int nextInt(int max) {
+		return (int)(MersenneTwister.genrand_real2()*max);
+	}
+
 	void setResourceBase(string path) {
 		sdx.resourceBase = path;
 	}
@@ -210,17 +241,18 @@ namespace sdx {
 		_mark1 = (double)SDL.Timer.get_performance_counter()/_freq;
 	}
 
-	void update() {
+	float update() {
 		_mark2 = (double)SDL.Timer.get_performance_counter()/_freq;
-		delta = _mark2 - _mark1;
+		delta = (float)(_mark2 - _mark1);
 		_mark1 = _mark2;
 		_frames++;
 		_elapsed = _elapsed + delta;
-		if (_elapsed > 1.0) {
+		if (_elapsed > 1) {
 			fps = (int)((double)_frames / _elapsed);
-			_elapsed = 0.0;
+			_elapsed = 0;
 			_frames = 0;
 		}
+		return delta;
 	}
 
 	void processEvents() {
@@ -262,11 +294,11 @@ namespace sdx {
 #if (!ANDROID)
 				case SDL.EventType.FINGERMOTION:
 #if (EMSCRIPTEN)					
-					mouseX = _evt.tfinger.x * (double)width;
-					mouseY = _evt.tfinger.y * (double)height;
+					mouseX = (int)(_evt.tfinger.x * (float)width);
+					mouseY = (int)(_evt.tfinger.y * (float)height);
 #else
-					mouseX = _evt.tfinger.x;
-					mouseY = _evt.tfinger.y;
+					mouseX = (int)_evt.tfinger.x;
+					mouseY = (int)_evt.tfinger.y;
 #endif
 					break;
 				case SDL.EventType.FINGERDOWN:

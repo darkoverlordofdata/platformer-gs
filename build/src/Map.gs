@@ -1,3 +1,4 @@
+uses sdx.math
  
 [Compact, CCode ( /** reference counting */
 	ref_function = "map_retain", 
@@ -45,13 +46,13 @@ class Map
 		for d in data.@array do tiles[i++] = (uint8)d.number
 		
 
-	def getTile(x: double, y: double): int
+	def getTile(x: float, y: float): int
 		var nx = (int)clamp(x / tilewidth, 0, width-1)
 		var ny = (int)clamp(y / tileheight, 0, height-1)
 		var pos = ny * width + nx
 		return tiles[pos]
 
-	def isSolid(x: double, y: double): bool
+	def isSolid(x: float, y: float): bool
 		case getTile(x, y)
 			when AIR
 				return false
@@ -61,25 +62,25 @@ class Map
 				return false
 		return true
 
-	def isOnGround(pos: Point2d, size: Vector2d): bool
-		return (isSolid(pos.x - size.x*0.25, pos.y + size.y*0.25 + 1) 
-			||  isSolid(pos.x + size.x*0.25, pos.y + size.y*0.25 + 1))
+	def isOnGround(pos: Vector2, size: Vector2): bool
+		return (isSolid(pos.x - size.x*0.25f, pos.y + size.y*0.25f + 1.0f) 
+			||  isSolid(pos.x + size.x*0.25f, pos.y + size.y*0.25f + 1.0f))
 
-	def isHit(pos: Point2d, size: Vector2d): bool
-		return (isSolid(pos.x - size.x*0.25, pos.y - size.y*0.25)
-			||  isSolid(pos.x + size.x*0.25, pos.y - size.y*0.25)
-			||  isSolid(pos.x - size.x*0.25, pos.y + size.y*0.25)
-			||  isSolid(pos.x + size.x*0.25, pos.y + size.y*0.25))
+	def isHit(pos: Vector2, size: Vector2): bool
+		return (isSolid(pos.x - size.x*0.25f, pos.y - size.y*0.25f)
+			||  isSolid(pos.x + size.x*0.25f, pos.y - size.y*0.25f)
+			||  isSolid(pos.x - size.x*0.25f, pos.y + size.y*0.25f)
+			||  isSolid(pos.x + size.x*0.25f, pos.y + size.y*0.25f))
 
 	/**
 	 * updates the position & velocity
 	 */
-	def moveBox(ref pos: Point2d, ref vel: Vector2d, size: Vector2d)
+	def moveBox(ref pos: Vector2, ref vel: Vector2, size: Vector2)
 		var distance = vel.len()
 		if distance < 0 do return
 		for var i = 0 to distance  
 
-			var newPos = pos.add(vel.mul(1.0 / (distance + 1.0)))
+			var newPos = pos.add(vel.mul(1 / (distance + 1)))
 			if isHit(newPos, size)
 				var hit = false
 

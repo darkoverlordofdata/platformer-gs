@@ -32,14 +32,14 @@ typedef struct _sdxgraphicsTextureRegion sdxgraphicsTextureRegion;
 typedef sdxgraphicsSurface sdxgraphicsSurfaceTextureSurface;
 typedef sdxgraphicsSprite sdxgraphicsSpriteCompositeSprite;
 
-#define SDX_TYPE_BLIT (sdx_blit_get_type ())
-typedef struct _sdxBlit sdxBlit;
+#define SDX_GRAPHICS_TYPE_BLIT (sdx_graphics_blit_get_type ())
+typedef struct _sdxgraphicsBlit sdxgraphicsBlit;
 typedef sdxgraphicsSprite sdxgraphicsSpriteTextSprite;
 typedef struct _sdxFont sdxFont;
 
 struct _sdxgraphicsScale {
-	gdouble x;
-	gdouble y;
+	gfloat x;
+	gfloat y;
 };
 
 typedef enum  {
@@ -120,19 +120,19 @@ struct _sdxgraphicsTextureRegion {
 	gint height;
 	gint regionWidth;
 	gint regionHeight;
-	gdouble u;
-	gdouble v;
-	gdouble u2;
-	gdouble v2;
+	gfloat u;
+	gfloat v;
+	gfloat u2;
+	gfloat v2;
 };
 
-struct _sdxBlit {
+struct _sdxgraphicsBlit {
 	SDL_Rect source;
 	SDL_Rect dest;
 	SDL_RendererFlip flip;
 };
 
-typedef sdxBlit* (*sdxCompositor) (gint x, gint y, int* result_length1, void* user_data);
+typedef sdxgraphicsBlit* (*sdxgraphicsCompositor) (gint x, gint y, int* result_length1, void* user_data);
 
 extern gint sdx_graphics_sprite_uniqueId;
 gint sdx_graphics_sprite_uniqueId = 0;
@@ -163,10 +163,10 @@ gint sdx_graphics_surface_get_height (sdxgraphicsSurface* self);
 void sdx_graphics_atlas_region_free (sdxgraphicsAtlasRegion* self);
 sdxgraphicsSpriteAtlasSprite* sdx_graphics_sprite_atlas_sprite_new (sdxgraphicsAtlasRegion* region);
 void sdx_graphics_texture_region_free (sdxgraphicsTextureRegion* self);
-GType sdx_blit_get_type (void) G_GNUC_CONST;
-sdxBlit* sdx_blit_dup (const sdxBlit* self);
-void sdx_blit_free (sdxBlit* self);
-sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (const gchar* path, sdxCompositor builder, void* builder_target);
+GType sdx_graphics_blit_get_type (void) G_GNUC_CONST;
+sdxgraphicsBlit* sdx_graphics_blit_dup (const sdxgraphicsBlit* self);
+void sdx_graphics_blit_free (sdxgraphicsBlit* self);
+sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (const gchar* path, sdxgraphicsCompositor builder, void* builder_target);
 void sdx_font_free (sdxFont* self);
 sdxgraphicsSpriteTextSprite* sdx_graphics_sprite_text_sprite_new (const gchar* text, sdxFont* font, SDL_Color color);
 void sdx_graphics_sprite_text_sprite_setText (sdxgraphicsSpriteTextSprite* self, const gchar* text, sdxFont* font, SDL_Color color);
@@ -242,12 +242,12 @@ void sdx_graphics_sprite_render (sdxgraphicsSprite* self, gint x, gint y, SDL_Re
 	SDL_Rect* _tmp1_ = NULL;
 	gint w = 0;
 	sdxgraphicsScale _tmp5_ = {0};
-	gdouble _tmp6_ = 0.0;
+	gfloat _tmp6_ = 0.0F;
 	guint _tmp7_ = 0U;
 	SDL_Rect* _tmp8_ = NULL;
 	gint h = 0;
 	sdxgraphicsScale _tmp12_ = {0};
-	gdouble _tmp13_ = 0.0;
+	gfloat _tmp13_ = 0.0F;
 	gint _tmp14_ = 0;
 	gboolean _tmp15_ = FALSE;
 	gint _tmp19_ = 0;
@@ -752,14 +752,14 @@ sdxgraphicsSpriteAtlasSprite* sdx_graphics_sprite_atlas_sprite_new (sdxgraphicsA
  * @param function that returns a list of rectangles
  * 
  */
-sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (const gchar* path, sdxCompositor builder, void* builder_target) {
+sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (const gchar* path, sdxgraphicsCompositor builder, void* builder_target) {
 	sdxgraphicsSpriteCompositeSprite* self;
 	gint h = 0;
 	gint w = 0;
-	sdxCompositor _tmp0_ = NULL;
+	sdxgraphicsCompositor _tmp0_ = NULL;
 	void* _tmp0__target = NULL;
 	gint _tmp1_ = 0;
-	sdxBlit* _tmp2_ = NULL;
+	sdxgraphicsBlit* _tmp2_ = NULL;
 	gint index = 0;
 	const gchar* _tmp17_ = NULL;
 	gint _tmp18_ = 0;
@@ -775,12 +775,12 @@ sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (cons
 	guint32 _tmp23_ = 0U;
 	guint32 _tmp24_ = 0U;
 	SDL_Surface* _tmp25_ = NULL;
-	sdxCompositor _tmp26_ = NULL;
+	sdxgraphicsCompositor _tmp26_ = NULL;
 	void* _tmp26__target = NULL;
 	gint _tmp27_ = 0;
 	gint _tmp28_ = 0;
 	gint _tmp29_ = 0;
-	sdxBlit* _tmp30_ = NULL;
+	sdxgraphicsBlit* _tmp30_ = NULL;
 	SDL_Renderer* _tmp40_ = NULL;
 	SDL_Surface* _tmp41_ = NULL;
 	SDL_Texture* _tmp42_ = NULL;
@@ -796,21 +796,21 @@ sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (cons
 	_tmp0__target = builder_target;
 	_tmp2_ = _tmp0_ (0, 0, &_tmp1_, _tmp0__target);
 	{
-		sdxBlit* segment_collection = NULL;
+		sdxgraphicsBlit* segment_collection = NULL;
 		gint segment_collection_length1 = 0;
 		gint _segment_collection_size_ = 0;
 		gint segment_it = 0;
 		segment_collection = _tmp2_;
 		segment_collection_length1 = _tmp1_;
 		for (segment_it = 0; segment_it < _tmp1_; segment_it = segment_it + 1) {
-			sdxBlit segment = {0};
+			sdxgraphicsBlit segment = {0};
 			segment = segment_collection[segment_it];
 			{
-				sdxBlit _tmp3_ = {0};
+				sdxgraphicsBlit _tmp3_ = {0};
 				SDL_Rect _tmp4_ = {0};
 				guint _tmp5_ = 0U;
 				gint _tmp6_ = 0;
-				sdxBlit _tmp10_ = {0};
+				sdxgraphicsBlit _tmp10_ = {0};
 				SDL_Rect _tmp11_ = {0};
 				guint _tmp12_ = 0U;
 				gint _tmp13_ = 0;
@@ -819,7 +819,7 @@ sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (cons
 				_tmp5_ = _tmp4_.h;
 				_tmp6_ = h;
 				if (_tmp5_ > ((guint) _tmp6_)) {
-					sdxBlit _tmp7_ = {0};
+					sdxgraphicsBlit _tmp7_ = {0};
 					SDL_Rect _tmp8_ = {0};
 					guint _tmp9_ = 0U;
 					_tmp7_ = segment;
@@ -832,7 +832,7 @@ sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (cons
 				_tmp12_ = _tmp11_.w;
 				_tmp13_ = w;
 				if (_tmp12_ > ((guint) _tmp13_)) {
-					sdxBlit _tmp14_ = {0};
+					sdxgraphicsBlit _tmp14_ = {0};
 					SDL_Rect _tmp15_ = {0};
 					guint _tmp16_ = 0U;
 					_tmp14_ = segment;
@@ -865,14 +865,14 @@ sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (cons
 	_tmp28_ = w;
 	_tmp30_ = _tmp26_ (_tmp27_ / 2, _tmp28_ / 2, &_tmp29_, _tmp26__target);
 	{
-		sdxBlit* segment_collection = NULL;
+		sdxgraphicsBlit* segment_collection = NULL;
 		gint segment_collection_length1 = 0;
 		gint _segment_collection_size_ = 0;
 		gint segment_it = 0;
 		segment_collection = _tmp30_;
 		segment_collection_length1 = _tmp29_;
 		for (segment_it = 0; segment_it < _tmp29_; segment_it = segment_it + 1) {
-			sdxBlit segment = {0};
+			sdxgraphicsBlit segment = {0};
 			segment = segment_collection[segment_it];
 			{
 				sdxgraphicsSurface** _tmp31_ = NULL;
@@ -880,10 +880,10 @@ sdxgraphicsSpriteCompositeSprite* sdx_graphics_sprite_composite_sprite_new (cons
 				gint _tmp32_ = 0;
 				sdxgraphicsSurface* _tmp33_ = NULL;
 				SDL_Surface* _tmp34_ = NULL;
-				sdxBlit _tmp35_ = {0};
+				sdxgraphicsBlit _tmp35_ = {0};
 				SDL_Rect _tmp36_ = {0};
 				SDL_Surface* _tmp37_ = NULL;
-				sdxBlit _tmp38_ = {0};
+				sdxgraphicsBlit _tmp38_ = {0};
 				SDL_Rect _tmp39_ = {0};
 				_tmp31_ = sdx_graphics_surface_cached_surface_cache;
 				_tmp31__length1 = sdx_graphics_surface_cached_surface_cache_length1;
@@ -1002,8 +1002,8 @@ static void sdx_graphics_sprite_instance_init (sdxgraphicsSprite * self) {
 	self->id = _tmp1_;
 	self->frame = -1;
 	memset (&_tmp2_, 0, sizeof (sdxgraphicsScale));
-	_tmp2_.x = 1.0;
-	_tmp2_.y = 1.0;
+	_tmp2_.x = (gfloat) 1;
+	_tmp2_.y = (gfloat) 1;
 	self->scale = _tmp2_;
 	self->color = SDX_COLOR_White;
 	self->centered = TRUE;
